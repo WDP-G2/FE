@@ -17,7 +17,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState('tournaments');
+  const [activeTab, setActiveTab] = useState('info');
 
   // Mock user data
   const user = {

@@ -1,9 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import HomePage from '@/pages/HomePage'
-<<<<<<< Updated upstream
 import AboutPage from '@/pages/AboutPage'
-=======
->>>>>>> Stashed changes
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
@@ -18,10 +15,7 @@ export const router = createBrowserRouter([
   { path: '/forgot-password', Component: ForgotPasswordPage },
   { path: '/logout-demo', Component: DemoLogoutModal },
   { path: '/profile', Component: ProfilePage },
-<<<<<<< Updated upstream
   { path: '/about', Component: AboutPage },
-=======
->>>>>>> Stashed changes
   { path: '/tournaments', Component: HomePage },
   { path: '/rankings', Component: HomePage },
   { path: '*', Component: NotFoundPage },

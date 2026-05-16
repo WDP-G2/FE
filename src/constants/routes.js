@@ -4,10 +4,7 @@ export const ROUTES = {
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
   PROFILE: '/profile',
-<<<<<<< Updated upstream
   ABOUT: '/about',
-=======
->>>>>>> Stashed changes
   TOURNAMENTS: '/tournaments',
   RANKINGS: '/rankings',
   LOGOUT_DEMO: '/logout-demo',

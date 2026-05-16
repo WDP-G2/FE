@@ -100,7 +100,7 @@ export default function AboutPage() {
               >
                 <div className="flex items-start space-x-6">
                   <div className="w-16 h-16 bg-[#D4A017]/10 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#D4A017]/20 transition-all">
-                    {(() => { const FeatureIcon = feature.icon; return <FeatureIcon className="w-8 h-8 text-[#D4A017]" /> })()}
+                    <feature.icon className="w-8 h-8 text-[#D4A017]" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-[#1E3A5F] mb-3">{feature.title}</h3>
@@ -130,7 +130,7 @@ export default function AboutPage() {
                 className="text-center group"
               >
                 <div className="w-20 h-20 bg-[#D4A017]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-[#D4A017]/20 transition-all">
-                  {(() => { const BenefitIcon = benefit.icon; return <BenefitIcon className="w-10 h-10 text-[#D4A017]" /> })()}
+                  <benefit.icon className="w-10 h-10 text-[#D4A017]" />
                 </div>
                 <h3 className="text-xl font-bold text-[#1E3A5F] mb-3">{benefit.title}</h3>
                 <p className="text-[#1E3A5F]/70 leading-relaxed">{benefit.description}</p>
