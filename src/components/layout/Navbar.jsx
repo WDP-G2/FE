@@ -11,8 +11,13 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Trang chủ', path: '/' },
     { name: 'Giải đấu', path: '/tournaments' },
+<<<<<<< Updated upstream
     { name: 'Bảng xếp hạng', path: '/rankings' },
     { name: 'Giới thiệu', path: '/about' },
+=======
+    { name: 'Xếp hạng', path: '/rankings' },
+    { name: 'Hồ sơ', path: '/profile' },
+>>>>>>> Stashed changes
   ];
 
   return (
