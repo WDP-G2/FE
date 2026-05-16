@@ -42,8 +42,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/profile" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">
-                  Hồ sơ
+                <Link to="/about" className="text-white/70 hover:text-[#D4A017] transition-colors text-sm">
+                  Giới thiệu
                 </Link>
               </li>
             </ul>

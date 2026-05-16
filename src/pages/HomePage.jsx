@@ -1,18 +1,13 @@
 import { Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  Trophy, 
-  TrendingUp, 
-  Play, 
-  Ticket, 
-  BarChart3, 
-  Star, 
+import {
+  Calendar,
+  Trophy,
+  BarChart3,
   MapPin,
-  Clock,
   ChevronRight,
-  Flame,
   Users,
-  Award
+  Award,
+  User
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -63,34 +58,11 @@ export default function HomePage() {
 
   const statistics = [
     { label: 'Tổng giải đấu', value: '156', icon: Trophy },
-    { label: 'Người tham gia', value: '2,845', icon: Users },
-    { label: 'Ngựa đăng ký', value: '328', icon: Award },
-    { label: 'Vé đã bán', value: '12,450', icon: Ticket }
+    { label: 'Ngựa tham gia', value: '328', icon: Award },
+    { label: 'Jockeys', value: '145', icon: Users },
+    { label: 'Spectators', value: '2,845', icon: BarChart3 }
   ];
 
-  const testimonials = [
-    {
-      name: 'Nguyễn Minh Tuấn',
-      role: 'Chủ ngựa',
-      content: 'Nền tảng tuyệt vời! Quản lý giải đấu chuyên nghiệp và minh bạch. Tôi rất hài lòng với dịch vụ.',
-      avatar: '👨‍💼',
-      rating: 5
-    },
-    {
-      name: 'Trần Hồng Nhung',
-      role: 'Jockey',
-      content: 'Giao diện đẹp, dễ sử dụng. Thông tin giải đấu luôn được cập nhật kịp thời.',
-      avatar: '👩‍💼',
-      rating: 5
-    },
-    {
-      name: 'Lê Quang Huy',
-      role: 'Khán giả',
-      content: 'Trải nghiệm xem livestream mượt mà. Hệ thống đặt vé nhanh chóng và tiện lợi.',
-      avatar: '🧑‍💼',
-      rating: 5
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFF8F0] via-white to-[#FAFAFA]">
@@ -113,36 +85,36 @@ export default function HomePage() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
           <div className="max-w-3xl">
             <div className="inline-flex items-center space-x-2 px-4 py-2 bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-full mb-6">
-              <Flame className="w-4 h-4 text-[#D4A017]" />
-              <span className="text-[#D4A017] font-semibold text-sm">Giải đấu lớn nhất năm 2026</span>
+              <Trophy className="w-4 h-4 text-[#D4A017]" />
+              <span className="text-[#D4A017] font-semibold text-sm">Nền tảng quản lý giải đua ngựa chuyên nghiệp</span>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold text-[#1E3A5F] mb-6 leading-tight">
-              Trải nghiệm đua ngựa
-              <span className="block text-[#D4A017]">Đẳng cấp thế giới</span>
+              Trải nghiệm giải đua ngựa
+              <span className="block text-[#D4A017]">chuyên nghiệp</span>
             </h1>
 
             <p className="text-xl text-[#1E3A5F]/70 mb-10 leading-relaxed">
-              Tham gia hệ sinh thái đua ngựa chuyên nghiệp hàng đầu Việt Nam.
-              Theo dõi giải đấu, đặt vé và trải nghiệm cảm giác chiến thắng.
+              Hệ thống quản lý giải đua ngựa hiện đại - Theo dõi các giải đấu,
+              bảng xếp hạng ngựa và kết quả thi đấu một cách dễ dàng.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                to="/register"
+                to="/tournaments"
                 className="group px-8 py-4 bg-[#D4A017] text-white rounded-2xl font-semibold hover:bg-[#B8941F] transition-all duration-200 shadow-xl shadow-[#D4A017]/30 flex items-center justify-center space-x-2"
               >
-                <Ticket className="w-5 h-5" />
-                <span>Đặt vé ngay</span>
+                <Calendar className="w-5 h-5" />
+                <span>Xem giải đấu</span>
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
 
               <Link
-                to="/tournaments"
+                to="/register"
                 className="px-8 py-4 bg-white text-[#1E3A5F] border-2 border-[#1E3A5F]/20 rounded-2xl font-semibold hover:bg-[#1E3A5F]/5 hover:border-[#1E3A5F]/40 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
               >
-                <Calendar className="w-5 h-5" />
-                <span>Xem giải đấu</span>
+                <User className="w-5 h-5" />
+                <span>Đăng ký tham gia</span>
               </Link>
             </div>
           </div>
@@ -315,37 +287,63 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* About Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[#1E3A5F] mb-4">Đánh giá từ người dùng</h2>
-            <p className="text-[#1E3A5F]/60">Những trải nghiệm thực tế từ cộng đồng</p>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-[#1E3A5F] mb-4">Giới thiệu hệ thống</h2>
+            <p className="text-[#1E3A5F]/60 max-w-2xl mx-auto mb-6">
+              Nền tảng quản lý giải đua ngựa chuyên nghiệp - Hỗ trợ toàn diện từ tổ chức giải đấu đến theo dõi kết quả
+            </p>
+            <Link
+              to="/about"
+              className="inline-flex items-center space-x-2 text-[#D4A017] hover:text-[#B8941F] transition-colors font-semibold"
+            >
+              <span>Xem chi tiết</span>
+              <ChevronRight className="w-5 h-5" />
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl p-8 border border-gray-200 hover:border-[#D4A017] transition-all duration-300 hover:shadow-xl"
-              >
-                <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-[#D4A017] fill-current" />
-                  ))}
-                </div>
-
-                <p className="text-[#1E3A5F]/70 mb-6 leading-relaxed">"{testimonial.content}"</p>
-
-                <div className="flex items-center space-x-3">
-                  <div className="text-3xl">{testimonial.avatar}</div>
-                  <div>
-                    <div className="text-[#1E3A5F] font-semibold">{testimonial.name}</div>
-                    <div className="text-[#1E3A5F]/60 text-sm">{testimonial.role}</div>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-[#D4A017]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-[#D4A017]/20 group-hover:scale-110 transition-all duration-300">
+                <Trophy className="w-10 h-10 text-[#D4A017]" />
               </div>
-            ))}
+              <h3 className="text-xl font-bold text-[#1E3A5F] mb-3">Quản lý giải đấu</h3>
+              <p className="text-[#1E3A5F]/60 text-sm leading-relaxed">
+                Tổ chức và quản lý các giải đua ngựa chuyên nghiệp
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-[#D4A017]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-[#D4A017]/20 group-hover:scale-110 transition-all duration-300">
+                <Award className="w-10 h-10 text-[#D4A017]" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1E3A5F] mb-3">Đăng ký ngựa</h3>
+              <p className="text-[#1E3A5F]/60 text-sm leading-relaxed">
+                Hệ thống đăng ký ngựa đua minh bạch và chi tiết
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-[#D4A017]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-[#D4A017]/20 group-hover:scale-110 transition-all duration-300">
+                <Users className="w-10 h-10 text-[#D4A017]" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1E3A5F] mb-3">Phối hợp Jockey</h3>
+              <p className="text-[#1E3A5F]/60 text-sm leading-relaxed">
+                Quản lý jockeys chuyên nghiệp cho giải đấu
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-[#D4A017]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-[#D4A017]/20 group-hover:scale-110 transition-all duration-300">
+                <BarChart3 className="w-10 h-10 text-[#D4A017]" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1E3A5F] mb-3">Theo dõi kết quả</h3>
+              <p className="text-[#1E3A5F]/60 text-sm leading-relaxed">
+                Cập nhật kết quả và bảng xếp hạng theo thời gian thực
+              </p>
+            </div>
           </div>
         </div>
       </section>
