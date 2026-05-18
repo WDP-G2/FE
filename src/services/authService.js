@@ -10,7 +10,25 @@ function unwrap(response) {
   return response
 }
 
+function deriveUsername(email) {
+  let name = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '')
+  if (name.length < 3) {
+    name = `user_${name}${Date.now().toString().slice(-4)}`
+  }
+  return name.slice(0, 50)
+}
+
 export const authService = {
+  register: async ({ fullName, email, password }) => {
+    const res = await apiClient.post('auth/register', {
+      username: deriveUsername(email),
+      fullName,
+      email,
+      password,
+    })
+    return unwrap(res)
+  },
+
   forgotPassword: async (email) => {
     const res = await apiClient.post('auth/forgot-password', { email })
     return unwrap(res)

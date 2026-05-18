@@ -9,9 +9,6 @@ import {
   Award,
   User
 } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-
 export default function HomePage() {
   // Mock data
   const upcomingTournaments = [
@@ -66,8 +63,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFF8F0] via-white to-[#FAFAFA]">
-      <Navbar />
-
       {/* Hero Section */}
       <section className="relative min-h-[85vh] pt-28 pb-20 overflow-hidden">
         {/* Background Image with Overlay */}
@@ -381,8 +376,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }
