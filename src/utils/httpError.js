@@ -23,3 +23,11 @@ export async function parseResponse(response) {
 
   return data
 }
+
+export function getApiErrorMessage(error) {
+  const data = error?.data
+  if (data?.data && typeof data.data === 'object') {
+    return Object.values(data.data).join(', ')
+  }
+  return data?.message || error?.message || 'Đã có lỗi xảy ra'
+}
