@@ -32,6 +32,22 @@ export const useAuthStore = create((set, get) => ({
     return { auth, user }
   },
 
+  loginWithGoogle: async (idToken) => {
+    const auth = await authApi.loginGoogle(idToken)
+    setAccessToken(auth.token)
+    set({ token: auth.token })
+    const user = await get().fetchMe()
+    return { auth, user }
+  },
+
+  loginWithFacebook: async (accessToken) => {
+    const auth = await authApi.loginFacebook(accessToken)
+    setAccessToken(auth.token)
+    set({ token: auth.token })
+    const user = await get().fetchMe()
+    return { auth, user }
+  },
+
   register: (payload) => authApi.register(payload),
 
   logout: async () => {

@@ -23,6 +23,10 @@ export const authApi = {
 
   login: (payload) => api.post('/auth/login', payload).then(unwrap),
 
+  loginGoogle: (idToken) => api.post('/auth/google', { idToken }).then(unwrap),
+
+  loginFacebook: (accessToken) => api.post('/auth/facebook', { accessToken }).then(unwrap),
+
   logout: () => api.post('/auth/logout').then(unwrap),
 
   getMe: () => api.get('/auth/me').then(unwrap),

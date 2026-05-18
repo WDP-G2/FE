@@ -282,10 +282,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* About Section */}
-      <section className="py-20 bg-white">
+      {/* About Us Section */}
+      <section id="about-us" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1 mb-3 text-xs font-semibold tracking-widest uppercase text-[#D4A017] bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-full">
+              About Us
+            </span>
             <h2 className="text-4xl font-bold text-[#1E3A5F] mb-4">Giới thiệu hệ thống</h2>
             <p className="text-[#1E3A5F]/60 max-w-2xl mx-auto mb-6">
               Nền tảng quản lý giải đua ngựa chuyên nghiệp - Hỗ trợ toàn diện từ tổ chức giải đấu đến theo dõi kết quả

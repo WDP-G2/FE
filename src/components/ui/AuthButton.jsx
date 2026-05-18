@@ -1,4 +1,12 @@
-export default function AuthButton({ children, loading, type = 'submit', variant = 'primary', onClick, className = '' }) {
+export default function AuthButton({
+  children,
+  loading,
+  disabled = false,
+  type = 'submit',
+  variant = 'primary',
+  onClick,
+  className = '',
+}) {
   const base =
     'w-full py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed'
   const variants = {
@@ -13,7 +21,7 @@ export default function AuthButton({ children, loading, type = 'submit', variant
     <button
       type={type}
       onClick={onClick}
-      disabled={loading}
+      disabled={loading || disabled}
       className={`${base} ${variants[variant]} ${className}`}
     >
       {loading ? (

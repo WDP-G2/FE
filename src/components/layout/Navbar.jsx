@@ -9,6 +9,7 @@ const PUBLIC_LINKS = [
   { name: 'Trang chủ', path: '/' },
   { name: 'Giải đấu', path: '/tournaments' },
   { name: 'Bảng xếp hạng', path: '/rankings' },
+  { name: 'Giới thiệu', path: '/about' },
 ]
 
 const ROLE_LINKS = {
