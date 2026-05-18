@@ -16,7 +16,7 @@ export async function parseResponse(response) {
     const message =
       (typeof data === 'object' && data?.message) ||
       response.statusText ||
-      'Request failed'
+      'Request failed!'
 
     throw new HttpError(message, { status: response.status, data })
   }
