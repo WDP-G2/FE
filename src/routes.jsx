@@ -9,6 +9,7 @@ import NotFoundPage from '@/pages/NotFoundPage'
 import ProfilePage from '@/pages/ProfilePage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
 import AdminTournamentsPage from '@/pages/AdminTournamentsPage'
+import AdminTournamentDetailPage from '@/pages/AdminTournamentDetailPage'
 
 export const router = createBrowserRouter([
   { path: '/', Component: HomePage },
@@ -21,7 +22,7 @@ export const router = createBrowserRouter([
   { path: '/admin', Component: AdminDashboardPage },
   { path: '/admin/tournaments', Component: AdminTournamentsPage },
   { path: '/admin/tournaments/new', Component: AdminDashboardPage },
-  { path: '/admin/tournaments/:id', Component: AdminDashboardPage },
+  { path: '/admin/tournaments/:id', Component: AdminTournamentDetailPage },
   { path: '/admin/news', Component: AdminDashboardPage },
   { path: '/admin/users', Component: AdminDashboardPage },
   { path: '/admin/statistics', Component: AdminDashboardPage },

@@ -32,6 +32,7 @@ export default function AdminLayout({
   heading = 'Tổng quan',
   highlight = 'Bảng điều khiển',
   subtitle = 'Thống kê hệ thống quản lý giải đua ngựa',
+  showPageHeader = true,
 }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -144,17 +145,19 @@ export default function AdminLayout({
           </div>
         </header>
 
-        <main className="px-4 pb-10 pt-9 md:px-10">
-          <div className="mb-11 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight md:text-[44px]">
-                {heading} <span className="text-white/35">·</span>{' '}
-                <span className="text-[#dda50e]">{highlight}</span>
-              </h1>
-              <p className="mt-2 text-lg text-white/50">{subtitle}</p>
+        <main className={`px-4 pb-10 md:px-10 ${showPageHeader ? 'pt-9' : 'pt-0'}`}>
+          {showPageHeader && (
+            <div className="mb-11 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+              <div>
+                <h1 className="text-4xl font-bold tracking-tight md:text-[44px]">
+                  {heading} <span className="text-white/35">·</span>{' '}
+                  <span className="text-[#dda50e]">{highlight}</span>
+                </h1>
+                <p className="mt-2 text-lg text-white/50">{subtitle}</p>
+              </div>
+              {action}
             </div>
-            {action}
-          </div>
+          )}
 
           {children}
         </main>
