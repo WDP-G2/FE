@@ -26,7 +26,13 @@ const ADMIN_NAV = [
   { label: 'Cài đặt', to: '/admin/settings', icon: Settings },
 ]
 
-export default function AdminLayout({ children, action }) {
+export default function AdminLayout({
+  children,
+  action,
+  heading = 'Tổng quan',
+  highlight = 'Bảng điều khiển',
+  subtitle = 'Thống kê hệ thống quản lý giải đua ngựa',
+}) {
   const location = useLocation()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -142,10 +148,10 @@ export default function AdminLayout({ children, action }) {
           <div className="mb-11 flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <div>
               <h1 className="text-4xl font-bold tracking-tight md:text-[44px]">
-                Tổng quan <span className="text-white/35">·</span>{' '}
-                <span className="text-[#dda50e]">Bảng điều khiển</span>
+                {heading} <span className="text-white/35">·</span>{' '}
+                <span className="text-[#dda50e]">{highlight}</span>
               </h1>
-              <p className="mt-2 text-lg text-white/50">Thống kê hệ thống quản lý giải đua ngựa</p>
+              <p className="mt-2 text-lg text-white/50">{subtitle}</p>
             </div>
             {action}
           </div>
@@ -180,4 +186,3 @@ function TopbarButton({ children, label }) {
     </button>
   )
 }
-
