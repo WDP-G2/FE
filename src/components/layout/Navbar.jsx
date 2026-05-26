@@ -9,6 +9,7 @@ const PUBLIC_LINKS = [
   { name: 'Trang chủ', path: '/' },
   { name: 'Giải đấu', path: '/tournaments' },
   { name: 'Bảng xếp hạng', path: '/rankings' },
+  { name: 'Tin tức', path: '/news' },
   { name: 'Giới thiệu', path: '/about' },
 ]
 
@@ -17,21 +18,31 @@ const ROLE_LINKS = {
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Quản trị', path: '/admin' },
     { name: 'Giải đấu', path: '/tournaments' },
+    { name: 'Tin tức', path: '/news' },
   ],
   OWNER: [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Chủ ngựa', path: '/horse-owner' },
+    { name: 'Tin tức', path: '/news' },
   ],
   JOCKEY: [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Kỵ sĩ', path: '/jockey' },
+    { name: 'Tin tức', path: '/news' },
   ],
   REFEREE: [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Trọng tài', path: '/referee' },
+    { name: 'Tin tức', path: '/news' },
   ],
-  SPECTATOR: [{ name: 'Dashboard', path: '/dashboard' }],
-  USER: [{ name: 'Dashboard', path: '/dashboard' }],
+  SPECTATOR: [
+    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Tin tức', path: '/news' },
+  ],
+  USER: [
+    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Tin tức', path: '/news' },
+  ],
 }
 
 export default function Navbar() {
@@ -44,7 +55,13 @@ export default function Navbar() {
   const storeRole = useAuthStore((s) => s.role)
   const role = normalizeRole(storeRole || user?.role)
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === path
+    }
+
+    return location.pathname === path || location.pathname.startsWith(`${path}/`)
+  }
 
   const navLinks = isAuthenticated
     ? ROLE_LINKS[role] || ROLE_LINKS.USER

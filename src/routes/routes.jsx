@@ -5,6 +5,8 @@ import RoleProtectedRoute from '@/auth/RoleProtectedRoute'
 
 import HomePage from '@/pages/HomePage'
 import AboutPage from '@/pages/AboutPage'
+import NewsPage from '@/pages/news/NewsPage'
+import NewsDetailPage from '@/pages/news/NewsDetailPage'
 import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
@@ -25,6 +27,8 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', Component: HomePage },
       { path: '/about', Component: AboutPage },
+      { path: '/news', Component: NewsPage },
+      { path: '/news/:id', Component: NewsDetailPage },
       { path: '/tournaments', Component: HomePage },
       { path: '/rankings', Component: HomePage },
       {
