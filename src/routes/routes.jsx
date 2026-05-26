@@ -16,6 +16,8 @@ import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ProfilePage from '@/pages/profile/ProfilePage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
 import AdminTournamentsPage from '@/pages/AdminTournamentsPage'
+import AdminTournamentCreatePage from '@/pages/AdminTournamentCreatePage'
+import AdminTournamentDetailPage from '@/pages/AdminTournamentDetailPage'
 import HorseOwnerPage from '@/pages/dashboard/HorseOwnerPage'
 import JockeyPage from '@/pages/dashboard/JockeyPage'
 import RefereePage from '@/pages/dashboard/RefereePage'
@@ -81,7 +83,7 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
+              <AdminTournamentCreatePage />
             </RoleProtectedRoute>
           </ProtectedRoute>
         ),
@@ -91,7 +93,7 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
+              <AdminTournamentDetailPage />
             </RoleProtectedRoute>
           </ProtectedRoute>
         ),
