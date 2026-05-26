@@ -2,7 +2,8 @@ import { API_BASE_URL } from '@/config/env'
 import { parseResponse } from '@/utils/httpError'
 
 function buildUrl(path, params) {
-  const url = new URL(path, API_BASE_URL)
+  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`
+  const url = new URL(path.replace(/^\//, ''), base)
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {

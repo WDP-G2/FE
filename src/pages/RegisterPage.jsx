@@ -1,28 +1,25 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, Trophy, CheckCircle2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Trophy, Globe } from 'lucide-react';
+import { authService } from '@/services/authService';
+import { getApiErrorMessage } from '@/utils/httpError';
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'spectator'
   });
   const [errors, setErrors] = useState({
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
-
-  const roles = [
-    { value: 'spectator', label: 'Khán giả', description: 'Theo dõi và đặt vé giải đấu', icon: '👤' },
-    { value: 'owner', label: 'Chủ ngựa', description: 'Đăng ký và quản lý ngựa đua', icon: '🏇' },
-    { value: 'jockey', label: 'Jockey', description: 'Tham gia thi đấu chuyên nghiệp', icon: '🎖️' }
-  ];
 
   const validatePassword = (password) => {
     if (password.length < 8) {
@@ -39,57 +36,68 @@ export default function RegisterPage() {
 
   const handlePasswordChange = (password) => {
     setFormData({ ...formData, password });
-    const error = validatePassword(password);
-    setErrors({ ...errors, password: error });
+    setErrors({ ...errors, password: validatePassword(password) });
   };
 
   const handleConfirmPasswordChange = (confirmPassword) => {
     setFormData({ ...formData, confirmPassword });
-    const error = confirmPassword !== formData.password ? 'Mật khẩu không khớp' : '';
-    setErrors({ ...errors, confirmPassword: error });
+    setErrors({
+      ...errors,
+      confirmPassword: confirmPassword !== formData.password ? 'Mật khẩu không khớp' : '',
+    });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setError('');
+
     const passwordError = validatePassword(formData.password);
-    const confirmError = formData.password !== formData.confirmPassword ? 'Mật khẩu không khớp' : '';
-    
+    const confirmError =
+      formData.password !== formData.confirmPassword ? 'Mật khẩu không khớp' : '';
+
     if (passwordError || confirmError) {
       setErrors({ password: passwordError, confirmPassword: confirmError });
       return;
     }
 
     setIsLoading(true);
-    // Simulate registration
-    setTimeout(() => {
+    try {
+      await authService.register({
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      });
+      navigate('/login', {
+        replace: true,
+        state: {
+          message: 'Đăng ký thành công. Vui lòng chờ quản trị viên xác minh tài khoản.',
+        },
+      });
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
       setIsLoading(false);
-      console.log('Register with:', formData);
-    }, 1500);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFF8F0] via-white to-[#FAFAFA] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Image */}
       <div className="absolute inset-0">
         <img
           src="https://images.unsplash.com/photo-1580831800257-f83135932664?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3JzZSUyMHJhY2luZyUyMGNoYW1waW9uc2hpcCUyMHRyb3BoeXxlbnwxfHx8fDE3Nzg5MTU1NzF8MA&ixlib=rb-4.1.0&q=80&w=1080"
           alt="Background"
           className="w-full h-full object-cover opacity-10"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/90 to-white/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/90 to-white/80" />
       </div>
 
-      {/* Decorative Elements */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#D4A017]/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#D4A017]/10 rounded-full blur-3xl"></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#D4A017]/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#D4A017]/10 rounded-full blur-3xl" />
 
-      {/* Register Card */}
-      <div className="relative w-full max-w-2xl my-8">
-        {/* Logo */}
+      <div className="relative w-full max-w-md my-8">
         <Link to="/" className="flex items-center justify-center space-x-3 mb-8 group">
           <div className="relative">
-            <div className="absolute inset-0 bg-[#D4A017] blur-lg opacity-30 group-hover:opacity-50 transition-opacity"></div>
+            <div className="absolute inset-0 bg-[#D4A017] blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
             <Trophy className="w-12 h-12 text-[#D4A017] relative z-10" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col">
@@ -101,11 +109,16 @@ export default function RegisterPage() {
         <div className="bg-white/90 backdrop-blur-lg rounded-2xl border border-gray-200 p-8 shadow-2xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-[#1E3A5F] mb-2">Tạo tài khoản mới</h1>
-            <p className="text-[#1E3A5F]/60">Tham gia cộng đồng đua ngựa hàng đầu</p>
+            <p className="text-[#1E3A5F]/60">Tham gia hệ thống quản lý giải đua ngựa</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Full Name */}
+            {error && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-[#1E3A5F] mb-2">
                 Họ và tên
@@ -124,7 +137,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-[#1E3A5F] mb-2">
                 Email
@@ -143,7 +155,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-[#1E3A5F] mb-2">
                 Mật khẩu
@@ -166,17 +177,14 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1E3A5F]/60 hover:text-[#B8941F] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1E3A5F]/60 hover:text-[#D4A017] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-2 text-sm text-red-400">{errors.password}</p>
-              )}
+              {errors.password && <p className="mt-2 text-sm text-red-500">{errors.password}</p>}
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#1E3A5F] mb-2">
                 Xác nhận mật khẩu
@@ -199,72 +207,47 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1E3A5F]/60 hover:text-[#B8941F] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1E3A5F]/60 hover:text-[#D4A017] transition-colors"
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-2 text-sm text-red-400">{errors.confirmPassword}</p>
+                <p className="mt-2 text-sm text-red-500">{errors.confirmPassword}</p>
               )}
             </div>
 
-            {/* Role Selection */}
-            <div>
-              <label className="block text-sm font-medium text-[#1E3A5F] mb-3">
-                Chọn vai trò
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {roles.map((role) => (
-                  <label
-                    key={role.value}
-                    className={`relative flex flex-col p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      formData.role === role.value
-                        ? 'border-[#D4A017] bg-[#D4A017]/10'
-                        : 'border-gray-200 bg-[#FAFAFA] hover:border-[#D4A017]/40'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="role"
-                      value={role.value}
-                      checked={formData.role === role.value}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      className="sr-only"
-                    />
-                    {formData.role === role.value && (
-                      <CheckCircle2 className="absolute top-2 right-2 w-5 h-5 text-[#D4A017]" />
-                    )}
-                    <div className="text-3xl mb-2">{role.icon}</div>
-                    <div className="text-[#1E3A5F] font-semibold mb-1">{role.label}</div>
-                    <div className="text-xs text-[#1E3A5F]/60">{role.description}</div>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <p className="text-sm text-[#1E3A5F]/60 bg-[#FFF8F0] border border-[#D4A017]/20 rounded-xl p-4">
+              Tài khoản sẽ được quản trị viên xác minh và cấp quyền phù hợp.
+            </p>
 
-            {/* Register Button */}
             <button
               type="submit"
               disabled={isLoading || !!errors.password || !!errors.confirmPassword}
               className="w-full py-3 bg-[#D4A017] text-white rounded-xl font-semibold hover:bg-[#B8941F] transition-all duration-200 shadow-lg shadow-[#D4A017]/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center space-x-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Đang đăng ký...</span>
-                </span>
-              ) : (
-                'Đăng ký tài khoản'
-              )}
+              {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
             </button>
           </form>
 
-          {/* Login Link */}
-          <p className="text-center text-[#1E3A5F]/60 mt-6">
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-[#1E3A5F]/60">Hoặc đăng ký với</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="w-full flex items-center justify-center space-x-3 py-3 bg-[#FAFAFA] border border-gray-200 rounded-xl hover:border-[#D4A017] hover:bg-white transition-all"
+          >
+            <Globe className="w-5 h-5 text-[#1E3A5F]/60" />
+            <span className="text-[#1E3A5F] font-medium">Tiếp tục với Google</span>
+          </button>
+
+          <p className="text-center text-[#1E3A5F]/70 mt-8">
             Đã có tài khoản?{' '}
             <Link to="/login" className="text-[#D4A017] hover:text-[#B8941F] font-semibold transition-colors">
               Đăng nhập
@@ -272,10 +255,9 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* Back to Home */}
         <Link
           to="/"
-          className="block text-center text-[#1E3A5F]/60 hover:text-[#B8941F] mt-6 transition-colors"
+          className="block text-center text-[#1E3A5F]/60 hover:text-[#D4A017] mt-6 transition-colors font-medium"
         >
           ← Quay lại trang chủ
         </Link>

@@ -16,10 +16,18 @@ export async function parseResponse(response) {
     const message =
       (typeof data === 'object' && data?.message) ||
       response.statusText ||
-      'Request failed'
+      'Request failed!'
 
     throw new HttpError(message, { status: response.status, data })
   }
 
   return data
+}
+
+export function getApiErrorMessage(error) {
+  const data = error?.data
+  if (data?.data && typeof data.data === 'object') {
+    return Object.values(data.data).join(', ')
+  }
+  return data?.message || error?.message || 'Đã có lỗi xảy ra'
 }
