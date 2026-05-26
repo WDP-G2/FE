@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useParams, useSearchParams } from 'react-router-dom'
 import {
   Activity,
   ArrowRight,
@@ -145,8 +145,13 @@ const tabs = [
 
 export default function AdminTournamentDetailPage() {
   const { id = '' } = useParams()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const source = detailTournaments[id] ?? detailTournaments['vietnam-grand-prix-2026']
+  const createdTournament = location.state?.tournament
+  const source =
+    createdTournament?.id === id
+      ? createdTournament
+      : detailTournaments[id] ?? detailTournaments['vietnam-grand-prix-2026']
   const [tournament, setTournament] = useState(source)
   const selectedTab = tabs.some((tab) => tab.key === searchParams.get('tab'))
     ? searchParams.get('tab')
