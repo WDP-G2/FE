@@ -8,6 +8,7 @@ import DemoLogoutModal from '@/pages/DemoLogoutModal'
 import NotFoundPage from '@/pages/NotFoundPage'
 import ProfilePage from '@/pages/ProfilePage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
+import AdminTournamentsPage from '@/pages/AdminTournamentsPage'
 
 export const router = createBrowserRouter([
   { path: '/', Component: HomePage },
@@ -18,7 +19,7 @@ export const router = createBrowserRouter([
   { path: '/profile', Component: ProfilePage },
   { path: '/about', Component: AboutPage },
   { path: '/admin', Component: AdminDashboardPage },
-  { path: '/admin/tournaments', Component: AdminDashboardPage },
+  { path: '/admin/tournaments', Component: AdminTournamentsPage },
   { path: '/admin/tournaments/new', Component: AdminDashboardPage },
   { path: '/admin/tournaments/:id', Component: AdminDashboardPage },
   { path: '/admin/news', Component: AdminDashboardPage },
