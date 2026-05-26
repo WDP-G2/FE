@@ -14,10 +14,15 @@ import VerifyOtpPage from '@/pages/auth/VerifyOtpPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ProfilePage from '@/pages/profile/ProfilePage'
-import AdminDashboardPage from '@/pages/AdminDashboardPage'
+import AdminHomePage from '@/pages/admin/AdminHomePage'
 import AdminTournamentsPage from '@/pages/AdminTournamentsPage'
 import AdminTournamentCreatePage from '@/pages/AdminTournamentCreatePage'
 import AdminTournamentDetailPage from '@/pages/AdminTournamentDetailPage'
+import AdminNewsPage from '@/pages/admin/AdminNewsPage'
+import AdminUsersPage from '@/pages/admin/AdminUsersPage'
+import AdminStatisticsPage from '@/pages/admin/AdminStatisticsPage'
+import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
 import HorseOwnerPage from '@/pages/dashboard/HorseOwnerPage'
 import JockeyPage from '@/pages/dashboard/JockeyPage'
 import RefereePage from '@/pages/dashboard/RefereePage'
@@ -59,96 +64,6 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: '/admin',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/tournaments',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminTournamentsPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/tournaments/new',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminTournamentCreatePage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/tournaments/:id',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminTournamentDetailPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/news',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/users',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/statistics',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/notifications',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/admin/settings',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminDashboardPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
         path: '/horse-owner',
         element: (
           <ProtectedRoute>
@@ -179,6 +94,96 @@ export const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/admin',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminHomePage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/tournaments',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminTournamentsPage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/tournaments/new',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminTournamentCreatePage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/tournaments/:id',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminTournamentDetailPage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/news',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminNewsPage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/users',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminUsersPage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/statistics',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminStatisticsPage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/notifications',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminNotificationsPage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/settings',
+    element: (
+      <ProtectedRoute>
+        <RoleProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminSettingsPage />
+        </RoleProtectedRoute>
+      </ProtectedRoute>
+    ),
   },
   { path: '/login', Component: LoginPage },
   { path: '/register', Component: RegisterPage },
