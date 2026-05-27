@@ -1,4 +1,4 @@
-import { Activity, CheckCircle2, FileText, Flag, Sparkles, Trophy, Users } from 'lucide-react'
+﻿import { Activity, CheckCircle2, FileText, Flag, Sparkles, Trophy, Users } from 'lucide-react'
 import Card from '@/components/admin/ui/Card'
 import StatCard from '@/components/admin/ui/StatCard'
 import { SectionHeading } from '@/components/admin/ui/Panel'
@@ -6,36 +6,36 @@ import { formatVnd } from './utils'
 
 export default function OverviewTab({ tournament, totalPrize, totalRegistered }) {
   const progress = [
-    { name: 'Tạo giải đấu', done: true },
-    { name: 'Cấu hình cuộc đua', done: tournament.races.length > 0 },
-    { name: 'Mở đăng ký', done: tournament.status !== 'Nháp' },
+    { name: 'Tß║ío giß║úi ─æß║Ñu', done: true },
+    { name: 'Cß║Ñu h├¼nh cuß╗Öc ─æua', done: tournament.races.length > 0 },
+    { name: 'Mß╗ƒ ─æ─âng k├╜', done: tournament.status !== 'Nh├íp' },
     {
-      name: 'Diễn ra',
-      done: tournament.status === 'Đang diễn ra' || tournament.status === 'Đã kết thúc',
+      name: 'Diß╗àn ra',
+      done: tournament.status === '─Éang diß╗àn ra' || tournament.status === '─É├ú kß║┐t th├║c',
     },
-    { name: 'Hoàn tất kết quả', done: tournament.status === 'Đã kết thúc' },
+    { name: 'Ho├án tß║Ñt kß║┐t quß║ú', done: tournament.status === '─É├ú kß║┐t th├║c' },
   ]
 
   return (
     <>
       <div className="mb-9 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Flag} tone="gold" value={String(tournament.races.length)} label="Cuộc đua" />
-        <StatCard icon={Users} tone="green" value={String(totalRegistered)} label="Đăng ký" />
-        <StatCard icon={Trophy} tone="purple" value={formatVnd(totalPrize)} label="Tổng giải thưởng" />
-        <StatCard icon={Activity} tone="blue" value={tournament.status} label="Trạng thái" />
+        <StatCard icon={Flag} tone="gold" value={String(tournament.races.length)} label="Cuß╗Öc ─æua" />
+        <StatCard icon={Users} tone="green" value={String(totalRegistered)} label="─É─âng k├╜" />
+        <StatCard icon={Trophy} tone="purple" value={formatVnd(totalPrize)} label="Tß╗òng giß║úi th╞░ß╗ƒng" />
+        <StatCard icon={Activity} tone="blue" value={tournament.status} label="Trß║íng th├íi" />
       </div>
 
       <div className="grid gap-8 xl:grid-cols-[2.1fr_1fr]">
         <Card className="p-8">
-          <SectionHeading icon={FileText}>Mô tả giải đấu</SectionHeading>
+          <SectionHeading icon={FileText}>M├┤ tß║ú giß║úi ─æß║Ñu</SectionHeading>
           <p className="mb-10 text-lg leading-8 text-white/70">{tournament.description}</p>
-          <SectionHeading icon={FileText}>Luật giải đấu</SectionHeading>
+          <SectionHeading icon={FileText}>Luß║¡t giß║úi ─æß║Ñu</SectionHeading>
           <pre className="whitespace-pre-wrap rounded-3xl border border-white/10 bg-white/[0.035] p-7 font-sans text-lg leading-8 text-white/70">
             {tournament.rules}
           </pre>
         </Card>
         <Card className="h-fit p-8">
-          <SectionHeading icon={Sparkles}>Tiến độ tổ chức</SectionHeading>
+          <SectionHeading icon={Sparkles}>Tiß║┐n ─æß╗Ö tß╗ò chß╗⌐c</SectionHeading>
           <div className="space-y-5">
             {progress.map((step) => (
               <div key={step.name} className="flex items-center gap-4">

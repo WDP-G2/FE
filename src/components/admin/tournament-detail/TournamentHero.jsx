@@ -1,4 +1,4 @@
-import { CalendarDays, Flag, Hash, MapPin, Users } from 'lucide-react'
+﻿import { CalendarDays, Flag, Hash, MapPin, Users } from 'lucide-react'
 import Badge from '@/components/admin/ui/Badge'
 import { Meta } from '@/components/admin/ui/Panel'
 
@@ -18,9 +18,9 @@ export default function TournamentHero({ tournament, totalRegistered }) {
         <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-[42px]">{tournament.name}</h1>
         <div className="flex flex-wrap gap-x-8 gap-y-3 text-lg text-white/70">
           <Meta icon={MapPin} text={tournament.location} />
-          <Meta icon={CalendarDays} text={`${tournament.startDate} → ${tournament.endDate}`} />
-          <Meta icon={Flag} text={`${tournament.races.length} cuộc đua`} />
-          <Meta icon={Users} text={`${totalRegistered} đăng ký`} />
+          <Meta icon={CalendarDays} text={`${tournament.startDate} ΓåÆ ${tournament.endDate}`} />
+          <Meta icon={Flag} text={`${tournament.races.length} cuß╗Öc ─æua`} />
+          <Meta icon={Users} text={`${totalRegistered} ─æ─âng k├╜`} />
         </div>
       </div>
     </section>

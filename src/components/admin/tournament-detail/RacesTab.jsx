@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import {
   Award,
   Crown,
@@ -45,7 +45,7 @@ export default function RacesTab({ tournament, setTournament }) {
       ...createRaces(tournament.id, [0])[0],
       id: `${tournament.id}-r${no}`,
       no,
-      name: `Cuộc đua ${no}`,
+      name: `Cuß╗Öc ─æua ${no}`,
       date: tournament.startDate,
       regDeadline: tournament.startDate,
     }
@@ -63,10 +63,10 @@ export default function RacesTab({ tournament, setTournament }) {
     return (
       <Card className="p-16 text-center">
         <Flag className="mx-auto mb-5 h-14 w-14 text-[#dda50e]" />
-        <h2 className="mb-3 text-2xl font-bold">Chưa có cuộc đua nào</h2>
+        <h2 className="mb-3 text-2xl font-bold">Ch╞░a c├│ cuß╗Öc ─æua n├áo</h2>
         <button type="button" onClick={addRace} className={primaryButton}>
           <Plus className="h-5 w-5" />
-          Tạo cuộc đua đầu tiên
+          Tß║ío cuß╗Öc ─æua ─æß║ºu ti├¬n
         </button>
       </Card>
     )
@@ -77,12 +77,12 @@ export default function RacesTab({ tournament, setTournament }) {
       <Card className="h-fit p-5">
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold">Cuộc đua</h2>
-            <p className="text-sm text-white/50">{tournament.races.length} cuộc đua trong giải</p>
+            <h2 className="text-xl font-bold">Cuß╗Öc ─æua</h2>
+            <p className="text-sm text-white/50">{tournament.races.length} cuß╗Öc ─æua trong giß║úi</p>
           </div>
           <button type="button" onClick={addRace} className={`${primaryButton} h-11 px-4 text-sm`}>
             <Plus className="h-4 w-4" />
-            Thêm
+            Th├¬m
           </button>
         </div>
         <div className="space-y-3">
@@ -103,7 +103,7 @@ export default function RacesTab({ tournament, setTournament }) {
                   <div className="min-w-0">
                     <div className="truncate font-bold">{race.name}</div>
                     <div className="text-xs text-white/50">
-                      {race.date} · {race.time}
+                      {race.date} ┬╖ {race.time}
                     </div>
                   </div>
                 </div>
@@ -112,7 +112,7 @@ export default function RacesTab({ tournament, setTournament }) {
               <div className="mb-3 flex justify-between text-xs text-white/55">
                 <span>{race.distance}</span>
                 <span>
-                  {race.registered}/{race.maxHorses} đăng ký
+                  {race.registered}/{race.maxHorses} ─æ─âng k├╜
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-white/10">
@@ -134,13 +134,13 @@ export default function RacesTab({ tournament, setTournament }) {
               <div>
                 <h2 className="text-xl font-bold">{selected.name}</h2>
                 <p className="text-sm text-white/50">
-                  {selected.date} · {selected.time} · {selected.distance}
+                  {selected.date} ┬╖ {selected.time} ┬╖ {selected.distance}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              aria-label="Xóa cuộc đua"
+              aria-label="X├│a cuß╗Öc ─æua"
               onClick={removeRace}
               className="p-3 text-white/55 hover:text-rose-300"
             >
@@ -149,11 +149,11 @@ export default function RacesTab({ tournament, setTournament }) {
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              ['info', 'Thông tin', Info],
-              ['prizes', 'Giải thưởng', Crown],
-              ['registrations', 'Đăng ký', Users],
-              ['gates', 'Vị trí xuất phát', Grid3x3],
-              ['race-results', 'Kết quả', Award],
+              ['info', 'Th├┤ng tin', Info],
+              ['prizes', 'Giß║úi th╞░ß╗ƒng', Crown],
+              ['registrations', '─É─âng k├╜', Users],
+              ['gates', 'Vß╗ï tr├¡ xuß║Ñt ph├ít', Grid3x3],
+              ['race-results', 'Kß║┐t quß║ú', Award],
             ].map(([key, label, Icon]) => (
               <button
                 key={key}
@@ -187,74 +187,74 @@ function RaceInfo({ race, updateRace }) {
     <Card>
       <PanelHeader
         icon={Info}
-        title="Thông tin cuộc đua"
-        subtitle="Tên, thời gian, đường đua, lệ phí và giới hạn ngựa"
+        title="Th├┤ng tin cuß╗Öc ─æua"
+        subtitle="T├¬n, thß╗¥i gian, ─æ╞░ß╗¥ng ─æua, lß╗ç ph├¡ v├á giß╗¢i hß║ín ngß╗▒a"
       />
       <div className="grid gap-5 p-6 md:grid-cols-2">
-        <Field label="Tên cuộc đua">
+        <Field label="T├¬n cuß╗Öc ─æua">
           <Input value={race.name} onChange={(event) => updateRace({ name: event.target.value })} />
         </Field>
-        <Field label="Số thứ tự">
+        <Field label="Sß╗æ thß╗⌐ tß╗▒">
           <Input
             type="number"
             value={race.no}
             onChange={(event) => updateRace({ no: Number(event.target.value) })}
           />
         </Field>
-        <Field label="Mô tả" full>
+        <Field label="M├┤ tß║ú" full>
           <TextArea
             value={race.description}
             onChange={(event) => updateRace({ description: event.target.value })}
           />
         </Field>
-        <Field label="Ngày thi đấu">
+        <Field label="Ng├áy thi ─æß║Ñu">
           <Input type="date" value={race.date} onChange={(event) => updateRace({ date: event.target.value })} />
         </Field>
-        <Field label="Giờ thi đấu">
+        <Field label="Giß╗¥ thi ─æß║Ñu">
           <Input type="time" value={race.time} onChange={(event) => updateRace({ time: event.target.value })} />
         </Field>
-        <Field label="Khoảng cách">
+        <Field label="Khoß║úng c├ích">
           <Input value={race.distance} onChange={(event) => updateRace({ distance: event.target.value })} />
         </Field>
-        <Field label="Đường đua">
+        <Field label="─É╞░ß╗¥ng ─æua">
           <Input value={race.track} onChange={(event) => updateRace({ track: event.target.value })} />
         </Field>
-        <Field label="Mặt sân">
+        <Field label="Mß║╖t s├ón">
           <Select value={race.surface} onChange={(event) => updateRace({ surface: event.target.value })}>
-            <option>Cỏ</option>
-            <option>Đất</option>
-            <option>Tổng hợp</option>
+            <option>Cß╗Å</option>
+            <option>─Éß║Ñt</option>
+            <option>Tß╗òng hß╗úp</option>
           </Select>
         </Field>
-        <Field label="Hạng đua">
+        <Field label="Hß║íng ─æua">
           <Select value={race.category} onChange={(event) => updateRace({ category: event.target.value })}>
-            <option>Hạng A</option>
-            <option>Hạng B</option>
-            <option>Hạng C</option>
+            <option>Hß║íng A</option>
+            <option>Hß║íng B</option>
+            <option>Hß║íng C</option>
             <option>Open</option>
           </Select>
         </Field>
-        <Field label="Tối đa ngựa">
+        <Field label="Tß╗æi ─æa ngß╗▒a">
           <Input
             type="number"
             value={race.maxHorses}
             onChange={(event) => updateRace({ maxHorses: Number(event.target.value) })}
           />
         </Field>
-        <Field label="Lệ phí đăng ký">
+        <Field label="Lß╗ç ph├¡ ─æ─âng k├╜">
           <Input
             type="number"
             value={race.entryFee}
             onChange={(event) => updateRace({ entryFee: Number(event.target.value) })}
           />
         </Field>
-        <Field label="Trạng thái" full>
+        <Field label="Trß║íng th├íi" full>
           <Select value={race.status} onChange={(event) => updateRace({ status: event.target.value })}>
-            <option>Nháp</option>
-            <option>Mở đăng ký</option>
-            <option>Sắp diễn ra</option>
-            <option>Đang đua</option>
-            <option>Đã kết thúc</option>
+            <option>Nh├íp</option>
+            <option>Mß╗ƒ ─æ─âng k├╜</option>
+            <option>Sß║»p diß╗àn ra</option>
+            <option>─Éang ─æua</option>
+            <option>─É├ú kß║┐t th├║c</option>
           </Select>
         </Field>
       </div>
@@ -265,17 +265,17 @@ function RaceInfo({ race, updateRace }) {
 
 function RacePrizes({ race, updateRace }) {
   const items = [
-    { key: 'first', label: 'Vô địch', icon: Crown, color: 'text-[#dda50e]' },
-    { key: 'second', label: 'Á quân', icon: Medal, color: 'text-white' },
-    { key: 'third', label: 'Hạng ba', icon: Medal, color: 'text-orange-300' },
-    { key: 'bonus', label: 'Thưởng phụ', icon: Gift, color: 'text-emerald-300' },
+    { key: 'first', label: 'V├┤ ─æß╗ïch', icon: Crown, color: 'text-[#dda50e]' },
+    { key: 'second', label: '├ü qu├ón', icon: Medal, color: 'text-white' },
+    { key: 'third', label: 'Hß║íng ba', icon: Medal, color: 'text-orange-300' },
+    { key: 'bonus', label: 'Th╞░ß╗ƒng phß╗Ñ', icon: Gift, color: 'text-emerald-300' },
   ]
   const total = getTotalPrize(race)
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_290px]">
       <Card>
-        <PanelHeader icon={Crown} title="Cấu hình giải thưởng" subtitle="Mỗi cuộc đua có giải thưởng riêng" />
+        <PanelHeader icon={Crown} title="Cß║Ñu h├¼nh giß║úi th╞░ß╗ƒng" subtitle="Mß╗ùi cuß╗Öc ─æua c├│ giß║úi th╞░ß╗ƒng ri├¬ng" />
         <div className="space-y-4 p-6">
           {items.map((item) => {
             const Icon = item.icon
@@ -300,7 +300,7 @@ function RacePrizes({ race, updateRace }) {
         </div>
       </Card>
       <Card className="h-fit p-6">
-        <h3 className="text-lg font-bold">Tổng giải thưởng</h3>
+        <h3 className="text-lg font-bold">Tß╗òng giß║úi th╞░ß╗ƒng</h3>
         <p className="mb-6 mt-2 text-2xl font-bold text-[#dda50e]">{formatVnd(total)}</p>
         {items.map((item) => (
           <div key={item.key} className="mb-3 flex justify-between text-sm text-white/65">
@@ -317,17 +317,17 @@ function RaceRegistrations({ race }) {
   const registrations = registrationsFor(race)
   return (
     <Card>
-      <PanelHeader icon={Users} title="Đăng ký cuộc đua" subtitle={`${registrations.length} hồ sơ đăng ký`} />
+      <PanelHeader icon={Users} title="─É─âng k├╜ cuß╗Öc ─æua" subtitle={`${registrations.length} hß╗ô s╞í ─æ─âng k├╜`} />
       <SimpleTable
-        headers={['Ngựa', 'Chủ ngựa', 'Jockey', 'Tiền cọc', 'Duyệt']}
+        headers={['Ngß╗▒a', 'Chß╗º ngß╗▒a', 'Jockey', 'Tiß╗ün cß╗ìc', 'Duyß╗çt']}
         rows={registrations.map((item) => [
           item.horse,
           item.owner,
           item.jockey,
-          <Badge key="d" tone={item.deposit === 'Đã thanh toán' ? 'green' : 'red'}>
+          <Badge key="d" tone={item.deposit === '─É├ú thanh to├ín' ? 'green' : 'red'}>
             {item.deposit}
           </Badge>,
-          <Badge key="a" tone={item.approval === 'Đã duyệt' ? 'green' : 'gold'}>
+          <Badge key="a" tone={item.approval === '─É├ú duyß╗çt' ? 'green' : 'gold'}>
             {item.approval}
           </Badge>,
         ])}
@@ -339,7 +339,7 @@ function RaceRegistrations({ race }) {
 function RaceGates({ race }) {
   return (
     <Card>
-      <PanelHeader icon={Grid3x3} title="Vị trí xuất phát" subtitle="Phân làn các ngựa đã được duyệt" />
+      <PanelHeader icon={Grid3x3} title="Vß╗ï tr├¡ xuß║Ñt ph├ít" subtitle="Ph├ón l├án c├íc ngß╗▒a ─æ├ú ─æ╞░ß╗úc duyß╗çt" />
       <div className="grid gap-4 p-6 md:grid-cols-2">
         {registrationsFor(race)
           .slice(0, race.maxHorses)
@@ -365,9 +365,9 @@ function RaceGates({ race }) {
 function RaceResults({ race }) {
   return (
     <Card>
-      <PanelHeader icon={Award} title="Nhập kết quả cuộc đua" subtitle="Xếp hạng và công bố thành tích" />
+      <PanelHeader icon={Award} title="Nhß║¡p kß║┐t quß║ú cuß╗Öc ─æua" subtitle="Xß║┐p hß║íng v├á c├┤ng bß╗æ th├ánh t├¡ch" />
       <SimpleTable
-        headers={['Hạng', 'Ngựa', 'Jockey', 'Thời gian', 'Giải thưởng']}
+        headers={['Hß║íng', 'Ngß╗▒a', 'Jockey', 'Thß╗¥i gian', 'Giß║úi th╞░ß╗ƒng']}
         rows={resultsFor(race).map((item) => [
           `#${item.position}`,
           item.horse,
@@ -375,13 +375,13 @@ function RaceResults({ race }) {
           item.time,
           item.position < 4
             ? formatVnd([race.prizes.first, race.prizes.second, race.prizes.third][item.position - 1])
-            : '—',
+            : 'ΓÇö',
         ])}
       />
       <div className="flex justify-end p-6 pt-0">
         <button type="button" className={primaryButton}>
           <Send className="h-5 w-5" />
-          Công bố kết quả
+          C├┤ng bß╗æ kß║┐t quß║ú
         </button>
       </div>
     </Card>

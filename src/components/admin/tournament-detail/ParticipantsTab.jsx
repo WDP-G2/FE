@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react'
+﻿import { Users } from 'lucide-react'
 import Badge from '@/components/admin/ui/Badge'
 import Card from '@/components/admin/ui/Card'
 import { PanelHeader, SimpleTable } from '@/components/admin/ui/Panel'
@@ -7,14 +7,14 @@ import { registrationsFor } from './utils'
 export default function ParticipantsTab({ tournament }) {
   const rows = tournament.races.flatMap((race) =>
     registrationsFor(race).map((person) => [
-      `R${race.no} · ${race.name}`,
+      `R${race.no} ┬╖ ${race.name}`,
       person.horse,
       person.owner,
       person.jockey,
-      <Badge key="dep" tone={person.deposit === 'Đã thanh toán' ? 'green' : 'red'}>
+      <Badge key="dep" tone={person.deposit === '─É├ú thanh to├ín' ? 'green' : 'red'}>
         {person.deposit}
       </Badge>,
-      <Badge key="approve" tone={person.approval === 'Đã duyệt' ? 'green' : 'gold'}>
+      <Badge key="approve" tone={person.approval === '─É├ú duyß╗çt' ? 'green' : 'gold'}>
         {person.approval}
       </Badge>,
     ]),
@@ -24,11 +24,11 @@ export default function ParticipantsTab({ tournament }) {
     <Card>
       <PanelHeader
         icon={Users}
-        title="Tất cả đăng ký trong giải đấu"
-        subtitle="Tổng hợp ngựa đăng ký xuyên suốt các cuộc đua"
+        title="Tß║Ñt cß║ú ─æ─âng k├╜ trong giß║úi ─æß║Ñu"
+        subtitle="Tß╗òng hß╗úp ngß╗▒a ─æ─âng k├╜ xuy├¬n suß╗æt c├íc cuß╗Öc ─æua"
       />
       <SimpleTable
-        headers={['Cuộc đua', 'Ngựa', 'Chủ ngựa', 'Jockey', 'Cọc', 'Trạng thái']}
+        headers={['Cuß╗Öc ─æua', 'Ngß╗▒a', 'Chß╗º ngß╗▒a', 'Jockey', 'Cß╗ìc', 'Trß║íng th├íi']}
         rows={rows}
       />
     </Card>
