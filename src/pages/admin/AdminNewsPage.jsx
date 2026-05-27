@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Newspaper, Search, Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { newsApi } from '@/api/newsApi'
 
@@ -21,14 +22,18 @@ export default function AdminNewsPage() {
   const [news, setNews] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('all')
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     async function loadNews() {
       try {
         setLoading(true)
-        const response = await newsApi.getAllNews({ search })
+        const response = await newsApi.getAllNews({ search, admin: true })
         setNews(response.data)
+      } catch (error) {
+        console.error('Error loading admin news:', error)
+        toast.error('Không thể tải tin tức. Hãy đăng nhập admin và kiểm tra backend.')
+        setNews([])
       } finally {
         setLoading(false)
       }
@@ -38,15 +43,15 @@ export default function AdminNewsPage() {
   }, [search])
 
   const filteredNews = useMemo(() => {
-    if (status === 'all') return news
-    return news.filter((item) => item.status === status)
-  }, [news, status])
+    if (filter === 'featured') return news.filter((item) => item.featured)
+    return news
+  }, [news, filter])
 
   const stats = [
     { label: 'Tổng bài viết', value: news.length, icon: Newspaper, tone: 'text-[#dda50e] bg-[#dda50e]/15' },
     {
       label: 'Đã xuất bản',
-      value: news.filter((item) => item.status === 'published').length,
+      value: news.length,
       icon: Sparkles,
       tone: 'text-emerald-300 bg-emerald-500/15',
     },
@@ -92,13 +97,12 @@ export default function AdminNewsPage() {
           </label>
 
           <select
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
             className="h-14 rounded-2xl border border-white/10 bg-[#162338] px-5 text-white outline-none focus:border-[#dda50e]/60 lg:w-64"
           >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="published">Đã xuất bản</option>
-            <option value="draft">Bản nháp</option>
+            <option value="all">Tất cả bài viết</option>
+            <option value="featured">Chỉ tin nổi bật</option>
           </select>
         </div>
       </section>
@@ -154,11 +158,13 @@ export default function AdminNewsPage() {
                     <td className="px-6 py-5">{item.author}</td>
                     <td className="px-6 py-5">
                       <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${statusBadge(
-                          item.status,
-                        )}`}
+                        className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${
+                          item.featured
+                            ? 'border-[#dda50e]/35 bg-[#dda50e]/15 text-[#efbb2c]'
+                            : statusBadge('published')
+                        }`}
                       >
-                        {item.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
+                        {item.featured ? 'Nổi bật' : 'Đã xuất bản'}
                       </span>
                     </td>
                     <td className="px-6 py-5">{formatDate(item.createdAt)}</td>

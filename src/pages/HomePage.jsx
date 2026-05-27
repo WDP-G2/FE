@@ -9,6 +9,7 @@ import {
   Award,
   User
 } from 'lucide-react';
+import HomeFeaturedNews from '@/components/news/HomeFeaturedNews';
 export default function HomePage() {
   // Mock data
   const upcomingTournaments = [
@@ -281,6 +282,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeFeaturedNews />
 
       {/* About Us Section */}
       <section id="about-us" className="py-20 bg-white">

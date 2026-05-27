@@ -1,15 +1,15 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { DollarSign, FileText, Mail, Palette, Settings, Shield } from 'lucide-react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import Field from '@/components/admin/ui/Field'
 import { inputClass } from '@/components/admin/ui/styles'
 
 const tabs = [
-  { key: 'fees', label: 'Lß╗ç ph├¡ mß║╖c ─æß╗ïnh', icon: DollarSign },
-  { key: 'rules', label: 'Luß║¡t mß║╖c ─æß╗ïnh', icon: FileText },
-  { key: 'email', label: 'Mß║½u email', icon: Mail },
-  { key: 'security', label: 'Bß║úo mß║¡t', icon: Shield },
-  { key: 'brand', label: 'Th╞░╞íng hiß╗çu', icon: Palette },
+  { key: 'fees', label: 'Lệ phí mặc định', icon: DollarSign },
+  { key: 'rules', label: 'Luật mặc định', icon: FileText },
+  { key: 'email', label: 'Mẫu email', icon: Mail },
+  { key: 'security', label: 'Bảo mật', icon: Shield },
+  { key: 'brand', label: 'Thương hiệu', icon: Palette },
 ]
 
 export default function AdminSettingsPage() {
@@ -17,9 +17,9 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminLayout
-      heading="C├ái ─æß║╖t"
-      highlight="Hß╗ç thß╗æng"
-      subtitle="Cß║Ñu h├¼nh mß║╖c ─æß╗ïnh d├╣ng chung cho to├án bß╗Ö nß╗ün tß║úng admin"
+      heading="Cài đặt"
+      highlight="Hệ thống"
+      subtitle="Cấu hình mặc định dùng chung cho toàn bộ nền tảng admin"
     >
       <section className="mb-6 flex flex-wrap gap-2 rounded-3xl border border-white/10 bg-white/[0.045] p-2">
         {tabs.map((item) => {
@@ -51,38 +51,38 @@ export default function AdminSettingsPage() {
           </span>
           <div>
             <h2 className="text-xl font-bold">{tabs.find((item) => item.key === tab)?.label}</h2>
-            <p className="text-sm text-white/50">Thiß║┐t lß║¡p nhanh theo module</p>
+            <p className="text-sm text-white/50">Thiết lập nhanh theo module</p>
           </div>
         </div>
 
         <div className="grid gap-5 p-6 md:grid-cols-2">
           {tab === 'fees' && (
             <>
-              <Field label="Lß╗ç ph├¡ ─æ─âng k├╜ mß║╖c ─æß╗ïnh (VN─É)">
+              <Field label="Lệ phí đăng ký mặc định (VNĐ)">
                 <input type="number" defaultValue={5000000} className={inputClass} />
               </Field>
-              <Field label="Tiß╗ün cß╗ìc mß║╖c ─æß╗ïnh (VN─É)">
+              <Field label="Tiền cọc mặc định (VNĐ)">
                 <input type="number" defaultValue={10000000} className={inputClass} />
               </Field>
-              <Field label="Ph├¡ trß╗à hß║ín (VN─É)">
+              <Field label="Phí trễ hạn (VNĐ)">
                 <input type="number" defaultValue={500000} className={inputClass} />
               </Field>
-              <Field label="Ho├án cß╗ìc sau">
+              <Field label="Hoàn cọc sau">
                 <select defaultValue="3" className={inputClass}>
-                  <option value="3">3 ng├áy</option>
-                  <option value="7">7 ng├áy</option>
-                  <option value="14">14 ng├áy</option>
+                  <option value="3">3 ngày</option>
+                  <option value="7">7 ngày</option>
+                  <option value="14">14 ngày</option>
                 </select>
               </Field>
             </>
           )}
 
           {tab === 'rules' && (
-            <Field label="Luß║¡t mß║½u ├íp dß╗Ñng cho giß║úi ─æß║Ñu mß╗¢i" full>
+            <Field label="Luật mẫu áp dụng cho giải đấu mới" full>
               <textarea
                 rows={10}
                 defaultValue={
-                  '1. Ngß╗▒a phß║úi c├│ giß║Ñy chß╗⌐ng nhß║¡n sß╗⌐c khß╗Åe hß╗úp lß╗ç.\n2. Jockey phß║úi c├│ chß╗⌐ng chß╗ë FIA.\n3. Kiß╗âm tra doping bß║»t buß╗Öc.\n4. Tiß╗ün cß╗ìc ─æ╞░ß╗úc ho├án sau khi giß║úi kß║┐t th├║c.'
+                  '1. Ngựa phải có giấy chứng nhận sức khỏe hợp lệ.\n2. Jockey phải có chứng chỉ FIA.\n3. Kiểm tra doping bắt buộc.\n4. Tiền cọc được hoàn sau khi giải kết thúc.'
                 }
                 className={`${inputClass} h-auto resize-none py-4`}
               />
@@ -91,21 +91,21 @@ export default function AdminSettingsPage() {
 
           {tab === 'email' && (
             <>
-              <Field label="Mß║½u mß╗ƒ ─æ─âng k├╜" full>
+              <Field label="Mẫu mở đăng ký" full>
                 <input
-                  defaultValue="[HorseRacing] Mß╗ƒ ─æ─âng k├╜ giß║úi ─æß║Ñu {{tournament}}"
+                  defaultValue="[HorseRacing] Mở đăng ký giải đấu {{tournament}}"
                   className={inputClass}
                 />
               </Field>
-              <Field label="Mß║½u nhß║»c check-in" full>
+              <Field label="Mẫu nhắc check-in" full>
                 <input
-                  defaultValue="[HorseRacing] Nhß║»c check-in cuß╗Öc ─æua {{race}}"
+                  defaultValue="[HorseRacing] Nhắc check-in cuộc đua {{race}}"
                   className={inputClass}
                 />
               </Field>
-              <Field label="Mß║½u c├┤ng bß╗æ kß║┐t quß║ú" full>
+              <Field label="Mẫu công bố kết quả" full>
                 <input
-                  defaultValue="[HorseRacing] Kß║┐t quß║ú cuß╗Öc ─æua {{race}}"
+                  defaultValue="[HorseRacing] Kết quả cuộc đua {{race}}"
                   className={inputClass}
                 />
               </Field>
@@ -114,14 +114,14 @@ export default function AdminSettingsPage() {
 
           {tab === 'security' && (
             <>
-              <Field label="X├íc thß╗▒c 2 yß║┐u tß╗æ">
+              <Field label="Xác thực 2 yếu tố">
                 <select defaultValue="admin" className={inputClass}>
-                  <option value="admin">Bß║¡t cho Admin</option>
-                  <option value="all">Bß║»t buß╗Öc tß║Ñt cß║ú</option>
-                  <option value="off">Tß║»t</option>
+                  <option value="admin">Bật cho Admin</option>
+                  <option value="all">Bắt buộc tất cả</option>
+                  <option value="off">Tắt</option>
                 </select>
               </Field>
-              <Field label="Thß╗¥i gian phi├¬n (ph├║t)">
+              <Field label="Thời gian phiên (phút)">
                 <input type="number" defaultValue={60} className={inputClass} />
               </Field>
             </>
@@ -129,10 +129,10 @@ export default function AdminSettingsPage() {
 
           {tab === 'brand' && (
             <>
-              <Field label="T├¬n hß╗ç thß╗æng">
+              <Field label="Tên hệ thống">
                 <input defaultValue="Horse Racing Admin" className={inputClass} />
               </Field>
-              <Field label="M├áu ch├¡nh">
+              <Field label="Màu chính">
                 <input defaultValue="#D4A017" className={inputClass} />
               </Field>
             </>
@@ -144,13 +144,13 @@ export default function AdminSettingsPage() {
             type="button"
             className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 font-semibold text-white/70 transition hover:bg-white/[0.08]"
           >
-            Hß╗ºy
+            Hủy
           </button>
           <button
             type="button"
             className="rounded-2xl bg-[#dda50e] px-5 py-3 font-semibold text-white shadow-lg shadow-[#d4a017]/20 transition hover:bg-[#c8940f]"
           >
-            L╞░u c├ái ─æß║╖t
+            Lưu cài đặt
           </button>
         </div>
       </section>
