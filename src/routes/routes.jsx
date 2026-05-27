@@ -14,20 +14,13 @@ import VerifyOtpPage from '@/pages/auth/VerifyOtpPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ProfilePage from '@/pages/profile/ProfilePage'
-import AdminHomePage from '@/pages/admin/AdminHomePage'
-import AdminTournamentsPage from '@/pages/admin/AdminTournamentsPage'
-import AdminTournamentCreatePage from '@/pages/admin/AdminTournamentCreatePage'
-import AdminTournamentDetailPage from '@/pages/admin/AdminTournamentDetailPage'
-import AdminNewsPage from '@/pages/admin/AdminNewsPage'
-import AdminUsersPage from '@/pages/admin/AdminUsersPage'
-import AdminStatisticsPage from '@/pages/admin/AdminStatisticsPage'
-import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
-import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
 import HorseOwnerPage from '@/pages/dashboard/HorseOwnerPage'
 import JockeyPage from '@/pages/dashboard/JockeyPage'
 import RefereePage from '@/pages/dashboard/RefereePage'
 import NotFoundPage from '@/pages/errors/NotFoundPage'
 import UnauthorizedPage from '@/pages/errors/UnauthorizedPage'
+import { adminRoutes } from './adminRoutes'
+import { withAuth } from './guards'
 
 export const router = createBrowserRouter([
   {
@@ -39,152 +32,36 @@ export const router = createBrowserRouter([
       { path: '/news/:id', Component: NewsDetailPage },
       { path: '/tournaments', Component: HomePage },
       { path: '/rankings', Component: HomePage },
-      {
-        path: '/dashboard',
-        element: (
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/profile',
-        element: (
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/unauthorized',
-        element: (
-          <ProtectedRoute>
-            <UnauthorizedPage />
-          </ProtectedRoute>
-        ),
-      },
+      { path: '/dashboard', element: withAuth(<DashboardPage />) },
+      { path: '/profile', element: withAuth(<ProfilePage />) },
+      { path: '/unauthorized', element: withAuth(<UnauthorizedPage />) },
       {
         path: '/horse-owner',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['OWNER']}>
-              <HorseOwnerPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
+        element: withAuth(
+          <RoleProtectedRoute allowedRoles={['OWNER']}>
+            <HorseOwnerPage />
+          </RoleProtectedRoute>,
         ),
       },
       {
         path: '/jockey',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['JOCKEY']}>
-              <JockeyPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
+        element: withAuth(
+          <RoleProtectedRoute allowedRoles={['JOCKEY']}>
+            <JockeyPage />
+          </RoleProtectedRoute>,
         ),
       },
       {
         path: '/referee',
-        element: (
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['REFEREE']}>
-              <RefereePage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
+        element: withAuth(
+          <RoleProtectedRoute allowedRoles={['REFEREE']}>
+            <RefereePage />
+          </RoleProtectedRoute>,
         ),
       },
     ],
   },
-  {
-    path: '/admin',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminHomePage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/tournaments',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminTournamentsPage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/tournaments/new',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminTournamentCreatePage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/tournaments/:id',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminTournamentDetailPage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/news',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminNewsPage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/users',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminUsersPage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/statistics',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminStatisticsPage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/notifications',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminNotificationsPage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin/settings',
-    element: (
-      <ProtectedRoute>
-        <RoleProtectedRoute allowedRoles={['ADMIN']}>
-          <AdminSettingsPage />
-        </RoleProtectedRoute>
-      </ProtectedRoute>
-    ),
-  },
+  ...adminRoutes,
   { path: '/login', Component: LoginPage },
   { path: '/register', Component: RegisterPage },
   { path: '/forgot-password', Component: ForgotPasswordPage },

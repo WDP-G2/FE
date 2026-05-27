@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { DollarSign, FileText, Mail, Palette, Settings, Shield } from 'lucide-react'
 import AdminLayout from '@/components/admin/AdminLayout'
+import Field from '@/components/admin/ui/Field'
+import { inputClass } from '@/components/admin/ui/styles'
 
 const tabs = [
   { key: 'fees', label: 'Lệ phí mặc định', icon: DollarSign },
@@ -156,16 +158,3 @@ export default function AdminSettingsPage() {
   )
 }
 
-const inputClass =
-  'h-14 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-white outline-none placeholder:text-white/30 focus:border-[#dda50e]/60'
-
-function Field({ label, children, full = false }) {
-  return (
-    <label className={full ? 'md:col-span-2' : ''}>
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/55">
-        {label}
-      </span>
-      {children}
-    </label>
-  )
-}

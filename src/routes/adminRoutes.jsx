@@ -1,0 +1,26 @@
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
+import AdminTournamentsPage from '@/pages/admin/AdminTournamentsPage'
+import AdminTournamentCreatePage from '@/pages/admin/AdminTournamentCreatePage'
+import AdminTournamentDetailPage from '@/pages/admin/AdminTournamentDetailPage'
+import AdminNewsPage from '@/pages/admin/AdminNewsPage'
+import AdminUsersPage from '@/pages/admin/AdminUsersPage'
+import AdminStatisticsPage from '@/pages/admin/AdminStatisticsPage'
+import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
+import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
+import { withAdminRole } from './guards'
+
+function adminRoute(path, Page) {
+  return { path, element: withAdminRole(<Page />) }
+}
+
+export const adminRoutes = [
+  adminRoute('/admin', AdminDashboardPage),
+  adminRoute('/admin/tournaments', AdminTournamentsPage),
+  adminRoute('/admin/tournaments/new', AdminTournamentCreatePage),
+  adminRoute('/admin/tournaments/:id', AdminTournamentDetailPage),
+  adminRoute('/admin/news', AdminNewsPage),
+  adminRoute('/admin/users', AdminUsersPage),
+  adminRoute('/admin/statistics', AdminStatisticsPage),
+  adminRoute('/admin/notifications', AdminNotificationsPage),
+  adminRoute('/admin/settings', AdminSettingsPage),
+]

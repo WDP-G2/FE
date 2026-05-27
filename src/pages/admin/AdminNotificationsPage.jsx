@@ -1,5 +1,7 @@
 import { Bell, Clock, Mail, MessageSquare, Send, Smartphone } from 'lucide-react'
 import AdminLayout from '@/components/admin/AdminLayout'
+import Field from '@/components/admin/ui/Field'
+import { inputClass } from '@/components/admin/ui/styles'
 
 const history = [
   { id: 'N-1', title: 'Mở đăng ký Vietnam Grand Prix 2026', channel: 'Email + Push', when: '2 giờ trước', sent: 1248 },
@@ -126,16 +128,3 @@ export default function AdminNotificationsPage() {
   )
 }
 
-const inputClass =
-  'h-14 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-white outline-none placeholder:text-white/30 focus:border-[#dda50e]/60'
-
-function Field({ label, children, full = false }) {
-  return (
-    <label className={full ? 'md:col-span-2' : ''}>
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/55">
-        {label}
-      </span>
-      {children}
-    </label>
-  )
-}
