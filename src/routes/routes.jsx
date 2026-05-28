@@ -15,7 +15,7 @@ import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ProfilePage from '@/pages/profile/ProfilePage'
 import HorseOwnerPage from '@/pages/horse-owner/HorseOwnerPage'
-import JockeyPage from '@/pages/dashboard/JockeyPage'
+import JockeyPage from '@/pages/jockey/JockeyPage'
 import RefereePage from '@/pages/dashboard/RefereePage'
 import NotFoundPage from '@/pages/errors/NotFoundPage'
 import UnauthorizedPage from '@/pages/errors/UnauthorizedPage'
@@ -35,14 +35,6 @@ export const router = createBrowserRouter([
       { path: '/profile', element: withAuth(<ProfilePage />) },
       { path: '/unauthorized', element: withAuth(<UnauthorizedPage />) },
       {
-        path: '/jockey',
-        element: withAuth(
-          <RoleProtectedRoute allowedRoles={['JOCKEY']}>
-            <JockeyPage />
-          </RoleProtectedRoute>,
-        ),
-      },
-      {
         path: '/referee',
         element: withAuth(
           <RoleProtectedRoute allowedRoles={['REFEREE']}>
@@ -51,6 +43,14 @@ export const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/jockey/*',
+    element: withAuth(
+      <RoleProtectedRoute allowedRoles={['JOCKEY']}>
+        <JockeyPage />
+      </RoleProtectedRoute>,
+    ),
   },
   {
     path: '/horse-owner/*',

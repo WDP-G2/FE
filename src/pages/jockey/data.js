@@ -1,0 +1,75 @@
+export const jockeyAccount = {
+  email: 'jockey.demo@horseracing.vn',
+  password: 'Jockey@123',
+  user: {
+    id: 'jockey-001',
+    userId: 'jockey-001',
+    username: 'jockey_demo',
+    email: 'jockey.demo@horseracing.vn',
+    role: 'JOCKEY',
+    fullName: 'Nguyễn Văn A',
+    phone: '0912345678',
+  },
+  token:
+    'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJqb2NrZXktMDAxIiwicm9sZSI6IkpPQ0tFWSIsImV4cCI6NDEwMDkwODgwMCwiZW1haWwiOiJqb2NrZXkuZGVtb0Bob3JzZXJhY2luZy52biJ9.',
+}
+
+export const jockeyProfile = {
+  id: 'jk1',
+  name: 'Nguyễn Văn A',
+  age: 28,
+  experience: 8,
+  license: 'VN-JK-001',
+  ranking: 3,
+  wins: 45,
+  races: 112,
+  winRate: 40.2,
+  email: 'jockey.a@horseracing.vn',
+  phone: '0912345678',
+  address: '45 Đinh Tiên Hoàng, Q.1, TP.HCM',
+  bio: 'Jockey chuyên nghiệp với hơn 8 năm kinh nghiệm thi đấu trong các giải đấu quốc gia và khu vực Đông Nam Á.',
+  achievements: ['Quán quân Vietnam Grand Prix 2024', 'Top 5 Jockey xuất sắc nhất 2023', 'Huy chương vàng Saigon Derby 2022'],
+}
+
+export const invitations = [
+  { id: 'inv1', owner: 'Nguyễn Chủ Ngựa', horse: 'Golden Thunder', horseBread: 'Thoroughbred · 5 tuổi', tournament: 'Vietnam Grand Prix 2026', raceNo: 'Race R3 · Chung kết', raceDate: '2026-06-16', raceTime: '14:30', location: 'Phú Thọ Racecourse, TP.HCM', reward: 5000000, status: 'Chờ xử lý', statusTone: 'gold', sentAt: '2026-05-25' },
+  { id: 'inv2', owner: 'Trần Đại Gia', horse: 'Wind Runner', horseBread: 'Arabian · 4 tuổi', tournament: 'Saigon Derby Spring Cup', raceNo: 'Race R2', raceDate: '2026-07-11', raceTime: '10:00', location: 'Saigon Racecourse', reward: 3000000, status: 'Chờ xử lý', statusTone: 'gold', sentAt: '2026-05-26' },
+  { id: 'inv3', owner: 'Lê Văn Phú', horse: 'Storm Breaker', horseBread: 'Quarter Horse · 6 tuổi', tournament: 'Hanoi Championship 2026', raceNo: 'Race R1', raceDate: '2026-08-05', raceTime: '09:00', location: 'Gia Lâm Racecourse, Hà Nội', reward: 4000000, status: 'Đã chấp nhận', statusTone: 'green', sentAt: '2026-05-20' },
+]
+
+export const schedules = [
+  { id: 'sch1', tournament: 'Vietnam Grand Prix 2026', race: 'Race R3 · Chung kết', horse: 'Golden Thunder', owner: 'Nguyễn Chủ Ngựa', date: '2026-06-16', time: '14:30', location: 'Phú Thọ Racecourse, TP.HCM', status: 'Xác nhận', statusTone: 'green', checkedIn: false, laneNo: 4 },
+  { id: 'sch2', tournament: 'Hanoi Championship 2026', race: 'Race R1', horse: 'Storm Breaker', owner: 'Lê Văn Phú', date: '2026-08-05', time: '09:00', location: 'Gia Lâm Racecourse, Hà Nội', status: 'Chờ xác nhận', statusTone: 'gold', checkedIn: false, laneNo: 7 },
+]
+
+export const assignedHorses = [
+  { id: 'ah1', name: 'Golden Thunder', breed: 'Thoroughbred', age: 5, weight: 480, color: 'Hồng mã', health: 'Tốt', healthTone: 'green', owner: 'Nguyễn Chủ Ngựa', tournament: 'Vietnam Grand Prix 2026', wins: 8, races: 14, lastRace: '2026-06-16', notes: 'Ngựa có thể lực tốt, chạy tốt trên đường thẳng. Cần ý tại vòng cua thứ 2.' },
+  { id: 'ah2', name: 'Storm Breaker', breed: 'Quarter Horse', age: 6, weight: 510, color: 'Hắc mã', health: 'Tốt', healthTone: 'green', owner: 'Lê Văn Phú', tournament: 'Hanoi Championship 2026', wins: 12, races: 20, lastRace: '2026-08-05', notes: 'Mạnh mẽ ở đoạn cuối, tốc độ đỉnh cao. Cần khởi động kỹ trước race.' },
+]
+
+export const jockeyResults = [
+  { id: 'jr1', tournament: 'Vietnam Grand Prix 2025', race: 'Race R3 · Chung kết', horse: 'Lightning Bolt', owner: 'Phạm Đại Gia', position: 1, finishTime: '1:41.22', prize: 20000000, date: '2025-06-18' },
+  { id: 'jr2', tournament: 'Saigon Derby 2025', race: 'Race R2', horse: 'Golden Thunder', owner: 'Nguyễn Chủ Ngựa', position: 1, finishTime: '1:42.55', prize: 12000000, date: '2025-11-22' },
+  { id: 'jr3', tournament: 'Hanoi Cup 2025', race: 'Race R1', horse: 'Silver Wind', owner: 'Trần Đại Gia', position: 3, finishTime: '1:44.80', prize: 5000000, date: '2025-09-10' },
+  { id: 'jr4', tournament: 'Vietnam Grand Prix 2024', race: 'Race R4 · Bán kết', horse: 'Thunder Storm', owner: 'Lê Văn Phú', position: 2, finishTime: '1:43.15', prize: 15000000, date: '2024-06-20' },
+]
+
+export const rankings = [
+  { rank: 1, name: 'Trần Văn Hùng', wins: 78, races: 180, winRate: 43.3, points: 1250 },
+  { rank: 2, name: 'Lê Minh Quân', wins: 65, races: 160, winRate: 40.6, points: 1180 },
+  { rank: 3, name: 'Nguyễn Văn A', wins: 45, races: 112, winRate: 40.2, points: 980, isMe: true },
+  { rank: 4, name: 'Phạm Văn Tài', wins: 55, races: 145, winRate: 37.9, points: 920 },
+  { rank: 5, name: 'Hoàng Minh B', wins: 68, races: 180, winRate: 37.8, points: 880 },
+  { rank: 6, name: 'Đỗ Quang C', wins: 42, races: 115, winRate: 36.5, points: 820 },
+  { rank: 7, name: 'Ngô Văn D', wins: 38, races: 108, winRate: 35.2, points: 760 },
+  { rank: 8, name: 'Bùi Tiến E', wins: 30, races: 88, winRate: 34.1, points: 700 },
+]
+
+export const jockeyNotifications = [
+  { id: 'jn1', title: 'Lời mời mới từ Nguyễn Chủ Ngựa', body: 'Bạn được mời cưỡi ngựa Golden Thunder tại Vietnam Grand Prix 2026 · Race R3', time: '1 giờ trước', read: false, type: 'info' },
+  { id: 'jn2', title: 'Xác nhận lịch race thành công', body: 'Race R3 · Vietnam Grand Prix 2026 ngày 16/06/2026 lúc 14:30 đã được xác nhận', time: '3 giờ trước', read: false, type: 'success' },
+  { id: 'jn3', title: 'Nhắc nhở race sắp diễn ra', body: 'Race R3 Vietnam Grand Prix 2026 diễn ra sau 20 ngày nữa. Hãy chuẩn bị tốt!', time: '1 ngày trước', read: true, type: 'warning' },
+  { id: 'jn4', title: 'Kết quả race đã được công bố', body: 'Bạn về nhất Race R2 · Saigon Derby 2025. Nhận thưởng 12.000.000đ', time: '2 ngày trước', read: true, type: 'trophy' },
+]
+
+export const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n)
