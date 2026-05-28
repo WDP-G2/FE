@@ -530,12 +530,6 @@ export function HorseOwnerTournamentRegisterPage() {
                     selectedRace?.entryFee || tournament.config?.entryFee || 0,
                   )}
                 />
-                <SummaryRow
-                  label="Deposit"
-                  value={formatMoney(
-                    selectedRace?.deposit || tournament.config?.depositFee || 0,
-                  )}
-                />
               </div>
             </GlassCard>
 

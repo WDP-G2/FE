@@ -7,14 +7,22 @@ export function registrationsFor(race) {
     horse: `Ngựa #${index + 1}`,
     owner: "Chưa cập nhật",
     jockey: "Chưa cập nhật",
-    deposit: index % 5 === 4 ? "Chưa thanh toán" : "Đã thanh toán",
     approval: index % 4 === 3 ? "Chờ duyệt" : "Đã duyệt",
   }));
 }
 
 export function resultsFor(race) {
   if (Array.isArray(race.results) && race.results.length) {
-    return race.results;
+    return race.results
+      .filter(Boolean)
+      .map((item, index) => ({
+        horse: item.horse || "Chưa cập nhật",
+        owner: item.owner || "Chưa cập nhật",
+        jockey: item.jockey || "Chưa cập nhật",
+        position: item.position ?? index + 1,
+        time: item.time || "—",
+        ...item,
+      }));
   }
   return registrationsFor(race).map((member, index) => ({
     ...member,
@@ -24,10 +32,12 @@ export function resultsFor(race) {
 }
 
 export function getTotalPrize(race) {
+  const prizes = race.prizes || {};
   return (
-    race.prizes.first +
-    race.prizes.second +
-    race.prizes.third
+    (prizes.first || 0) +
+    (prizes.second || 0) +
+    (prizes.third || 0) +
+    (prizes.bonus || 0)
   );
 }
 

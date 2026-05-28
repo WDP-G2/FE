@@ -61,18 +61,8 @@ export default function AdminSettingsPage() {
               <Field label="Lệ phí đăng ký mặc định (VNĐ)">
                 <input type="number" defaultValue={5000000} className={inputClass} />
               </Field>
-              <Field label="Tiền cọc mặc định (VNĐ)">
-                <input type="number" defaultValue={10000000} className={inputClass} />
-              </Field>
               <Field label="Phí trễ hạn (VNĐ)">
                 <input type="number" defaultValue={500000} className={inputClass} />
-              </Field>
-              <Field label="Hoàn cọc sau">
-                <select defaultValue="3" className={inputClass}>
-                  <option value="3">3 ngày</option>
-                  <option value="7">7 ngày</option>
-                  <option value="14">14 ngày</option>
-                </select>
               </Field>
             </>
           )}
@@ -82,7 +72,7 @@ export default function AdminSettingsPage() {
               <textarea
                 rows={10}
                 defaultValue={
-                  '1. Ngựa phải có giấy chứng nhận sức khỏe hợp lệ.\n2. Jockey phải có chứng chỉ FIA.\n3. Kiểm tra doping bắt buộc.\n4. Tiền cọc được hoàn sau khi giải kết thúc.'
+                  '1. Ngựa phải có giấy chứng nhận sức khỏe hợp lệ.\n2. Jockey phải có chứng chỉ FIA.\n3. Kiểm tra doping bắt buộc.'
                 }
                 className={`${inputClass} h-auto resize-none py-4`}
               />
