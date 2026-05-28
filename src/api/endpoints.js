@@ -21,18 +21,29 @@ export const ENDPOINTS = {
   },
   tournaments: {
     list: "/tournaments",
+    ownerOpen: "/tournaments/owner/open",
+    ownerRegistrations: "/tournaments/owner/registrations",
     byId: (id) => `/tournaments/${id}`,
     config: (id) => `/tournaments/${id}/config`,
     races: (id) => `/tournaments/${id}/races`,
     raceById: (id, raceId) => `/tournaments/${id}/races/${raceId}`,
+    ownerRaceOptions: (id, raceId) =>
+      `/tournaments/${id}/races/${raceId}/owner-options`,
+    ownerRegistrationsByTournament: (id) =>
+      `/tournaments/${id}/owner/registrations`,
     deleteRace: (id, raceId) => `/tournaments/${id}/races/${raceId}`,
     results: (id, raceId) => `/tournaments/${id}/races/${raceId}/results`,
     registrations: (id) => `/tournaments/${id}/registrations`,
+    ownerRegister: (id) => `/tournaments/${id}/owner/registrations`,
   },
 
   blood: {
     list: "/blood-records",
     byId: (id) => `/blood-records/${id}`,
+  },
+  horses: {
+    list: "/horses",
+    byId: (id) => `/horses/${id}`,
   },
   news: {
     all: "/news",

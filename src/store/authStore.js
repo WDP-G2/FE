@@ -8,10 +8,10 @@ import { horseOwnerAccount } from '@/pages/horse-owner/data'
 import { jockeyAccount } from '@/pages/jockey/data'
 
 function persistLogin(auth) {
-  const { token, user, role, isAuthenticated } = applyAuthToState(auth)
-  if (!token) throw new Error('Không nhận được token từ server')
-  setStoredToken(token)
-  return { token, user, role, isAuthenticated }
+  const { token, user, role, isAuthenticated } = applyAuthToState(auth);
+  if (!token) throw new Error("Không nhận được token từ server");
+  setStoredToken(token);
+  return { token, user, role, isAuthenticated };
 }
 
 export const useAuthStore = create((set, get) => ({
@@ -22,41 +22,42 @@ export const useAuthStore = create((set, get) => ({
   isLoading: true,
 
   setUser: (user) => {
-    const role = normalizeRole(user?.role) || get().role
+    const role = normalizeRole(user?.role) || get().role;
     set({
       user,
       role,
       isAuthenticated: !!get().token && !!user,
-    })
+    });
   },
 
   setSession: (token, user) => {
-    setStoredToken(token)
-    const role = normalizeRole(user?.role) || normalizeRole(getRoleFromToken(token))
+    setStoredToken(token);
+    const role =
+      normalizeRole(user?.role) || normalizeRole(getRoleFromToken(token));
     set({
       token,
       user,
       role,
       isAuthenticated: !!token && !!user,
-    })
+    });
   },
 
   clearSession: () => {
-    removeStoredToken()
+    removeStoredToken();
     set({
       token: null,
       user: null,
       role: null,
       isAuthenticated: false,
       isLoading: false,
-    })
+    });
   },
 
   fetchProfile: async () => {
-    const user = await authService.getMe()
-    const role = normalizeRole(user?.role)
-    set({ user, role, isAuthenticated: true })
-    return user
+    const user = await authService.getMe();
+    const role = normalizeRole(user?.role);
+    set({ user, role, isAuthenticated: true });
+    return user;
   },
 
   login: async ({ email, password }) => {
@@ -91,61 +92,61 @@ export const useAuthStore = create((set, get) => ({
     set({ ...session, isLoading: false })
 
     if (!session.user?.email) {
-      const user = await get().fetchProfile()
-      return { auth, user }
+      const user = await get().fetchProfile();
+      return { auth, user };
     }
-    return { auth, user: session.user }
+    return { auth, user: session.user };
   },
 
   loginWithGoogle: async (idToken) => {
-    const auth = await authService.loginGoogle(idToken)
-    const session = persistLogin(auth)
-    set({ ...session, isLoading: false })
-    return { auth, user: session.user }
+    const auth = await authService.loginGoogle(idToken);
+    const session = persistLogin(auth);
+    set({ ...session, isLoading: false });
+    return { auth, user: session.user };
   },
 
   loginWithFacebook: async (accessToken) => {
-    const auth = await authService.loginFacebook(accessToken)
-    const session = persistLogin(auth)
-    set({ ...session, isLoading: false })
-    return { auth, user: session.user }
+    const auth = await authService.loginFacebook(accessToken);
+    const session = persistLogin(auth);
+    set({ ...session, isLoading: false });
+    return { auth, user: session.user };
   },
 
   register: (payload) => authService.register(payload),
 
   logout: async () => {
     try {
-      if (getStoredToken()) await authService.logout()
+      if (getStoredToken()) await authService.logout();
     } finally {
-      get().clearSession()
+      get().clearSession();
     }
   },
 
   initAuth: async () => {
-    const stored = getStoredToken()
+    const stored = getStoredToken();
 
     if (!stored) {
-      set({ isLoading: false })
-      return
+      set({ isLoading: false });
+      return;
     }
 
     if (isTokenExpired(stored)) {
-      get().clearSession()
-      return
+      get().clearSession();
+      return;
     }
 
     set({
       token: stored,
       role: normalizeRole(getRoleFromToken(stored)),
       isLoading: true,
-    })
+    });
 
     try {
-      await get().fetchProfile()
+      await get().fetchProfile();
     } catch {
-      get().clearSession()
+      get().clearSession();
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
-}))
+}));
