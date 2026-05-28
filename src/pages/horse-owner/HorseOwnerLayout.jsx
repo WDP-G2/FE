@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
   User,
@@ -18,19 +18,24 @@ import {
   X,
   Mail,
   Shield,
-} from 'lucide-react';
+} from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 
 export const HORSE_OWNER_NAV = [
-  { label: 'Dashboard', to: '/horse-owner', icon: LayoutDashboard },
-  { label: 'Hồ sơ cá nhân', to: '/horse-owner/profile', icon: User },
-  { label: 'Quản lý ngựa', to: '/horse-owner/horses', icon: PawPrint },
-  { label: 'Giải đấu', to: '/horse-owner/tournaments', icon: Trophy },
-  { label: 'Đăng ký thi đấu', to: '/horse-owner/registrations', icon: ClipboardList },
-  { label: 'Jockey', to: '/horse-owner/jockeys', icon: Users },
-  { label: 'Thanh toán', to: '/horse-owner/payments', icon: CreditCard },
-  { label: 'Kết quả thi đấu', to: '/horse-owner/results', icon: BarChart3 },
-  { label: 'Thông báo', to: '/horse-owner/notifications', icon: Bell },
-  { label: 'Cài đặt', to: '/horse-owner/settings', icon: Settings },
+  { label: "Dashboard", to: "/horse-owner", icon: LayoutDashboard },
+  { label: "Hồ sơ cá nhân", to: "/horse-owner/profile", icon: User },
+  { label: "Quản lý ngựa", to: "/horse-owner/horses", icon: PawPrint },
+  { label: "Giải đấu", to: "/horse-owner/tournaments", icon: Trophy },
+  {
+    label: "Đăng ký thi đấu",
+    to: "/horse-owner/registrations",
+    icon: ClipboardList,
+  },
+  { label: "Jockey", to: "/horse-owner/jockeys", icon: Users },
+  { label: "Thanh toán", to: "/horse-owner/payments", icon: CreditCard },
+  { label: "Kết quả thi đấu", to: "/horse-owner/results", icon: BarChart3 },
+  { label: "Thông báo", to: "/horse-owner/notifications", icon: Bell },
+  { label: "Cài đặt", to: "/horse-owner/settings", icon: Settings },
 ];
 
 export function HorseOwnerLayout({ children, title, subtitle, actions }) {
@@ -39,22 +44,30 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
   const [open, setOpen] = useState(false);
 
   const logout = () => {
-    try { localStorage.removeItem('auth_user'); } catch {}
-    navigate('/login');
+    try {
+      useAuthStore.getState().clearSession();
+    } catch {
+      try {
+        localStorage.removeItem("auth_user");
+      } catch {}
+    }
+    navigate("/login");
   };
 
   const isActive = (to) =>
-    to === '/horse-owner'
-      ? location.pathname === '/horse-owner'
+    to === "/horse-owner"
+      ? location.pathname === "/horse-owner"
       : location.pathname.startsWith(to);
 
-  const [head, tail] = title.includes('·') ? title.split('·').map((s) => s.trim()) : [title, ''];
+  const [head, tail] = title.includes("·")
+    ? title.split("·").map((s) => s.trim())
+    : [title, ""];
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white">
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#0F1E3A]/95 backdrop-blur-xl border-r border-white/10 transition-transform ${
-          open ? 'translate-x-0' : '-translate-x-full'
+          open ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
         <div className="h-16 flex items-center gap-3 px-5 border-b border-white/10">
@@ -63,11 +76,16 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
           </div>
           <div>
             <div className="text-sm font-bold leading-tight">Horse Racing</div>
-            <div className="text-[10px] text-[#D4A017] uppercase tracking-wider font-semibold">Owner Portal</div>
+            <div className="text-[10px] text-[#D4A017] uppercase tracking-wider font-semibold">
+              Owner Portal
+            </div>
           </div>
         </div>
 
-        <nav className="p-3 space-y-0.5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+        <nav
+          className="p-3 space-y-0.5 overflow-y-auto"
+          style={{ maxHeight: "calc(100vh - 160px)" }}
+        >
           {HORSE_OWNER_NAV.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.to);
@@ -78,11 +96,13 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
                 onClick={() => setOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
                   active
-                    ? 'bg-[#D4A017]/15 text-white border border-[#D4A017]/30 shadow-md shadow-[#D4A017]/10'
-                    : 'text-white/60 hover:text-white hover:bg-white/5 border border-transparent'
+                    ? "bg-[#D4A017]/15 text-white border border-[#D4A017]/30 shadow-md shadow-[#D4A017]/10"
+                    : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#D4A017]' : ''}`} />
+                <Icon
+                  className={`w-4 h-4 flex-shrink-0 ${active ? "text-[#D4A017]" : ""}`}
+                />
                 <span className="font-semibold truncate">{item.label}</span>
               </Link>
             );
@@ -93,9 +113,13 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
           <div className="mb-2 p-3 bg-white/[0.04] rounded-xl border border-white/10">
             <div className="flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-[10px] text-emerald-300 uppercase tracking-wider font-bold">Đang hoạt động</span>
+              <span className="text-[10px] text-emerald-300 uppercase tracking-wider font-bold">
+                Đang hoạt động
+              </span>
             </div>
-            <div className="text-[11px] text-white/60">Nguyễn Chủ Ngựa · Chủ sở hữu</div>
+            <div className="text-[11px] text-white/60">
+              Nguyễn Chủ Ngựa · Chủ sở hữu
+            </div>
           </div>
           <button
             onClick={logout}
@@ -110,7 +134,10 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 h-16 bg-[#0A1628]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="lg:hidden p-2 hover:bg-white/5 rounded-lg">
+            <button
+              onClick={() => setOpen(true)}
+              className="lg:hidden p-2 hover:bg-white/5 rounded-lg"
+            >
               <Menu className="w-5 h-5" />
             </button>
             <div className="relative hidden md:block">
@@ -126,7 +153,10 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
               <Mail className="w-5 h-5 text-white/60" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#D4A017] rounded-full" />
             </button>
-            <Link to="/horse-owner/notifications" className="p-2 hover:bg-white/5 rounded-lg relative">
+            <Link
+              to="/horse-owner/notifications"
+              className="p-2 hover:bg-white/5 rounded-lg relative"
+            >
               <Bell className="w-5 h-5 text-white/60" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-400 rounded-full" />
             </Link>
@@ -135,7 +165,9 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
                 N
               </div>
               <div className="hidden md:block">
-                <div className="text-sm font-semibold leading-tight">Nguyễn Chủ Ngựa</div>
+                <div className="text-sm font-semibold leading-tight">
+                  Nguyễn Chủ Ngựa
+                </div>
                 <div className="text-[10px] text-white/40">Horse Owner</div>
               </div>
               <ChevronDown className="w-4 h-4 text-white/40" />
@@ -149,22 +181,31 @@ export function HorseOwnerLayout({ children, title, subtitle, actions }) {
               <span className="text-white">{head}</span>
               {tail && (
                 <>
-                  {' '}
-                  <span className="text-white/30">·</span>{' '}
-                  <span className="bg-gradient-to-r from-[#D4A017] to-[#E5B82F] bg-clip-text text-transparent">{tail}</span>
+                  {" "}
+                  <span className="text-white/30">·</span>{" "}
+                  <span className="bg-gradient-to-r from-[#D4A017] to-[#E5B82F] bg-clip-text text-transparent">
+                    {tail}
+                  </span>
                 </>
               )}
             </h1>
-            {subtitle && <p className="text-sm text-white/50 mt-1">{subtitle}</p>}
+            {subtitle && (
+              <p className="text-sm text-white/50 mt-1">{subtitle}</p>
+            )}
           </div>
-          {actions && <div className="flex items-center gap-2 flex-wrap">{actions}</div>}
+          {actions && (
+            <div className="flex items-center gap-2 flex-wrap">{actions}</div>
+          )}
         </div>
 
         <main className="px-4 md:px-8 py-6">{children}</main>
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setOpen(false)}>
+        <div
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={() => setOpen(false)}
+        >
           <button className="absolute top-4 right-4 p-2 text-white">
             <X className="w-5 h-5" />
           </button>

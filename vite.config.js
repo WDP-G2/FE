@@ -50,6 +50,10 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
       },
+      "/horses": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
       "/news": {
         target: "http://localhost:3000",
         changeOrigin: true,

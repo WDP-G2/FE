@@ -44,10 +44,13 @@ function mapRegistrationFromApi(item) {
   const deposit = approval === "Đã duyệt" ? "Đã thanh toán" : "Chưa thanh toán";
   return {
     id: item.id,
+    tournamentId: item.tournamentId || "",
     raceId: item.raceId || "",
     horse: item.horseName || "",
+    horseId: item.horseId || "",
     owner: item.ownerName || item.fullName || "",
     jockey: item.jockeyName || "",
+    jockeyId: item.jockeyId || "",
     deposit,
     approval,
     status: approval,
@@ -269,5 +272,52 @@ export const tournamentService = {
       .post(ENDPOINTS.tournaments.results(id, raceId), resultsPayload)
       .then(unwrapResponse);
     return mapTournamentFromApi(item);
+  },
+
+  async listOwnerOpen() {
+    const list = await axiosClient
+      .get(ENDPOINTS.tournaments.ownerOpen)
+      .then(unwrapResponse);
+    return (Array.isArray(list) ? list : [])
+      .map(mapTournamentFromApi)
+      .filter(Boolean);
+  },
+
+  async getOwnerRaceOptions(id, raceId) {
+    const item = await axiosClient
+      .get(ENDPOINTS.tournaments.ownerRaceOptions(id, raceId))
+      .then(unwrapResponse);
+    return item;
+  },
+
+  async createOwnerRegistration(id, payload) {
+    const item = await axiosClient
+      .post(ENDPOINTS.tournaments.ownerRegister(id), payload)
+      .then(unwrapResponse);
+    return mapTournamentFromApi(item);
+  },
+
+  async listOwnerRegistrations() {
+    const list = await axiosClient
+      .get(ENDPOINTS.tournaments.ownerRegistrations)
+      .then(unwrapResponse);
+    return (Array.isArray(list) ? list : []).map((item) => ({
+      id: item.id,
+      tournamentId: item.tournamentId || "",
+      tournamentName: item.tournamentName || "",
+      tournamentStatus: item.tournamentStatus || "",
+      raceId: item.raceId || "",
+      raceName: item.raceName || "",
+      raceStatus: item.raceStatus || "",
+      horseId: item.horseId || "",
+      horse: item.horseName || "",
+      owner: item.ownerName || item.fullName || "",
+      jockeyId: item.jockeyId || "",
+      jockey: item.jockeyName || "",
+      approval: item.status || "Chờ duyệt",
+      notes: item.notes || "",
+      registeredAt: item.registeredAt,
+      fullName: item.fullName || "",
+    }));
   },
 };

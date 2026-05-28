@@ -1,92 +1,231 @@
-import { useState } from 'react';
-import { Trophy, MapPin, Calendar, DollarSign, Users, Search, Eye, X } from 'lucide-react';
-import { HorseOwnerLayout } from './HorseOwnerLayout';
-import { GlassCard, Pill, PrimaryButton, GhostButton } from '../admin/AdminLayout';
-import { tournaments, fmt } from './data';
-import { toast } from 'sonner';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  DollarSign,
+  Eye,
+  MapPin,
+  Search,
+  Trophy,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
+import { HorseOwnerLayout } from "./HorseOwnerLayout";
+import {
+  GlassCard,
+  Pill,
+  PrimaryButton,
+  GhostButton,
+} from "../admin/AdminLayout";
+import { tournamentService } from "@/services/tournamentService";
+
+function formatMoney(value) {
+  return new Intl.NumberFormat("vi-VN").format(Number(value || 0));
+}
+
+function formatDate(value) {
+  if (!value) return "Chưa cập nhật";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Chưa cập nhật";
+  return date.toLocaleDateString("vi-VN");
+}
+
+function statusTone(status) {
+  if (status === "Đang mở đăng ký") return "green";
+  if (status === "Đang diễn ra") return "blue";
+  if (status === "Đã kết thúc") return "gray";
+  return "gold";
+}
 
 export function HorseOwnerTournaments() {
-  const [search, setSearch] = useState('');
-  const [detail, setDetail] = useState(null);
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [tournaments, setTournaments] = useState([]);
 
-  const filtered = tournaments.filter((t) =>
-    t.name.toLowerCase().includes(search.toLowerCase()) ||
-    t.location.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        const items = await tournamentService.listOwnerOpen();
+        if (active) setTournaments(items);
+      } catch (error) {
+        console.error("Error loading owner tournaments:", error);
+        toast.error("Không thể tải danh sách giải đấu đang mở");
+        if (active) setTournaments([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return tournaments;
+    return tournaments.filter((tournament) => {
+      return (
+        tournament.name.toLowerCase().includes(query) ||
+        tournament.location.toLowerCase().includes(query) ||
+        tournament.description.toLowerCase().includes(query)
+      );
+    });
+  }, [search, tournaments]);
 
   return (
-    <HorseOwnerLayout title="Horse Owner · Giải đấu" subtitle="Danh sách giải đấu đang mở đăng ký và sắp diễn ra">
+    <HorseOwnerLayout
+      title="Horse Owner · Giải đấu"
+      subtitle="Chỉ hiển thị giải đã mở đăng ký và các race đủ điều kiện"
+    >
       <div className="mb-6 flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm giải đấu, địa điểm..." className="pl-10 pr-4 py-2.5 w-full bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D4A017]/50" />
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Tìm giải đấu, địa điểm, mô tả..."
+            className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#D4A017]/50"
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-        {filtered.map((t) => (
-          <GlassCard key={t.id} className="overflow-hidden">
-            <div className="h-28 bg-gradient-to-br from-[#D4A017]/20 via-[#0F1E3A] to-[#0A1628] flex items-center justify-center relative">
-              <Trophy className="w-14 h-14 text-[#D4A017]/25" />
-              <div className="absolute top-3 left-3"><Pill tone={t.statusTone}>{t.status}</Pill></div>
-              <div className="absolute bottom-3 right-3 text-right"><div className="text-[10px] text-white/50">Prize Pool</div><div className="text-sm font-bold text-[#D4A017]">{fmt(t.prizePool)}</div></div>
-            </div>
-            <div className="p-5">
-              <h3 className="font-bold text-white text-base mb-1">{t.name}</h3>
-              <p className="text-xs text-white/50 mb-4">{t.description}</p>
-              <div className="space-y-2 mb-4">
-                <InfoRow icon={MapPin} text={t.location} />
-                <InfoRow icon={Calendar} text={`${t.startDate} → ${t.endDate}`} />
-                <InfoRow icon={Calendar} text={`Hạn đăng ký: ${t.deadline}`} highlight />
-                <InfoRow icon={DollarSign} text={`Entry fee: ${fmt(t.entryFee)}`} />
-                <InfoRow icon={Users} text={`${t.registeredHorses} / ${t.maxHorses} ngựa đã đăng ký`} />
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        {loading ? (
+          <div className="col-span-full rounded-3xl border border-white/10 bg-white/[0.045] p-10 text-center text-white/50">
+            Đang tải danh sách giải đấu...
+          </div>
+        ) : (
+          filtered.map((tournament) => (
+            <GlassCard key={tournament.id} className="overflow-hidden">
+              <div className="relative h-44 bg-gradient-to-br from-[#D4A017]/20 via-[#0F1E3A] to-[#0A1628]">
+                <img
+                  src={tournament.banner}
+                  alt={tournament.name}
+                  className="h-full w-full object-cover opacity-65"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute left-4 top-4 flex gap-2">
+                  <Pill tone={statusTone(tournament.status)}>
+                    {tournament.status}
+                  </Pill>
+                  <Pill tone="gold">
+                    {tournament.type === "championship"
+                      ? "Championship"
+                      : "Regular"}
+                  </Pill>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-bold text-white">
+                      {tournament.name}
+                    </h3>
+                    <p className="truncate text-sm text-white/70">
+                      {tournament.description || "Không có mô tả"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-wider text-white/45">
+                      Race mở
+                    </div>
+                    <div className="text-sm font-bold text-[#D4A017]">
+                      {tournament.openRaceCount ||
+                        tournament.races?.length ||
+                        0}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <GhostButton icon={Eye} className="flex-1" onClick={() => setDetail(t)}>Chi tiết</GhostButton>
-                {t.status === 'Đang mở đăng ký' && <PrimaryButton className="flex-1" onClick={() => toast.success(`Đã chuyển đến trang đăng ký · ${t.name}`)}>Đăng ký ngay</PrimaryButton>}
-              </div>
-            </div>
-          </GlassCard>
-        ))}
-      </div>
 
-      {detail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <GlassCard className="w-full max-w-lg">
-            <div className="p-5 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3"><div className="w-9 h-9 bg-[#D4A017]/15 rounded-xl flex items-center justify-center"><Trophy className="w-4 h-4 text-[#D4A017]" /></div><div><h2 className="font-bold text-white text-base">{detail.name}</h2><p className="text-xs text-white/50">{detail.location}</p></div></div>
-              <button onClick={() => setDetail(null)} className="p-1.5 hover:bg-white/10 rounded-lg"><X className="w-4 h-4 text-white/60" /></button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <StatBox label="Prize Pool" value={fmt(detail.prizePool)} tone="gold" />
-                <StatBox label="Entry Fee" value={fmt(detail.entryFee)} tone="blue" />
-                <StatBox label="Ngựa đã đăng ký" value={`${detail.registeredHorses}/${detail.maxHorses}`} tone="green" />
-                <StatBox label="Trạng thái" value={detail.status} tone={detail.statusTone} />
+              <div className="space-y-4 p-5">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <MetaItem
+                    icon={MapPin}
+                    value={tournament.location || "Chưa cập nhật"}
+                  />
+                  <MetaItem
+                    icon={Calendar}
+                    value={`${formatDate(tournament.startDate)} → ${formatDate(tournament.endDate)}`}
+                  />
+                  <MetaItem
+                    icon={DollarSign}
+                    value={`Entry fee: ${formatMoney(tournament.config?.entryFee || 0)}`}
+                  />
+                  <MetaItem
+                    icon={Users}
+                    value={`${tournament.registrationCount || 0} lượt đăng ký`}
+                  />
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div className="mb-2 text-xs uppercase tracking-wider text-white/40">
+                    Race có thể đăng ký
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(tournament.races || []).length ? (
+                      tournament.races.map((race) => (
+                        <span
+                          key={race.id}
+                          className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-white/75"
+                        >
+                          {race.raceNumber}. {race.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-white/50">
+                        Chưa có race nào mở đăng ký
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <GhostButton
+                    icon={Eye}
+                    className="flex-1"
+                    onClick={() => navigate("/horse-owner/registrations")}
+                  >
+                    Xem đăng ký của tôi
+                  </GhostButton>
+                  <PrimaryButton
+                    className="flex-1"
+                    onClick={() =>
+                      navigate(
+                        `/horse-owner/tournaments/${tournament.id}/register`,
+                      )
+                    }
+                    disabled={!tournament.races?.length}
+                  >
+                    Đăng ký ngay
+                  </PrimaryButton>
+                </div>
               </div>
-            </div>
-          </GlassCard>
-        </div>
-      )}
+            </GlassCard>
+          ))
+        )}
+
+        {!loading && filtered.length === 0 && (
+          <div className="col-span-full rounded-3xl border border-dashed border-white/10 bg-white/[0.03] py-16 text-center text-white/45">
+            <Trophy className="mx-auto mb-3 h-12 w-12 opacity-30" />
+            <p>Chưa có giải đấu nào đang mở đăng ký</p>
+          </div>
+        )}
+      </div>
     </HorseOwnerLayout>
   );
 }
 
-function InfoRow({ icon: Icon, text, highlight }) {
+function MetaItem({ icon: Icon, value }) {
   return (
-    <div className="flex items-center gap-2">
-      <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${highlight ? 'text-red-400' : 'text-white/40'}`} />
-      <span className={`text-xs ${highlight ? 'text-red-300 font-semibold' : 'text-white/60'}`}>{text}</span>
-    </div>
-  );
-}
-
-function StatBox({ label, value, tone }) {
-  const tones = { gold: 'text-[#D4A017]', green: 'text-emerald-300', blue: 'text-sky-300', purple: 'text-purple-300' };
-  return (
-    <div className="p-3 bg-white/[0.04] rounded-xl border border-white/10">
-      <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">{label}</div>
-      <div className={`text-sm font-bold ${tones[tone] ?? 'text-white'}`}>{value}</div>
+    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+      <Icon className="h-3.5 w-3.5 flex-shrink-0 text-white/40" />
+      <span className="truncate text-xs text-white/70">{value}</span>
     </div>
   );
 }
