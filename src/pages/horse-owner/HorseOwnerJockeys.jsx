@@ -1,17 +1,24 @@
-import { useState } from 'react';
-import { Users, Search, Trophy, Send, CheckCircle } from 'lucide-react';
-import { HorseOwnerLayout } from './HorseOwnerLayout';
-import { GlassCard, Pill, PrimaryButton, GhostButton } from '../admin/AdminLayout';
-import { jockeys } from './data';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Users, Search, Trophy, Send, CheckCircle } from "lucide-react";
+import { HorseOwnerLayout } from "./HorseOwnerLayout";
+import {
+  GlassCard,
+  Pill,
+  PrimaryButton,
+  GhostButton,
+} from "../admin/AdminLayout";
+import { jockeys } from "./data";
+import { toast } from "sonner";
 
 export function HorseOwnerJockeys() {
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('Tất cả');
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("Tất cả");
 
   const filtered = jockeys.filter((j) => {
-    const matchSearch = j.name.toLowerCase().includes(search.toLowerCase()) || j.license.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === 'Tất cả' || j.status === filterStatus;
+    const matchSearch =
+      j.name.toLowerCase().includes(search.toLowerCase()) ||
+      j.license.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filterStatus === "Tất cả" || j.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
@@ -39,12 +46,14 @@ export function HorseOwnerJockeys() {
           />
         </div>
         <div className="flex gap-2">
-          {['Tất cả', 'Sẵn sàng', 'Bận'].map((s) => (
+          {["Tất cả", "Sẵn sàng", "Bận"].map((s) => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                filterStatus === s ? 'bg-[#D4A017] text-white shadow-lg shadow-[#D4A017]/30' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/10'
+                filterStatus === s
+                  ? "bg-[#D4A017] text-white shadow-lg shadow-[#D4A017]/30"
+                  : "bg-white/5 text-white/60 hover:bg-white/10 border border-white/10"
               }`}
             >
               {s}
@@ -68,7 +77,9 @@ export function HorseOwnerJockeys() {
             <CheckCircle className="w-5 h-5 text-emerald-300" />
           </div>
           <div>
-            <div className="text-xl font-bold text-white">{jockeys.filter((j) => j.status === 'Sẵn sàng').length}</div>
+            <div className="text-xl font-bold text-white">
+              {jockeys.filter((j) => j.status === "Sẵn sàng").length}
+            </div>
             <div className="text-xs text-white/50">Sẵn sàng</div>
           </div>
         </GlassCard>
@@ -77,7 +88,9 @@ export function HorseOwnerJockeys() {
             <Trophy className="w-5 h-5 text-sky-300" />
           </div>
           <div>
-            <div className="text-xl font-bold text-white">{jockeys.filter((j) => j.assigned).length}</div>
+            <div className="text-xl font-bold text-white">
+              {jockeys.filter((j) => j.assigned).length}
+            </div>
             <div className="text-xs text-white/50">Đang được assign</div>
           </div>
         </GlassCard>
@@ -91,21 +104,27 @@ export function HorseOwnerJockeys() {
                 {j.name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-white text-base truncate">{j.name}</h3>
+                <h3 className="font-bold text-white text-base truncate">
+                  {j.name}
+                </h3>
                 <p className="text-xs text-white/50">{j.license}</p>
                 <div className="mt-1">
                   <Pill tone={j.statusTone}>{j.status}</Pill>
                 </div>
               </div>
               <div className="text-center shrink-0">
-                <div className="text-lg font-bold text-[#D4A017]">#{j.ranking}</div>
+                <div className="text-lg font-bold text-[#D4A017]">
+                  #{j.ranking}
+                </div>
                 <div className="text-[10px] text-white/40">Rank</div>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2 mb-4 p-3 bg-white/[0.04] rounded-xl">
               <div className="text-center">
-                <div className="text-base font-bold text-[#D4A017]">{j.wins}</div>
+                <div className="text-base font-bold text-[#D4A017]">
+                  {j.wins}
+                </div>
                 <div className="text-[10px] text-white/40">Thắng</div>
               </div>
               <div className="text-center border-x border-white/10">
@@ -113,7 +132,9 @@ export function HorseOwnerJockeys() {
                 <div className="text-[10px] text-white/40">Race</div>
               </div>
               <div className="text-center">
-                <div className="text-base font-bold text-emerald-300">{j.winRate}%</div>
+                <div className="text-base font-bold text-emerald-300">
+                  {j.winRate}%
+                </div>
                 <div className="text-[10px] text-white/40">Tỷ lệ</div>
               </div>
             </div>
@@ -121,7 +142,9 @@ export function HorseOwnerJockeys() {
             <div className="space-y-2 mb-4 text-xs">
               <div className="flex justify-between">
                 <span className="text-white/50">Kinh nghiệm</span>
-                <span className="text-white font-semibold">{j.experience} năm</span>
+                <span className="text-white font-semibold">
+                  {j.experience} năm
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-white/50">Tuổi</span>
@@ -129,7 +152,9 @@ export function HorseOwnerJockeys() {
               </div>
               <div className="flex justify-between">
                 <span className="text-white/50">Ngựa hiện tại</span>
-                <span className="text-white font-semibold">{j.assigned ?? 'Chưa có'}</span>
+                <span className="text-white font-semibold">
+                  {j.assigned ?? "Chưa có"}
+                </span>
               </div>
             </div>
 
@@ -139,16 +164,26 @@ export function HorseOwnerJockeys() {
                 <span>{j.winRate}%</span>
               </div>
               <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#D4A017] to-[#E5B82F]" style={{ width: `${j.winRate}%` }} />
+                <div
+                  className="h-full bg-gradient-to-r from-[#D4A017] to-[#E5B82F]"
+                  style={{ width: `${j.winRate}%` }}
+                />
               </div>
             </div>
 
             <div className="flex gap-2">
-              <GhostButton className="flex-1" icon={Send} onClick={() => handleInvite(j.name)}>
+              <GhostButton
+                className="flex-1"
+                icon={Send}
+                onClick={() => handleInvite(j.name)}
+              >
                 Mời
               </GhostButton>
               {j.assigned && (
-                <PrimaryButton className="flex-1" onClick={() => handleConfirm(j.name)}>
+                <PrimaryButton
+                  className="flex-1"
+                  onClick={() => handleConfirm(j.name)}
+                >
                   Xác nhận
                 </PrimaryButton>
               )}
