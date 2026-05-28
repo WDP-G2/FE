@@ -1,0 +1,39 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="128"
+  height="128"
+  viewBox="0 0 64 64"
+  fill="none"
+>
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF8" />
+      <stop offset="1" stop-color="#F4ECE0" />
+    </linearGradient>
+    <linearGradient id="gold" x1="18" y1="12" x2="46" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E1B126" />
+      <stop offset="1" stop-color="#C79212" />
+    </linearGradient>
+    <filter id="shadow" x="4" y="4" width="56" height="56" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#D4A017" flood-opacity="0.22" />
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="8" y="8" width="48" height="48" rx="12" fill="url(#bg)" />
+  </g>
+
+  <g
+    stroke="url(#gold)"
+    stroke-width="2.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M24 18h-3a5 5 0 0 0 0 10h3" />
+    <path d="M40 18h3a5 5 0 0 1 0 10h-3" />
+    <path d="M24 14h16v10c0 4.418-3.582 8-8 8s-8-3.582-8-8V14Z" />
+    <path d="M28.5 37v3.2c0 .814-.47 1.553-1.205 1.895L24 43.6V46" />
+    <path d="M35.5 37v3.2c0 .814.47 1.553 1.205 1.895L40 43.6V46" />
+    <path d="M24 46h16" />
+  </g>
+</svg>
