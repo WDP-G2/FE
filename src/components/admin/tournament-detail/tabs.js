@@ -1,6 +1,5 @@
 import {
   Award,
-  BarChart3,
   CalendarRange,
   Flag,
   Info,
@@ -14,6 +13,5 @@ export const detailTabs = [
   { key: 'participants', label: 'Người tham gia', icon: Users },
   { key: 'schedule', label: 'Lịch thi đấu', icon: CalendarRange },
   { key: 'results', label: 'Kết quả', icon: Award },
-  { key: 'stats', label: 'Thống kê', icon: BarChart3 },
   { key: 'settings', label: 'Cài đặt', icon: Settings },
 ]

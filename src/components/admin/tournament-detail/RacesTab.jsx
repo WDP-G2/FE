@@ -68,7 +68,6 @@ export default function RacesTab({
       minHorses: 0,
       maxHorses: tournament.config?.maxRegistrations || 12,
       entryFee: tournament.config?.entryFee || 0,
-      deposit: tournament.config?.depositFee || 0,
       regDeadline: tournament.startDate,
       checkIn: "08:00",
       prizes: { first: 0, second: 0, third: 0 },
@@ -338,15 +337,6 @@ function RaceInfo({ race, updateRace, onSave, saving }) {
             }
           />
         </Field>
-        <Field label="Tiền cọc">
-          <Input
-            type="number"
-            value={race.deposit}
-            onChange={(event) =>
-              updateRace({ deposit: Number(event.target.value) })
-            }
-          />
-        </Field>
         <Field label="Hạn đăng ký">
           <Input
             type="date"
@@ -456,17 +446,11 @@ function RaceRegistrations({ race }) {
         subtitle={`${registrations.length} hồ sơ đăng ký`}
       />
       <SimpleTable
-        headers={["Ngựa", "Chủ ngựa", "Jockey", "Tiền cọc", "Duyệt"]}
+        headers={["Ngựa", "Chủ ngựa", "Jockey", "Duyệt"]}
         rows={registrations.map((item) => [
           item.horse,
           item.owner,
           item.jockey,
-          <Badge
-            key="d"
-            tone={item.deposit === "Đã thanh toán" ? "green" : "red"}
-          >
-            {item.deposit}
-          </Badge>,
           <Badge key="a" tone={item.approval === "Đã duyệt" ? "green" : "gold"}>
             {item.approval}
           </Badge>,

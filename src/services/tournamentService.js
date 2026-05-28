@@ -41,7 +41,6 @@ function toNumber(value) {
 function mapRegistrationFromApi(item) {
   if (!item) return null;
   const approval = item.status || "Chờ duyệt";
-  const deposit = approval === "Đã duyệt" ? "Đã thanh toán" : "Chưa thanh toán";
   return {
     id: item.id,
     tournamentId: item.tournamentId || "",
@@ -51,7 +50,6 @@ function mapRegistrationFromApi(item) {
     owner: item.ownerName || item.fullName || "",
     jockey: item.jockeyName || "",
     jockeyId: item.jockeyId || "",
-    deposit,
     approval,
     status: approval,
   };
@@ -100,7 +98,6 @@ function mapRaceFromApi(race, tournament, registrationsByRaceId) {
     maxHorses: race.maxHorses || tournament.config?.maxRegistrations || 12,
     registered: registrations.length,
     entryFee: race.entryFee || tournament.config?.entryFee || 0,
-    deposit: race.deposit || tournament.config?.depositFee || 0,
     regDeadline,
     checkIn: race.checkIn || "08:00",
     prizes: { ...DEFAULT_PRIZES, ...(race.prizes || {}) },
@@ -181,7 +178,6 @@ function mapRacePayload(race) {
     minHorses: toNumber(race.minHorses),
     maxHorses: toNumber(race.maxHorses),
     entryFee: toNumber(race.entryFee),
-    deposit: toNumber(race.deposit),
     regDeadline: race.regDeadline || undefined,
     checkIn: race.checkIn,
     prizes: race.prizes,
