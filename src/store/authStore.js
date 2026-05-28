@@ -5,6 +5,7 @@ import { isTokenExpired, getRoleFromToken } from '@/utils/jwtDecode'
 import { applyAuthToState } from '@/utils/mapAuthResponse'
 import { normalizeRole } from '@/utils/roleRedirect'
 import { horseOwnerAccount } from '@/pages/horse-owner/data'
+import { jockeyAccount } from '@/pages/jockey/data'
 
 function persistLogin(auth) {
   const { token, user, role, isAuthenticated } = applyAuthToState(auth)
@@ -66,6 +67,18 @@ export const useAuthStore = create((set, get) => ({
         token: horseOwnerAccount.token,
         user: horseOwnerAccount.user,
         role: normalizeRole(horseOwnerAccount.user.role),
+        isAuthenticated: true,
+      }
+      setStoredToken(mockSession.token)
+      set({ ...mockSession, isLoading: false })
+      return { auth: mockSession, user: mockSession.user }
+    }
+    const jockeyEmail = jockeyAccount.email.toLowerCase()
+    if (mockEmail === jockeyEmail && password === jockeyAccount.password) {
+      const mockSession = {
+        token: jockeyAccount.token,
+        user: jockeyAccount.user,
+        role: normalizeRole(jockeyAccount.user.role),
         isAuthenticated: true,
       }
       setStoredToken(mockSession.token)
