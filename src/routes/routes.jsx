@@ -14,7 +14,7 @@ import VerifyOtpPage from '@/pages/auth/VerifyOtpPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ProfilePage from '@/pages/profile/ProfilePage'
-import HorseOwnerPage from '@/pages/dashboard/HorseOwnerPage'
+import HorseOwnerPage from '@/pages/horse-owner/HorseOwnerPage'
 import JockeyPage from '@/pages/dashboard/JockeyPage'
 import RefereePage from '@/pages/dashboard/RefereePage'
 import NotFoundPage from '@/pages/errors/NotFoundPage'
@@ -35,14 +35,6 @@ export const router = createBrowserRouter([
       { path: '/profile', element: withAuth(<ProfilePage />) },
       { path: '/unauthorized', element: withAuth(<UnauthorizedPage />) },
       {
-        path: '/horse-owner',
-        element: withAuth(
-          <RoleProtectedRoute allowedRoles={['OWNER']}>
-            <HorseOwnerPage />
-          </RoleProtectedRoute>,
-        ),
-      },
-      {
         path: '/jockey',
         element: withAuth(
           <RoleProtectedRoute allowedRoles={['JOCKEY']}>
@@ -59,6 +51,14 @@ export const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/horse-owner/*',
+    element: withAuth(
+      <RoleProtectedRoute allowedRoles={['OWNER']}>
+        <HorseOwnerPage />
+      </RoleProtectedRoute>,
+    ),
   },
   ...adminRoutes,
   { path: '/login', Component: LoginPage },
