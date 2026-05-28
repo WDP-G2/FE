@@ -29,13 +29,13 @@ export const ENDPOINTS = {
     results: (id, raceId) => `/tournaments/${id}/races/${raceId}/results`,
     registrations: (id) => `/tournaments/${id}/registrations`,
   },
-  
+
   blood: {
     list: "/blood-records",
     byId: (id) => `/blood-records/${id}`,
   },
   news: {
-    all: "/news/all",
+    all: "/news",
     featured: "/news/featured",
     byId: (id) => `/news/${id}`,
     related: (id) => `/news/${id}/related`,
