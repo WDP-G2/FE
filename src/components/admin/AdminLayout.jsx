@@ -6,7 +6,6 @@ import {
   ChevronDown,
   LayoutDashboard,
   LogOut,
-  Mail,
   Menu,
   Newspaper,
   Search,
@@ -123,16 +122,7 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-2 md:gap-5">
-            <TopbarButton label="Tin nhắn">
-              <Mail className="h-7 w-7" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#dda50e]" />
-            </TopbarButton>
-            <TopbarButton label="Thông báo">
-              <Bell className="h-7 w-7" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-400" />
-            </TopbarButton>
-
-            <div className="ml-2 flex items-center gap-4 border-l border-white/10 pl-4">
+            <div className="flex items-center gap-4">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dda50e] text-xl font-bold shadow-lg shadow-[#d4a017]/30">
                 A
               </span>
@@ -175,17 +165,5 @@ export default function AdminLayout({
         </div>
       )}
     </div>
-  )
-}
-
-function TopbarButton({ children, label }) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      className="relative rounded-xl p-3 text-white/55 transition hover:bg-white/5 hover:text-white"
-    >
-      {children}
-    </button>
   )
 }

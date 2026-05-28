@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import AuthLayout from '@/layouts/AuthLayout'
 import TextInput from '@/components/forms/TextInput'
 import AuthButton from '@/components/ui/AuthButton'
-import { authApi } from '@/api/authApi'
+import { authService } from '@/services/authService'
 import { getApiErrorMessage } from '@/utils/apiError'
 
 export default function ForgotPasswordPage() {
@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
     }
     setLoading(true)
     try {
-      await authApi.forgotPassword(email)
+      await authService.forgotPassword(email)
       toast.success('Mã OTP đã được gửi đến email của bạn.')
       navigate(`/verify-otp?email=${encodeURIComponent(email)}`, { replace: true })
     } catch (err) {

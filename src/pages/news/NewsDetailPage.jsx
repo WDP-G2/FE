@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Calendar, Tag, User } from 'lucide-react'
 import { toast } from 'sonner'
-import { newsApi } from '@/api/newsApi'
+import { newsService } from '@/services/newsService'
 import RelatedNews from '@/components/news/RelatedNews'
 
 function formatLongDate(dateString) {
@@ -24,7 +24,7 @@ export default function NewsDetailPage() {
     async function loadNews() {
       try {
         setLoading(true)
-        const response = await newsApi.getNewsById(id)
+        const response = await newsService.getNewsById(id)
         setNews(response.data)
       } catch (error) {
         console.error('Error loading news:', error)

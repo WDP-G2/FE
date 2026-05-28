@@ -11,6 +11,7 @@ const PUBLIC_LINKS = [
   { name: 'Bảng xếp hạng', path: '/rankings' },
   { name: 'Tin tức', path: '/news' },
   { name: 'Giới thiệu', path: '/about' },
+
 ]
 
 const ROLE_LINKS = {
@@ -19,6 +20,7 @@ const ROLE_LINKS = {
     { name: 'Quản trị', path: '/admin' },
     { name: 'Giải đấu', path: '/tournaments' },
     { name: 'Tin tức', path: '/news' },
+
   ],
   OWNER: [
     { name: 'Dashboard', path: '/dashboard' },
@@ -42,6 +44,7 @@ const ROLE_LINKS = {
   USER: [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Tin tức', path: '/news' },
+  
   ],
 }
 

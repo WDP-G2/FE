@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { authApi } from '@/api/authApi'
+import { authService } from '@/services/authService'
 import { getStoredToken, setStoredToken, removeStoredToken } from '@/utils/tokenStorage'
 import { isTokenExpired, getRoleFromToken } from '@/utils/jwtDecode'
 import { applyAuthToState } from '@/utils/mapAuthResponse'
@@ -18,6 +18,15 @@ export const useAuthStore = create((set, get) => ({
   role: null,
   isAuthenticated: false,
   isLoading: true,
+
+  setUser: (user) => {
+    const role = normalizeRole(user?.role) || get().role
+    set({
+      user,
+      role,
+      isAuthenticated: !!get().token && !!user,
+    })
+  },
 
   setSession: (token, user) => {
     setStoredToken(token)
@@ -42,14 +51,14 @@ export const useAuthStore = create((set, get) => ({
   },
 
   fetchProfile: async () => {
-    const user = await authApi.getMe()
+    const user = await authService.getMe()
     const role = normalizeRole(user?.role)
     set({ user, role, isAuthenticated: true })
     return user
   },
 
   login: async ({ email, password }) => {
-    const auth = await authApi.login({ email, password })
+    const auth = await authService.login({ email, password })
     const session = persistLogin(auth)
     set({ ...session, isLoading: false })
 
@@ -61,24 +70,24 @@ export const useAuthStore = create((set, get) => ({
   },
 
   loginWithGoogle: async (idToken) => {
-    const auth = await authApi.loginGoogle(idToken)
+    const auth = await authService.loginGoogle(idToken)
     const session = persistLogin(auth)
     set({ ...session, isLoading: false })
     return { auth, user: session.user }
   },
 
   loginWithFacebook: async (accessToken) => {
-    const auth = await authApi.loginFacebook(accessToken)
+    const auth = await authService.loginFacebook(accessToken)
     const session = persistLogin(auth)
     set({ ...session, isLoading: false })
     return { auth, user: session.user }
   },
 
-  register: (payload) => authApi.register(payload),
+  register: (payload) => authService.register(payload),
 
   logout: async () => {
     try {
-      if (getStoredToken()) await authApi.logout()
+      if (getStoredToken()) await authService.logout()
     } finally {
       get().clearSession()
     }

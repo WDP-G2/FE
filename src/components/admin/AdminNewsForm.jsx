@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { GhostButton, PrimaryButton } from '@/components/admin/ui/AdminButton'
 import { inputClass } from '@/components/admin/ui/styles'
-import { newsApi } from '@/api/newsApi'
+import { newsService } from '@/services/newsService'
 
 const CATEGORIES = ['Kết quả đua', 'Sự kiện', 'Chân dung', 'Công nghệ', 'Quy định', 'Phỏng vấn']
 
@@ -32,7 +32,7 @@ export default function AdminNewsForm({ articleId }) {
     async function load() {
       try {
         setLoading(true)
-        const { data } = await newsApi.getAdminNewsById(articleId)
+        const { data } = await newsService.getAdminNewsById(articleId)
         setForm({
           title: data.title,
           shortDescription: data.shortDescription,
@@ -76,10 +76,10 @@ export default function AdminNewsForm({ articleId }) {
       }
 
       if (isEdit) {
-        await newsApi.updateNews(articleId, payload, imageFile)
+        await newsService.updateNews(articleId, payload, imageFile)
         toast.success('Cập nhật bài viết thành công')
       } else {
-        await newsApi.createNews(payload, imageFile)
+        await newsService.createNews(payload, imageFile)
         toast.success('Tạo bài viết thành công')
       }
       navigate('/admin/news')

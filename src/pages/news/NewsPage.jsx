@@ -1,32 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Newspaper } from 'lucide-react'
 import { toast } from 'sonner'
-import { newsApi } from '@/api/newsApi'
+import { newsService } from '@/services/newsService'
+import { useDebounce } from '@/hooks/useDebounce'
+import { useFetch } from '@/hooks/useFetch'
 import FeaturedNews from '@/components/news/FeaturedNews'
 import NewsCard from '@/components/news/NewsCard'
 import NewsSearch from '@/components/news/NewsSearch'
-
 export default function NewsPage() {
-  const [news, setNews] = useState([])
-  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 350)
 
-  useEffect(() => {
-    async function loadNews() {
+  const { data, loading } = useFetch(
+    async () => {
       try {
-        setLoading(true)
-        const response = await newsApi.getAllNews({ search: searchQuery })
-        setNews(response.data)
+        const response = await newsService.getAllNews({ search: debouncedSearch })
+        return response.data
       } catch (error) {
         console.error('Error loading news:', error)
         toast.error('Khong the tai tin tuc')
-      } finally {
-        setLoading(false)
+        return []
       }
+    },
+    {
+      deps: [debouncedSearch],
     }
-
-    loadNews()
-  }, [searchQuery])
+  )
+  
+  const news = data ?? []
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFF8F0] via-white to-[#FAFAFA]">

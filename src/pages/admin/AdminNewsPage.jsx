@@ -4,7 +4,7 @@ import { CalendarDays, Edit, Newspaper, Plus, Search, Sparkles, Trash2 } from 'l
 import { toast } from 'sonner'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { PrimaryLink } from '@/components/admin/ui/AdminButton'
-import { newsApi } from '@/api/newsApi'
+import { newsService } from '@/services/newsService'
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -23,7 +23,7 @@ export default function AdminNewsPage() {
   const loadNews = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await newsApi.getAllNews({ search, admin: true })
+      const response = await newsService.getAllNews({ search, admin: true })
       setNews(response.data)
     } catch (error) {
       console.error('Error loading admin news:', error)
@@ -47,7 +47,7 @@ export default function AdminNewsPage() {
     if (!window.confirm(`Xóa bài viết "${title}"? Hành động này không thể hoàn tác.`)) return
 
     try {
-      await newsApi.deleteNews(id)
+      await newsService.deleteNews(id)
       toast.success('Xóa bài viết thành công')
       loadNews()
     } catch (error) {
