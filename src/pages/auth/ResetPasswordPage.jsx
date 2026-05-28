@@ -5,7 +5,7 @@ import AuthLayout from '@/layouts/AuthLayout'
 import PasswordInput from '@/components/forms/PasswordInput'
 import PasswordStrength from '@/components/forms/PasswordStrength'
 import AuthButton from '@/components/ui/AuthButton'
-import { authApi } from '@/api/authApi'
+import { authService } from '@/services/authService'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { getResetFlow, clearResetFlow } from '@/utils/resetFlow'
 import { validatePassword } from '@/utils/validation'
@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
     }
     setLoading(true)
     try {
-      await authApi.resetPassword({
+      await authService.resetPassword({
         email: flow.email,
         otp: flow.otp,
         newPassword: password,

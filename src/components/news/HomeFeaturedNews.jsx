@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, ChevronRight, Newspaper } from 'lucide-react'
-import { newsApi } from '@/api/newsApi'
+import { newsService } from '@/services/newsService'
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -18,7 +18,7 @@ export default function HomeFeaturedNews() {
   useEffect(() => {
     async function load() {
       try {
-        const response = await newsApi.getFeaturedNews(3)
+        const response = await newsService.getFeaturedNews(3)
         setItems(response.data)
       } catch (error) {
         console.error('Error loading homepage news:', error)

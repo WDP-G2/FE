@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import AuthLayout from '@/layouts/AuthLayout'
 import OtpInput from '@/components/forms/OtpInput'
 import AuthButton from '@/components/ui/AuthButton'
-import { authApi } from '@/api/authApi'
+import { authService } from '@/services/authService'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { saveResetFlow } from '@/utils/resetFlow'
 
@@ -45,7 +45,7 @@ export default function VerifyOtpPage() {
     if (countdown > 0) return
     setLoading(true)
     try {
-      await authApi.forgotPassword(email)
+      await authService.forgotPassword(email)
       toast.success('Mã OTP đã được gửi lại.')
       setCountdown(RESEND_SECONDS)
     } catch (err) {

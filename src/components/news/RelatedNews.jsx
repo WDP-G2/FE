@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
-import { newsApi } from '@/api/newsApi'
+import { newsService } from '@/services/newsService'
 
 function titleClampStyle() {
   return {
@@ -29,7 +29,7 @@ export default function RelatedNews({ currentNewsId }) {
     async function loadRelatedNews() {
       try {
         setLoading(true)
-        const response = await newsApi.getRelatedNews(currentNewsId)
+        const response = await newsService.getRelatedNews(currentNewsId)
         setRelatedNews(response.data)
       } catch (error) {
         console.error('Error loading related news:', error)

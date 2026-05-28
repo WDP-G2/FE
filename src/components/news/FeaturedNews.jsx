@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { toast } from 'sonner'
-import { newsApi } from '@/api/newsApi'
+import { newsService } from '@/services/newsService'
 import NewsCard from '@/components/news/NewsCard'
 
 export default function FeaturedNews() {
@@ -12,7 +12,7 @@ export default function FeaturedNews() {
     async function loadFeaturedNews() {
       try {
         setLoading(true)
-        const response = await newsApi.getFeaturedNews()
+        const response = await newsService.getFeaturedNews()
         setFeaturedNews(response.data)
       } catch (error) {
         console.error('Error loading featured news:', error)

@@ -21,7 +21,6 @@ import NotFoundPage from '@/pages/errors/NotFoundPage'
 import UnauthorizedPage from '@/pages/errors/UnauthorizedPage'
 import { adminRoutes } from './adminRoutes'
 import { withAuth } from './guards'
-
 export const router = createBrowserRouter([
   {
     element: <MainLayout />,
