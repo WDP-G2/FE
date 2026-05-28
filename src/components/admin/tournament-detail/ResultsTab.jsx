@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Award } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Badge from '@/components/admin/ui/Badge'
 import Card from '@/components/admin/ui/Card'
 import { SimpleTable } from '@/components/admin/ui/Panel'
@@ -13,6 +13,9 @@ export default function ResultsTab({ tournament }) {
       {tournament.races.map((race) => {
         const open = expanded === race.id
         const results = resultsFor(race)
+        const champion = results[0]?.horse ?? 'Chưa có'
+        const prizes = race.prizes || {}
+
         return (
           <Card key={race.id} className="overflow-hidden">
             <button
@@ -27,29 +30,34 @@ export default function ResultsTab({ tournament }) {
                   <Badge tone={toneForStatus(race.status)}>{race.status}</Badge>
                 </span>
                 <span className="text-sm text-white/55">
-                  {race.date} · {race.time} · Quán quân: {results[0].horse}
+                  {race.date} · {race.time} · Quán quân: {champion}
                 </span>
               </span>
               <span className="font-bold text-[#dda50e]">{formatVnd(getTotalPrize(race))}</span>
               <ArrowRight className={`h-5 w-5 text-white/45 transition ${open ? 'rotate-90' : ''}`} />
             </button>
-            {open && (
-              <SimpleTable
-                headers={['Hạng', 'Ngựa', 'Chủ ngựa', 'Jockey', 'Thời gian', 'Thưởng']}
-                rows={results.map((item) => [
-                  `#${item.position}`,
-                  item.horse,
-                  item.owner,
-                  item.jockey,
-                  item.time,
-                  item.position < 4
-                    ? formatVnd(
-                        [race.prizes.first, race.prizes.second, race.prizes.third][item.position - 1],
-                      )
-                    : '—',
-                ])}
-              />
-            )}
+            {open &&
+              (results.length ? (
+                <SimpleTable
+                  headers={['Hạng', 'Ngựa', 'Chủ ngựa', 'Jockey', 'Thời gian', 'Thưởng']}
+                  rows={results.map((item) => [
+                    `#${item.position}`,
+                    item.horse,
+                    item.owner,
+                    item.jockey,
+                    item.time,
+                    item.position < 4
+                      ? formatVnd(
+                          [prizes.first, prizes.second, prizes.third][item.position - 1] || 0,
+                        )
+                      : '—',
+                  ])}
+                />
+              ) : (
+                <p className="border-t border-white/10 px-6 py-8 text-center text-white/55">
+                  Chưa có kết quả cho cuộc đua này.
+                </p>
+              ))}
           </Card>
         )
       })}

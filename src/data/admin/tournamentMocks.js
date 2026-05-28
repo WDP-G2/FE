@@ -29,7 +29,6 @@ export function createRaces(prefix, counts, datePrefix = '2026-06', startDay = 1
       maxHorses: 12,
       registered,
       entryFee: 5000000 + index * 1000000,
-      deposit: 10000000,
       regDeadline: `${datePrefix}-${String(Math.max(1, startDay - 5 + index)).padStart(2, '0')}`,
       checkIn: '13:00',
       status: no < 3 ? 'Mở đăng ký' : 'Sắp diễn ra',
@@ -56,7 +55,7 @@ export const detailTournaments = {
     description:
       'Giải đua ngựa lớn nhất Việt Nam năm 2026 với sự tham gia của hơn 100 ngựa thuần chủng từ khắp Đông Nam Á.',
     rules:
-      '1. Ngựa phải có giấy chứng nhận sức khỏe hợp lệ.\n2. Jockey phải có chứng chỉ FIA.\n3. Tiền cọc hoàn lại sau khi kết thúc giải.\n4. Kiểm tra doping bắt buộc.',
+      '1. Ngựa phải có giấy chứng nhận sức khỏe hợp lệ.\n2. Jockey phải có chứng chỉ FIA.\n3. Kiểm tra doping bắt buộc.',
     races: createRaces('vgp', [8, 7, 7, 7, 7, 6]),
   },
   'saigon-derby-2026': {

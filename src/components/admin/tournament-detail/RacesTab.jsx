@@ -319,14 +319,11 @@ function RaceRegistrations({ race }) {
     <Card>
       <PanelHeader icon={Users} title="Đăng ký cuộc đua" subtitle={`${registrations.length} hồ sơ đăng ký`} />
       <SimpleTable
-        headers={['Ngựa', 'Chủ ngựa', 'Jockey', 'Tiền cọc', 'Duyệt']}
+        headers={['Ngựa', 'Chủ ngựa', 'Jockey', 'Duyệt']}
         rows={registrations.map((item) => [
           item.horse,
           item.owner,
           item.jockey,
-          <Badge key="d" tone={item.deposit === 'Đã thanh toán' ? 'green' : 'red'}>
-            {item.deposit}
-          </Badge>,
           <Badge key="a" tone={item.approval === 'Đã duyệt' ? 'green' : 'gold'}>
             {item.approval}
           </Badge>,

@@ -12,7 +12,6 @@ import {
   Plus,
   Search,
   Settings,
-  Trash2,
   Trophy,
   Users,
 } from 'lucide-react'
@@ -25,6 +24,7 @@ const tournaments = [
     status: 'Đang mở đăng ký',
     location: 'Sân đua Phú Thọ, TP. HCM',
     startDate: '2026-06-10',
+    endDate: '2026-06-15',
     raceCount: 6,
     registrations: 42,
     banner:
@@ -36,6 +36,7 @@ const tournaments = [
     status: 'Đang diễn ra',
     location: 'Sân đua Phú Thọ, TP. HCM',
     startDate: '2026-07-15',
+    endDate: '2026-07-20',
     raceCount: 5,
     registrations: 40,
     banner:
@@ -58,6 +59,7 @@ const tournaments = [
     status: 'Nháp',
     location: 'Sân đua Đà Lạt',
     startDate: '2026-03-10',
+    endDate: '2026-03-14',
     raceCount: 4,
     registrations: 36,
     banner:
@@ -224,6 +226,11 @@ function StatusBadge({ status }) {
   )
 }
 
+function formatTournamentDate(value, label) {
+  if (!value) return `${label}: —`
+  return `${label}: ${value}`
+}
+
 function TournamentCard({ tournament }) {
   return (
     <article className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.045]">
@@ -238,8 +245,15 @@ function TournamentCard({ tournament }) {
 
       <div className="p-6">
         <div className="grid grid-cols-2 gap-x-5 gap-y-4 border-b border-white/10 pb-6 text-base text-white/60">
-          <CardMeta icon={MapPin} text={tournament.location} />
-          <CardMeta icon={CalendarDays} text={tournament.startDate} />
+          <CardMeta icon={MapPin} text={tournament.location} className="col-span-2" />
+          <CardMeta
+            icon={CalendarDays}
+            text={formatTournamentDate(tournament.startDate, 'Bắt đầu')}
+          />
+          <CardMeta
+            icon={CalendarDays}
+            text={formatTournamentDate(tournament.endDate, 'Kết thúc')}
+          />
           <CardMeta icon={Flag} text={`${tournament.raceCount} cuộc đua`} />
           <CardMeta icon={Users} text={`${tournament.registrations} đăng ký`} />
         </div>
@@ -254,9 +268,6 @@ function TournamentCard({ tournament }) {
           </Link>
           <ActionButton label="Chỉnh sửa">
             <Pencil className="h-5 w-5" />
-          </ActionButton>
-          <ActionButton label="Xóa giải đấu">
-            <Trash2 className="h-5 w-5" />
           </ActionButton>
         </div>
       </div>
@@ -274,6 +285,7 @@ function TournamentTable({ tournaments: rows }) {
               <th className="px-7 py-5">Giải đấu</th>
               <th className="px-7 py-5">Địa điểm</th>
               <th className="px-7 py-5">Ngày bắt đầu</th>
+              <th className="px-7 py-5">Ngày kết thúc</th>
               <th className="px-7 py-5">Số cuộc đua</th>
               <th className="px-7 py-5">Trạng thái</th>
               <th className="px-7 py-5">Thao tác</th>
@@ -284,7 +296,8 @@ function TournamentTable({ tournaments: rows }) {
               <tr key={tournament.id} className="border-b border-white/5 text-white/70 last:border-0">
                 <td className="px-7 py-5 font-semibold text-white">{tournament.name}</td>
                 <td className="px-7 py-5">{tournament.location}</td>
-                <td className="px-7 py-5">{tournament.startDate}</td>
+                <td className="px-7 py-5">{tournament.startDate || '—'}</td>
+                <td className="px-7 py-5">{tournament.endDate || '—'}</td>
                 <td className="px-7 py-5">{tournament.raceCount}</td>
                 <td className="px-7 py-5">
                   <StatusBadge status={tournament.status} />
@@ -303,9 +316,9 @@ function TournamentTable({ tournaments: rows }) {
   )
 }
 
-function CardMeta({ icon: Icon, text }) {
+function CardMeta({ icon: Icon, text, className = '' }) {
   return (
-    <span className="flex min-w-0 items-center gap-3">
+    <span className={`flex min-w-0 items-center gap-3 ${className}`}>
       <Icon className="h-5 w-5 shrink-0 text-[#dda50e]" />
       <span className="truncate">{text}</span>
     </span>

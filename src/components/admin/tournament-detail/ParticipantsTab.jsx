@@ -11,9 +11,6 @@ export default function ParticipantsTab({ tournament }) {
       person.horse,
       person.owner,
       person.jockey,
-      <Badge key="dep" tone={person.deposit === 'Đã thanh toán' ? 'green' : 'red'}>
-        {person.deposit}
-      </Badge>,
       <Badge key="approve" tone={person.approval === 'Đã duyệt' ? 'green' : 'gold'}>
         {person.approval}
       </Badge>,
@@ -28,7 +25,7 @@ export default function ParticipantsTab({ tournament }) {
         subtitle="Tổng hợp ngựa đăng ký xuyên suốt các cuộc đua"
       />
       <SimpleTable
-        headers={['Cuộc đua', 'Ngựa', 'Chủ ngựa', 'Jockey', 'Cọc', 'Trạng thái']}
+        headers={['Cuộc đua', 'Ngựa', 'Chủ ngựa', 'Jockey', 'Trạng thái']}
         rows={rows}
       />
     </Card>

@@ -9,7 +9,6 @@ import {
   ResultsTab,
   ScheduleTab,
   SettingsTab,
-  StatisticsTab,
   TournamentHero,
   detailTabs,
 } from '@/components/admin/tournament-detail'
@@ -71,13 +70,6 @@ export default function AdminTournamentDetailPage() {
       {selectedTab === 'participants' && <ParticipantsTab tournament={tournament} />}
       {selectedTab === 'schedule' && <ScheduleTab tournament={tournament} />}
       {selectedTab === 'results' && <ResultsTab tournament={tournament} />}
-      {selectedTab === 'stats' && (
-        <StatisticsTab
-          tournament={tournament}
-          totalPrize={totalPrize}
-          totalRegistered={totalRegistered}
-        />
-      )}
       {selectedTab === 'settings' && (
         <SettingsTab tournament={tournament} setTournament={setTournament} />
       )}
