@@ -1,13 +1,11 @@
-import { create } from "zustand";
-import { authService } from "@/services/authService";
-import {
-  getStoredToken,
-  setStoredToken,
-  removeStoredToken,
-} from "@/utils/tokenStorage";
-import { isTokenExpired, getRoleFromToken } from "@/utils/jwtDecode";
-import { applyAuthToState } from "@/utils/mapAuthResponse";
-import { normalizeRole } from "@/utils/roleRedirect";
+import { create } from 'zustand'
+import { authService } from '@/services/authService'
+import { getStoredToken, setStoredToken, removeStoredToken } from '@/utils/tokenStorage'
+import { isTokenExpired, getRoleFromToken } from '@/utils/jwtDecode'
+import { applyAuthToState } from '@/utils/mapAuthResponse'
+import { normalizeRole } from '@/utils/roleRedirect'
+import { horseOwnerAccount } from '@/pages/horse-owner/data'
+import { jockeyAccount } from '@/pages/jockey/data'
 
 function persistLogin(auth) {
   const { token, user, role, isAuthenticated } = applyAuthToState(auth);
@@ -63,9 +61,35 @@ export const useAuthStore = create((set, get) => ({
   },
 
   login: async ({ email, password }) => {
-    const auth = await authService.login({ email, password });
-    const session = persistLogin(auth);
-    set({ ...session, isLoading: false });
+    const mockEmail = email?.trim().toLowerCase()
+    const ownerEmail = horseOwnerAccount.email.toLowerCase()
+    if (mockEmail === ownerEmail && password === horseOwnerAccount.password) {
+      const mockSession = {
+        token: horseOwnerAccount.token,
+        user: horseOwnerAccount.user,
+        role: normalizeRole(horseOwnerAccount.user.role),
+        isAuthenticated: true,
+      }
+      setStoredToken(mockSession.token)
+      set({ ...mockSession, isLoading: false })
+      return { auth: mockSession, user: mockSession.user }
+    }
+    const jockeyEmail = jockeyAccount.email.toLowerCase()
+    if (mockEmail === jockeyEmail && password === jockeyAccount.password) {
+      const mockSession = {
+        token: jockeyAccount.token,
+        user: jockeyAccount.user,
+        role: normalizeRole(jockeyAccount.user.role),
+        isAuthenticated: true,
+      }
+      setStoredToken(mockSession.token)
+      set({ ...mockSession, isLoading: false })
+      return { auth: mockSession, user: mockSession.user }
+    }
+
+    const auth = await authService.login({ email, password })
+    const session = persistLogin(auth)
+    set({ ...session, isLoading: false })
 
     if (!session.user?.email) {
       const user = await get().fetchProfile();
