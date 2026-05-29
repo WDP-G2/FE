@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Calendar,
@@ -20,22 +21,39 @@ import {
 } from "../admin/AdminLayout";
 import {
   jockeyProfile,
-  invitations,
   schedules,
   jockeyResults,
   jockeyNotifications,
   assignedHorses,
   fmt,
 } from "./data";
+import { invitationService } from "@/services/invitationService";
 import { JockeyQuickAction } from "./components/JockeyQuickAction";
 import { JockeyStatRow } from "./components/JockeyStatRow";
 
 export function JockeyDashboard() {
+  const [invs, setInvs] = useState([]);
   const unread = jockeyNotifications.filter((n) => !n.read).length;
-  const pendingInvitations = invitations.filter(
-    (i) => i.status === "Chờ xử lý",
+  const pendingInvitations = useMemo(
+    () => invs.filter((i) => i.status === "Chờ xử lý"),
+    [invs],
   );
   const totalPrize = jockeyResults.reduce((s, r) => s + r.prize, 0);
+
+  useEffect(() => {
+    let alive = true;
+    invitationService
+      .listMine()
+      .then((list) => {
+        if (alive) setInvs(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (alive) setInvs([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <JockeyLayout

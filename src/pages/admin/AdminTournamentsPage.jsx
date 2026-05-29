@@ -8,7 +8,6 @@ import {
   LayoutGrid,
   List,
   MapPin,
-  Pencil,
   Plus,
   Search,
   Settings,
@@ -271,17 +270,14 @@ function TournamentCard({ tournament }) {
           />
         </div>
 
-        <div className="mt-5 flex items-center gap-4">
+        <div className="mt-5">
           <Link
             to={`/admin/tournaments/${tournament.id}`}
-            className="inline-flex h-14 flex-1 items-center justify-center gap-3 rounded-2xl bg-[#dda50e] font-semibold shadow-lg shadow-[#d4a017]/20 transition hover:bg-[#c8940f]"
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-[#dda50e] font-semibold shadow-lg shadow-[#d4a017]/20 transition hover:bg-[#c8940f]"
           >
             <Settings className="h-5 w-5" />
             Quản lý
           </Link>
-          <ActionButton label="Chỉnh sửa">
-            <Pencil className="h-5 w-5" />
-          </ActionButton>
         </div>
       </div>
     </article>
@@ -343,17 +339,5 @@ function CardMeta({ icon: Icon, text, className = '' }) {
       <Icon className="h-5 w-5 shrink-0 text-[#dda50e]" />
       <span className="truncate">{text}</span>
     </span>
-  );
-}
-
-function ActionButton({ children, label }) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      className="rounded-xl p-3 text-white/60 transition hover:bg-white/10 hover:text-white"
-    >
-      {children}
-    </button>
   );
 }

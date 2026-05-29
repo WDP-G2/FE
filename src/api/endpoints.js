@@ -12,6 +12,8 @@ export const ENDPOINTS = {
   users: {
     byId: (id) => `/users/${id}`,
     profile: "/users/me",
+    jockeyDirectory: "/users/jockeys/directory",
+    byRole: (role) => `/users?role=${encodeURIComponent(role)}`,
   },
   admin: {
     users: "/admin/users",
@@ -35,6 +37,8 @@ export const ENDPOINTS = {
     results: (id, raceId) => `/tournaments/${id}/races/${raceId}/results`,
     registrations: (id) => `/tournaments/${id}/registrations`,
     ownerRegister: (id) => `/tournaments/${id}/owner/registrations`,
+    registrationStatus: (id, registrationId) =>
+      `/tournaments/${id}/registrations/${registrationId}`,
   },
 
   blood: {
@@ -44,6 +48,12 @@ export const ENDPOINTS = {
   horses: {
     list: "/horses",
     byId: (id) => `/horses/${id}`,
+  },
+  invitations: {
+    list: "/invitations",
+    me: "/invitations/me",
+    sent: "/invitations/sent",
+    respond: (id) => `/invitations/${id}/respond`,
   },
   news: {
     all: "/news",

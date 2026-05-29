@@ -34,28 +34,30 @@ export function HorseOwnerRegistrations() {
   const [registrations, setRegistrations] = useState([]);
   const [selected, setSelected] = useState(null);
 
+  const loadRegistrations = async () => {
+    try {
+      setLoading(true);
+      const items = await tournamentService.listOwnerRegistrations();
+      setRegistrations(items);
+    } catch (error) {
+      console.error("Error loading owner registrations:", error);
+      toast.error("Không thể tải danh sách đăng ký");
+      setRegistrations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let active = true;
+    loadRegistrations();
+  }, []);
 
-    const load = async () => {
-      try {
-        setLoading(true);
-        const items = await tournamentService.listOwnerRegistrations();
-        if (active) setRegistrations(items);
-      } catch (error) {
-        console.error("Error loading owner registrations:", error);
-        toast.error("Không thể tải danh sách đăng ký");
-        if (active) setRegistrations([]);
-      } finally {
-        if (active) setLoading(false);
-      }
+  useEffect(() => {
+    const onFocus = () => {
+      loadRegistrations();
     };
-
-    load();
-
-    return () => {
-      active = false;
-    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const filtered = useMemo(() => {

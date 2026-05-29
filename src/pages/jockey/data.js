@@ -1,19 +1,3 @@
-export const jockeyAccount = {
-  email: "jockey.demo@horseracing.vn",
-  password: "Jockey@123",
-  user: {
-    id: "jockey-001",
-    userId: "jockey-001",
-    username: "jockey_demo",
-    email: "jockey.demo@horseracing.vn",
-    role: "JOCKEY",
-    fullName: "Nguyễn Văn A",
-    phone: "0912345678",
-  },
-  token:
-    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJqb2NrZXktMDAxIiwicm9sZSI6IkpPQ0tFWSIsImV4cCI6NDEwMDkwODgwMCwiZW1haWwiOiJqb2NrZXkuZGVtb0Bob3JzZXJhY2luZy52biJ9.",
-};
-
 export const jockeyProfile = {
   id: "jk1",
   name: "Nguyễn Văn A",

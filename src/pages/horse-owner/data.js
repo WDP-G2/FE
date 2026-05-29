@@ -1,20 +1,3 @@
-export const horseOwnerAccount = {
-  email: "owner.demo@horseracing.vn",
-  password: "Owner@123",
-  user: {
-    id: "owner-001",
-    userId: "owner-001",
-    username: "owner_demo",
-    email: "owner.demo@horseracing.vn",
-    role: "OWNER",
-    fullName: "Nguyễn Hoàng Minh",
-    phone: "0909123456",
-  },
-  // JWT giả lập (alg=none) để state auth local hoạt động khi reload
-  token:
-    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJvd25lci0wMDEiLCJyb2xlIjoiT1dORVIiLCJleHAiOjQxMDA5MDg4MDAsImVtYWlsIjoib3duZXIuZGVtb0Bob3JzZXJhY2luZy52biJ9.",
-};
-
 export const horses = [
   {
     id: "h1",
@@ -150,65 +133,6 @@ export const registrations = [
     status: "Completed",
     statusTone: "blue",
     checkedIn: true,
-  },
-];
-
-export const jockeys = [
-  {
-    id: "j1",
-    name: "Nguyễn Văn A",
-    age: 28,
-    experience: 8,
-    wins: 45,
-    races: 112,
-    winRate: 40.2,
-    ranking: 3,
-    license: "VN-JK-001",
-    status: "Sẵn sàng",
-    statusTone: "green",
-    assigned: "Golden Thunder",
-  },
-  {
-    id: "j2",
-    name: "Trần Văn B",
-    age: 32,
-    experience: 12,
-    wins: 68,
-    races: 180,
-    winRate: 37.8,
-    ranking: 5,
-    license: "VN-JK-002",
-    status: "Sẵn sàng",
-    statusTone: "green",
-    assigned: "Silver Storm",
-  },
-  {
-    id: "j3",
-    name: "Lê Minh C",
-    age: 25,
-    experience: 4,
-    wins: 18,
-    races: 60,
-    winRate: 30.0,
-    ranking: 12,
-    license: "VN-JK-007",
-    status: "Bận",
-    statusTone: "red",
-    assigned: null,
-  },
-  {
-    id: "j4",
-    name: "Phạm Quang D",
-    age: 30,
-    experience: 10,
-    wins: 55,
-    races: 145,
-    winRate: 37.9,
-    ranking: 4,
-    license: "VN-JK-004",
-    status: "Sẵn sàng",
-    statusTone: "green",
-    assigned: null,
   },
 ];
 

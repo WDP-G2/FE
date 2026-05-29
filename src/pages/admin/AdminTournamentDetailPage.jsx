@@ -26,6 +26,7 @@ export default function AdminTournamentDetailPage() {
   const [loading, setLoading] = useState(!createdTournament);
   const [saving, setSaving] = useState(false);
   const [savingRace, setSavingRace] = useState(false);
+  const [updatingRegistrationId, setUpdatingRegistrationId] = useState("");
   const selectedTab = detailTabs.some(
     (tab) => tab.key === searchParams.get("tab"),
   )
@@ -107,6 +108,28 @@ export default function AdminTournamentDetailPage() {
     }
   };
 
+  const handleUpdateRegistrationStatus = async (registrationId, status) => {
+    if (!tournament || !registrationId) return;
+    setUpdatingRegistrationId(registrationId);
+    try {
+      const updated = await tournamentService.updateRegistrationStatus(
+        tournament.id,
+        registrationId,
+        status,
+      );
+      setTournament(updated);
+      toast.success(
+        status === "Đã duyệt"
+          ? "Đã duyệt đăng ký — chủ ngựa sẽ thấy trạng thái mới"
+          : "Đã cập nhật trạng thái đăng ký",
+      );
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || "Không thể cập nhật trạng thái");
+    } finally {
+      setUpdatingRegistrationId("");
+    }
+  };
+
   const handleRemoveRace = async (race) => {
     if (!tournament || !race?.id) return;
     setSavingRace(true);
@@ -180,11 +203,17 @@ export default function AdminTournamentDetailPage() {
           onAddRace={handleAddRace}
           onSaveRace={handleSaveRace}
           onRemoveRace={handleRemoveRace}
+          onUpdateRegistrationStatus={handleUpdateRegistrationStatus}
+          updatingRegistrationId={updatingRegistrationId}
           savingRace={savingRace}
         />
       )}
       {selectedTab === "participants" && (
-        <ParticipantsTab tournament={tournament} />
+        <ParticipantsTab
+          tournament={tournament}
+          onUpdateRegistrationStatus={handleUpdateRegistrationStatus}
+          updatingRegistrationId={updatingRegistrationId}
+        />
       )}
       {selectedTab === "schedule" && <ScheduleTab tournament={tournament} />}
       {selectedTab === "results" && <ResultsTab tournament={tournament} />}

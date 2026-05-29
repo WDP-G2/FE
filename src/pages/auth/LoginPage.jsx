@@ -126,6 +126,13 @@ export default function LoginPage() {
             Đăng ký
           </Link>
         </p>
+
+        <div className="rounded-xl border border-[#D4A017]/25 bg-[#D4A017]/10 px-4 py-3 text-xs text-gray-600">
+          <p className="font-semibold text-gray-700">Tài khoản mẫu (MongoDB Atlas)</p>
+          <p className="mt-1">Admin: admin@hr.vn / Password123!</p>
+          <p>Owner: owner1@hr.vn / Password123!</p>
+          <p>Jockey: jockey1@hr.vn / Password123!</p>
+        </div>
       </form>
     </AuthLayout>
   )

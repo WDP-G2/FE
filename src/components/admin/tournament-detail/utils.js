@@ -1,14 +1,15 @@
 export function registrationsFor(race) {
-  if (Array.isArray(race.registrations) && race.registrations.length) {
+  if (!race) return [];
+  if (Array.isArray(race.registrations)) {
     return race.registrations;
   }
-  const count = race.registered || 0;
-  return Array.from({ length: count }, (_, index) => ({
-    horse: `Ngựa #${index + 1}`,
-    owner: "Chưa cập nhật",
-    jockey: "Chưa cập nhật",
-    approval: index % 4 === 3 ? "Chờ duyệt" : "Đã duyệt",
-  }));
+  return [];
+}
+
+export function approvedRegistrationsFor(race) {
+  return registrationsFor(race).filter(
+    (item) => item.approval === "Đã duyệt",
+  );
 }
 
 export function resultsFor(race) {
@@ -24,10 +25,10 @@ export function resultsFor(race) {
         ...item,
       }));
   }
-  return registrationsFor(race).map((member, index) => ({
+  return approvedRegistrationsFor(race).map((member, index) => ({
     ...member,
     position: index + 1,
-    time: `01:${String(12 + index).padStart(2, "0")}.${String(24 + index * 3).padStart(2, "0")}`,
+    time: "—",
   }));
 }
 

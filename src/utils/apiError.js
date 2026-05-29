@@ -3,5 +3,5 @@ export function getApiErrorMessage(error) {
   if (data?.data && typeof data.data === 'object') {
     return Object.values(data.data).join(', ')
   }
-  return data?.message || error?.message || 'Đã có lỗi xảy ra'
+  return data?.message || data?.error || error?.message || 'Đã có lỗi xảy ra'
 }

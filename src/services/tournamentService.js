@@ -293,6 +293,15 @@ export const tournamentService = {
     return mapTournamentFromApi(item);
   },
 
+  async updateRegistrationStatus(tournamentId, registrationId, status) {
+    const item = await axiosClient
+      .patch(ENDPOINTS.tournaments.registrationStatus(tournamentId, registrationId), {
+        status,
+      })
+      .then(unwrapResponse);
+    return mapTournamentFromApi(item);
+  },
+
   async listOwnerRegistrations() {
     const list = await axiosClient
       .get(ENDPOINTS.tournaments.ownerRegistrations)

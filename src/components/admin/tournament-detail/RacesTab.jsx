@@ -23,6 +23,7 @@ import {
 } from "@/components/admin/ui/Panel";
 import { primaryButton } from "@/components/admin/ui/styles";
 import {
+  approvedRegistrationsFor,
   formatVnd,
   getTotalPrize,
   registrationsFor,
@@ -36,7 +37,9 @@ export default function RacesTab({
   onAddRace,
   onSaveRace,
   onRemoveRace,
+  onUpdateRegistrationStatus,
   savingRace,
+  updatingRegistrationId,
 }) {
   const [selectedId, setSelectedId] = useState(tournament.races[0]?.id);
   const [panel, setPanel] = useState("info");
@@ -225,7 +228,13 @@ export default function RacesTab({
             saving={savingRace}
           />
         )}
-        {panel === "registrations" && <RaceRegistrations race={selected} />}
+        {panel === "registrations" && (
+          <RaceRegistrations
+            race={selected}
+            onUpdateStatus={onUpdateRegistrationStatus}
+            updatingId={updatingRegistrationId}
+          />
+        )}
         {panel === "gates" && <RaceGates race={selected} />}
         {panel === "race-results" && <RaceResults race={selected} />}
       </div>
@@ -436,26 +445,67 @@ function RacePrizes({ race, updateRace, onSave, saving }) {
   );
 }
 
-function RaceRegistrations({ race }) {
+function RaceRegistrations({ race, onUpdateStatus, updatingId }) {
   const registrations = registrationsFor(race);
+
   return (
     <Card>
       <PanelHeader
         icon={Users}
         title="Đăng ký cuộc đua"
-        subtitle={`${registrations.length} hồ sơ đăng ký`}
+        subtitle={`${registrations.length} hồ sơ đăng ký từ database`}
       />
-      <SimpleTable
-        headers={["Ngựa", "Chủ ngựa", "Jockey", "Duyệt"]}
-        rows={registrations.map((item) => [
-          item.horse,
-          item.owner,
-          item.jockey,
-          <Badge key="a" tone={item.approval === "Đã duyệt" ? "green" : "gold"}>
-            {item.approval}
-          </Badge>,
-        ])}
-      />
+      {registrations.length === 0 ? (
+        <div className="p-8 text-center text-sm text-white/45">
+          Chưa có đăng ký nào cho cuộc đua này. Chủ ngựa đăng ký xong sẽ hiện
+          tại đây để admin duyệt.
+        </div>
+      ) : (
+        <SimpleTable
+          headers={["Ngựa", "Chủ ngựa", "Jockey", "Trạng thái", "Thao tác"]}
+          rows={registrations.map((item) => [
+            item.horse,
+            item.owner,
+            item.jockey || "Chưa chọn",
+            <Badge
+              key={`status-${item.id}`}
+              tone={
+                item.approval === "Đã duyệt"
+                  ? "green"
+                  : item.approval === "Từ chối"
+                    ? "red"
+                    : "gold"
+              }
+            >
+              {item.approval}
+            </Badge>,
+            <div key={`actions-${item.id}`} className="flex flex-wrap gap-2">
+              {item.approval === "Chờ duyệt" ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={updatingId === item.id}
+                    onClick={() => onUpdateStatus?.(item.id, "Đã duyệt")}
+                    className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/30 disabled:opacity-50"
+                  >
+                    Duyệt
+                  </button>
+                  <button
+                    type="button"
+                    disabled={updatingId === item.id}
+                    onClick={() => onUpdateStatus?.(item.id, "Từ chối")}
+                    className="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/25 disabled:opacity-50"
+                  >
+                    Từ chối
+                  </button>
+                </>
+              ) : (
+                <span className="text-xs text-white/40">—</span>
+              )}
+            </div>,
+          ])}
+        />
+      )}
     </Card>
   );
 }
@@ -469,11 +519,11 @@ function RaceGates({ race }) {
         subtitle="Phân làn các ngựa đã được duyệt"
       />
       <div className="grid gap-4 p-6 md:grid-cols-2">
-        {registrationsFor(race)
+        {approvedRegistrationsFor(race)
           .slice(0, race.maxHorses)
           .map((item, index) => (
             <div
-              key={item.horse}
+              key={item.id || item.horse}
               className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4"
             >
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#dda50e] text-xl font-bold">

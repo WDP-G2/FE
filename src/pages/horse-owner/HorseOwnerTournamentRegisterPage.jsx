@@ -163,9 +163,12 @@ export function HorseOwnerTournamentRegisterPage() {
             : data.horses?.find((horse) => horse.available !== false)?.id || "",
         );
         setJockeyId((current) =>
-          data.jockeys?.some((jockey) => jockey.id === current)
+          data.jockeys?.some(
+            (jockey) => jockey.id === current && jockey.available !== false,
+          )
             ? current
-            : data.jockeys?.[0]?.id || "",
+            : data.jockeys?.find((jockey) => jockey.available !== false)?.id ||
+                "",
         );
       } catch (err) {
         console.error("Error loading owner race options:", err);
@@ -201,6 +204,19 @@ export function HorseOwnerTournamentRegisterPage() {
     });
   }, [options.horses, search]);
 
+  const filteredJockeys = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return options.jockeys;
+    return options.jockeys.filter((jockey) => {
+      const name = (jockey.fullName || jockey.name || "").toLowerCase();
+      const email = (jockey.email || "").toLowerCase();
+      const username = (jockey.username || "").toLowerCase();
+      return (
+        name.includes(query) || email.includes(query) || username.includes(query)
+      );
+    });
+  }, [options.jockeys, search]);
+
   const handleSubmit = async () => {
     if (!selectedRaceId) {
       toast.error("Vui lòng chọn race");
@@ -212,6 +228,12 @@ export function HorseOwnerTournamentRegisterPage() {
     }
     if (!jockeyId) {
       toast.error("Vui lòng chọn jockey");
+      return;
+    }
+    if (selectedJockey?.available === false) {
+      toast.error(
+        selectedJockey.unavailableReason || "Jockey không khả dụng cho race này",
+      );
       return;
     }
 
@@ -441,9 +463,14 @@ export function HorseOwnerTournamentRegisterPage() {
                 <User className="h-4 w-4 text-[#dda50e]" />
                 <h3 className="text-base font-bold text-white">Chọn jockey</h3>
               </div>
+              <p className="mb-4 text-xs text-white/45">
+                Chỉ hiện jockey đã chấp nhận lời mời của bạn cho giải này. Vào
+                mục Jockey → Mời thi đấu (chọn đúng giải) và chờ jockey chấp
+                nhận trước khi đăng ký.
+              </p>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {options.jockeys.length ? (
-                  options.jockeys.map((jockey) => (
+                {filteredJockeys.length ? (
+                  filteredJockeys.map((jockey) => (
                     <div
                       key={jockey.id}
                       className={`rounded-3xl border p-4 text-left transition ${
@@ -454,8 +481,11 @@ export function HorseOwnerTournamentRegisterPage() {
                     >
                       <button
                         type="button"
-                        onClick={() => setJockeyId(jockey.id)}
-                        className="block w-full text-left"
+                        onClick={() => {
+                          if (jockey.available === false) return;
+                          setJockeyId(jockey.id);
+                        }}
+                        className="block w-full text-left disabled:cursor-not-allowed"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -466,8 +496,18 @@ export function HorseOwnerTournamentRegisterPage() {
                               {jockey.username || "jockey"}
                             </div>
                           </div>
-                          <Pill tone={jockeyId === jockey.id ? "gold" : "gray"}>
-                            {jockey.available === false ? "Bận" : "Rảnh"}
+                          <Pill
+                            tone={
+                              jockey.available === false
+                                ? "red"
+                                : jockey.relationship === "Đã nhận lời mời"
+                                  ? "green"
+                                  : "gold"
+                            }
+                          >
+                            {jockey.available === false
+                              ? "Không chọn được"
+                              : jockey.relationship || "Có thể chọn"}
                           </Pill>
                         </div>
                         <div className="mt-3 space-y-1 text-sm text-white/65">
@@ -494,7 +534,9 @@ export function HorseOwnerTournamentRegisterPage() {
                   ))
                 ) : (
                   <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-6 text-center text-white/45 md:col-span-2 xl:col-span-3">
-                    Không có jockey rảnh cho race này.
+                    {options.jockeys.length === 0
+                      ? "Chưa có jockey chấp nhận lời mời cho giải này. Mời đúng giải tại mục Jockey và chờ jockey bấm Chấp nhận."
+                      : "Không tìm thấy jockey phù hợp với từ khóa tìm kiếm."}
                   </div>
                 )}
               </div>
