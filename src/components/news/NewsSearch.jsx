@@ -25,7 +25,7 @@ export default function NewsSearch({ onSearch }) {
             type="text"
             value={query}
             onChange={handleChange}
-            placeholder="Tim kiem tin tuc..."
+            placeholder="Tìm kiếm tin tức..."
             className="w-full rounded-2xl border-2 border-gray-200 bg-white py-5 pl-14 pr-6 text-lg font-medium text-[#1E3A5F] shadow-lg outline-none transition-all placeholder:text-[#1E3A5F]/40 hover:shadow-xl focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10"
           />
         </div>

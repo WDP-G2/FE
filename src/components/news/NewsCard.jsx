@@ -41,7 +41,7 @@ export default function NewsCard({ news }) {
         {news.featured && (
           <div className="absolute right-4 top-4">
             <span className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg">
-              Noi bat
+              Nổi bật
             </span>
           </div>
         )}
@@ -66,7 +66,7 @@ export default function NewsCard({ news }) {
 
         <div className="flex items-center justify-between border-t border-gray-100 pt-4">
           <div className="flex items-center gap-1 font-bold text-[#D4A017] transition-all group-hover:gap-2">
-            <span>Doc them</span>
+            <span>Đọc thêm</span>
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </div>
         </div>

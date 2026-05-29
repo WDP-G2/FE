@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Trophy } from 'lucide-react'
+import { ArrowLeft, Trophy } from 'lucide-react'
 
 const BG =
   'https://images.unsplash.com/photo-1507514604110-ba3347c457f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3JzZSUyMHJhY2luZyUyMGpvY2tleSUyMHByb2Zlc3Npb25hbHxlbnwxfHx8fDE3Nzg5MTU1NzB8MA&ixlib=rb-4.1.0&q=80&w=1080'
@@ -31,6 +31,16 @@ export default function AuthLayout({ children, title, subtitle }) {
             </div>
           )}
           {children}
+
+          <div className="mt-6 border-t border-gray-100 pt-5 text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center gap-2 text-sm font-medium text-gray-500 transition hover:text-[#D4A017]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Về trang chủ
+            </Link>
+          </div>
         </div>
       </div>
     </div>

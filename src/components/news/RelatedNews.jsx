@@ -33,7 +33,7 @@ export default function RelatedNews({ currentNewsId }) {
         setRelatedNews(response.data)
       } catch (error) {
         console.error('Error loading related news:', error)
-        toast.error('Khong the tai tin tuc lien quan')
+        toast.error('Không thể tải tin tức liên quan')
       } finally {
         setLoading(false)
       }
@@ -66,7 +66,7 @@ export default function RelatedNews({ currentNewsId }) {
     <div className="rounded-3xl border border-gray-100 bg-gradient-to-br from-[#FAFAFA] to-white p-8 shadow-xl">
       <h3 className="mb-8 flex items-center text-2xl font-bold text-[#1E3A5F]">
         <span className="mr-3 h-8 w-1.5 rounded-full bg-gradient-to-b from-[#D4A017] to-[#B8941F]" />
-        Tin tuc lien quan
+        Tin tức liên quan
       </h3>
 
       <div className="space-y-5">

@@ -174,7 +174,13 @@ export default function AdminNewsPage() {
                             : 'border-emerald-400/35 bg-emerald-500/15 text-emerald-300'
                         }`}
                       >
-                        {item.featured ? 'Nổi bật' : 'Đã xuất bản'}
+                        {item.featured
+                          ? 'Nổi bật'
+                          : item.status === 'draft'
+                            ? 'Nháp'
+                            : item.status === 'archived'
+                              ? 'Lưu trữ'
+                              : 'Đã xuất bản'}
                       </span>
                     </td>
                     <td className="px-6 py-5">{formatDate(item.createdAt)}</td>

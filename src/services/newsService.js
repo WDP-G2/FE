@@ -16,12 +16,12 @@ export function mapNewsArticle(article) {
     shortDescription: article.summary ?? "",
     content: article.content ?? "",
     thumbnail: article.imageUrl || article.thumbnail || FALLBACK_THUMBNAIL,
-    category: article.category || "Tin tuc",
+    category: article.category || "Tin tức",
     author:
       article.author ||
       article.authorName ||
       article.createdBy ||
-      "Ban quan tri",
+      "Ban quản trị",
     createdAt: publishedAt,
     updatedAt: article.updatedAt,
     featured: Boolean(article.featured),
@@ -119,66 +119,41 @@ export const newsService = {
     return { data: mapped };
   },
 
-  async createNews(payload, imageFile) {
+  async createNews(payload) {
     const body = {
       title: payload.title,
       summary: payload.summary ?? payload.shortDescription ?? "",
       content: payload.content,
       category: payload.category,
       featured: Boolean(payload.featured),
-      publishedAt: payload.publishedAt ?? new Date().toISOString().slice(0, 19),
+      status: payload.status ?? "published",
+      thumbnail: payload.thumbnail || payload.imageUrl || "",
+      imageUrl: payload.thumbnail || payload.imageUrl || "",
     };
-
-    if (imageFile) {
-      const formData = new FormData();
-      formData.append(
-        "data",
-        new Blob([JSON.stringify(body)], { type: "application/json" }),
-      );
-      formData.append("image", imageFile);
-      const article = await axiosClient
-        .post("/news", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        })
-        .then(unwrapResponse);
-      return { data: mapNewsArticle(article) };
-    }
 
     const article = await axiosClient.post("/news", body).then(unwrapResponse);
     return { data: mapNewsArticle(article) };
   },
 
-  async updateNews(id, payload, imageFile) {
+  async updateNews(id, payload) {
     const body = {
       title: payload.title,
       summary: payload.summary ?? payload.shortDescription ?? "",
       content: payload.content,
       category: payload.category,
       featured: Boolean(payload.featured),
+      status: payload.status,
+      thumbnail: payload.thumbnail || payload.imageUrl,
+      imageUrl: payload.thumbnail || payload.imageUrl,
     };
 
-    if (imageFile) {
-      const formData = new FormData();
-      formData.append(
-        "data",
-        new Blob([JSON.stringify(body)], { type: "application/json" }),
-      );
-      formData.append("image", imageFile);
-      const article = await axiosClient
-        .put(`/news/${id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        })
-        .then(unwrapResponse);
-      return { data: mapNewsArticle(article) };
-    }
-
     const article = await axiosClient
-      .put(`/news/${id}`, body)
+      .patch(`/news/${id}`, body)
       .then(unwrapResponse);
     return { data: mapNewsArticle(article) };
   },
 
   async deleteNews(id) {
-    await axiosClient.delete(`/news/${id}`).then(unwrapResponse);
+    await axiosClient.delete(`/news/${id}`);
   },
 };

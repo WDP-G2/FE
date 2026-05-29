@@ -29,7 +29,7 @@ export default function NewsDetailPage() {
       } catch (error) {
         console.error('Error loading news:', error)
         setNews(null)
-        toast.error('Khong the tai bai viet')
+        toast.error('Không thể tải bài viết')
       } finally {
         setLoading(false)
       }
@@ -60,13 +60,13 @@ export default function NewsDetailPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#FFF8F0] via-white to-[#FAFAFA] pb-16 pt-10">
         <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8">
-          <h2 className="mb-4 text-2xl font-bold text-gray-800">Khong tim thay bai viet</h2>
+          <h2 className="mb-4 text-2xl font-bold text-gray-800">Không tìm thấy bài viết</h2>
           <Link
             to="/news"
             className="inline-flex items-center font-semibold text-[#D4A017] hover:text-[#B8941F]"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Quay lai trang tin tuc
+            Quay lại trang tin tức
           </Link>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function NewsDetailPage() {
             className="group mb-10 inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-semibold text-[#1E3A5F] shadow-sm transition-all hover:border-[#D4A017]/30 hover:bg-[#FFF8F0] hover:text-[#D4A017] hover:shadow-md"
           >
             <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            Quay lai tin tuc
+            Quay lại tin tức
           </Link>
 
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
@@ -104,7 +104,7 @@ export default function NewsDetailPage() {
 
                 {news.featured && (
                   <div className="absolute right-6 top-6 rounded-full bg-red-500 px-5 py-2.5 text-sm font-bold text-white shadow-xl">
-                    Noi bat
+                    Nổi bật
                   </div>
                 )}
               </div>

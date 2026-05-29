@@ -18,7 +18,7 @@ export default function NewsPage() {
         return response.data
       } catch (error) {
         console.error('Error loading news:', error)
-        toast.error('Khong the tai tin tuc')
+        toast.error('Không thể tải tin tức')
         return []
       }
     },
@@ -45,16 +45,16 @@ export default function NewsPage() {
           <div className="pt-16 text-center">
             <div className="mb-8 inline-flex items-center space-x-2 rounded-full border border-[#D4A017]/20 bg-gradient-to-r from-[#D4A017]/10 to-[#D4A017]/5 px-5 py-2.5 shadow-sm">
               <Newspaper className="h-5 w-5 text-[#D4A017]" />
-              <span className="font-semibold text-[#D4A017]">Tin tuc va su kien</span>
+              <span className="font-semibold text-[#D4A017]">Tin tức và sự kiện</span>
             </div>
 
             <h1 className="mb-6 text-5xl font-bold leading-tight text-[#1E3A5F] md:text-7xl">
-              Tin tuc dua ngua
+              Tin tức đua ngựa
             </h1>
 
             <p className="mx-auto mb-12 max-w-3xl text-xl leading-relaxed text-[#1E3A5F]/60 md:text-2xl">
-              Cap nhat tin tuc moi nhat ve giai dau, ngua dua, jockey va cac su kien dac
-              biet.
+              Cập nhật tin tức mới nhất về giải đấu, ngựa đua, jockey và các sự kiện đặc
+              biệt.
             </p>
 
             <div className="mx-auto max-w-2xl">
@@ -72,7 +72,7 @@ export default function NewsPage() {
       <section className="bg-gradient-to-b from-white to-[#FAFAFA] py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-16 text-center">
-            <h2 className="mb-4 text-4xl font-bold text-[#1E3A5F]">Tat ca tin tuc</h2>
+            <h2 className="mb-4 text-4xl font-bold text-[#1E3A5F]">Tất cả tin tức</h2>
             <div className="mx-auto h-1 w-24 rounded-full bg-gradient-to-r from-[#D4A017] to-[#F5E6C8]" />
           </div>
 
@@ -105,8 +105,8 @@ export default function NewsPage() {
                 <div className="absolute inset-0 rounded-full bg-[#D4A017]/10 blur-2xl" />
                 <Newspaper className="relative mx-auto h-20 w-20 text-[#D4A017]/40" />
               </div>
-              <h3 className="mb-3 text-2xl font-bold text-[#1E3A5F]">Khong tim thay tin tuc</h3>
-              <p className="text-lg text-[#1E3A5F]/60">Hay thu tim kiem voi tu khoa khac.</p>
+              <h3 className="mb-3 text-2xl font-bold text-[#1E3A5F]">Không tìm thấy tin tức</h3>
+              <p className="text-lg text-[#1E3A5F]/60">Hãy thử tìm kiếm với từ khóa khác.</p>
             </div>
           )}
         </div>

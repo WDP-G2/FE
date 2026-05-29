@@ -16,7 +16,7 @@ export default function FeaturedNews() {
         setFeaturedNews(response.data)
       } catch (error) {
         console.error('Error loading featured news:', error)
-        toast.error('Khong the tai tin tuc noi bat')
+        toast.error('Không thể tải tin tức nổi bật')
       } finally {
         setLoading(false)
       }
@@ -58,7 +58,7 @@ export default function FeaturedNews() {
         <div className="mb-16 text-center">
           <div className="mb-6 inline-flex items-center space-x-3">
             <Star className="h-10 w-10 fill-[#D4A017] text-[#D4A017]" />
-            <h2 className="text-5xl font-bold text-[#1E3A5F]">Tin tuc noi bat</h2>
+            <h2 className="text-5xl font-bold text-[#1E3A5F]">Tin tức nổi bật</h2>
             <Star className="h-10 w-10 fill-[#D4A017] text-[#D4A017]" />
           </div>
           <div className="mx-auto h-1.5 w-32 rounded-full bg-gradient-to-r from-transparent via-[#D4A017] to-transparent" />

@@ -74,19 +74,27 @@ export default function AdminNewsForm({ articleId }) {
 
     try {
       setSaving(true);
+      if (imageFile && !form.thumbnail.trim()) {
+        toast.error(
+          "Chưa hỗ trợ upload file trực tiếp. Vui lòng dán URL ảnh vào ô bên dưới.",
+        );
+        return;
+      }
+
       const payload = {
         title: form.title.trim(),
         summary: form.shortDescription.trim(),
         content: form.content.trim(),
         category: form.category,
         featured: form.featured,
+        thumbnail: form.thumbnail.trim(),
       };
 
       if (isEdit) {
-        await newsService.updateNews(articleId, payload, imageFile);
+        await newsService.updateNews(articleId, payload);
         toast.success("Cập nhật bài viết thành công");
       } else {
-        await newsService.createNews(payload, imageFile);
+        await newsService.createNews(payload);
         toast.success("Tạo bài viết thành công");
       }
       navigate("/admin/news");
