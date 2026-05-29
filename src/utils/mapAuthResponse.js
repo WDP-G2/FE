@@ -4,9 +4,10 @@ import { normalizeRole } from "@/utils/roleRedirect";
 export function mapAuthResponseToUser(auth) {
   if (!auth) return null;
   const user = auth.user || auth;
+  const id = user.id || user.userId || user._id;
   return {
-    id: user.id || user.userId || user._id,
-    userId: user.userId || user.id || user._id,
+    id: id ? String(id) : "",
+    userId: id ? String(id) : "",
     username: user.username,
     email: user.email,
     role: user.role,

@@ -66,11 +66,12 @@ export const useAuthStore = create((set, get) => ({
     const session = persistLogin(auth)
     set({ ...session, isLoading: false })
 
-    if (!session.user?.email) {
-      const user = await get().fetchProfile();
-      return { auth, user };
+    try {
+      const user = await get().fetchProfile()
+      return { auth, user }
+    } catch {
+      return { auth, user: session.user }
     }
-    return { auth, user: session.user };
   },
 
   loginWithGoogle: async (idToken) => {

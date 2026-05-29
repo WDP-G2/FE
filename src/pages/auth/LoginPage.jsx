@@ -7,9 +7,9 @@ import TextInput from '@/components/forms/TextInput'
 import PasswordInput from '@/components/forms/PasswordInput'
 import AuthButton from '@/components/ui/AuthButton'
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons'
-import { useAuthStore } from '@/store/authStore'
 import { getApiErrorMessage } from '@/utils/apiError'
-import { getRoleHomePath, normalizeRole } from '@/utils/roleRedirect'
+import { resolvePostLoginPath } from '@/utils/roleRedirect'
+import { useAuthStore } from '@/store/authStore'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -22,10 +22,13 @@ export default function LoginPage() {
   const [socialLoading, setSocialLoading] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
 
-  const redirectAfterAuth = (user) => {
-    const from = location.state?.from?.pathname
-    const home = from || getRoleHomePath(normalizeRole(user?.role))
-    navigate(home, { replace: true })
+  const redirectAfterAuth = () => {
+    const { role, user } = useAuthStore.getState()
+    const target = resolvePostLoginPath(
+      role || user?.role,
+      location.state?.from?.pathname,
+    )
+    navigate(target, { replace: true })
   }
 
   const handleSubmit = async (e) => {
@@ -36,9 +39,9 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
-      const { user } = await login(form)
+      await login(form)
       toast.success('Đăng nhập thành công')
-      redirectAfterAuth(user)
+      redirectAfterAuth()
     } catch (err) {
       toast.error(getApiErrorMessage(err) || 'Sai email hoặc mật khẩu')
     } finally {
@@ -51,7 +54,7 @@ export default function LoginPage() {
     try {
       const { user } = await loginWithGoogle(idToken)
       toast.success('Đăng nhập Google thành công')
-      redirectAfterAuth(user)
+      redirectAfterAuth()
     } catch (err) {
       toast.error(getApiErrorMessage(err) || 'Đăng nhập Google thất bại')
     } finally {
@@ -64,7 +67,7 @@ export default function LoginPage() {
     try {
       const { user } = await loginWithFacebook(accessToken)
       toast.success('Đăng nhập Facebook thành công')
-      redirectAfterAuth(user)
+      redirectAfterAuth()
     } catch (err) {
       toast.error(getApiErrorMessage(err) || 'Đăng nhập Facebook thất bại')
     } finally {
@@ -127,12 +130,6 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        <div className="rounded-xl border border-[#D4A017]/25 bg-[#D4A017]/10 px-4 py-3 text-xs text-gray-600">
-          <p className="font-semibold text-gray-700">Tài khoản mẫu (MongoDB Atlas)</p>
-          <p className="mt-1">Admin: admin@hr.vn / Password123!</p>
-          <p>Owner: owner1@hr.vn / Password123!</p>
-          <p>Jockey: jockey1@hr.vn / Password123!</p>
-        </div>
       </form>
     </AuthLayout>
   )

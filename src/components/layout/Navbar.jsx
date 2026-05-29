@@ -23,17 +23,14 @@ const ROLE_LINKS = {
 
   ],
   OWNER: [
-    { name: 'Dashboard', path: '/dashboard' },
     { name: 'Chủ ngựa', path: '/horse-owner' },
     { name: 'Tin tức', path: '/news' },
   ],
   JOCKEY: [
-    { name: 'Dashboard', path: '/dashboard' },
     { name: 'Kỵ sĩ', path: '/jockey' },
     { name: 'Tin tức', path: '/news' },
   ],
   REFEREE: [
-    { name: 'Dashboard', path: '/dashboard' },
     { name: 'Trọng tài', path: '/referee' },
     { name: 'Tin tức', path: '/news' },
   ],

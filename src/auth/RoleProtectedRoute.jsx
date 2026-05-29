@@ -1,10 +1,13 @@
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { getStoredToken } from '@/utils/tokenStorage'
+import { getRoleFromToken } from '@/utils/jwtDecode'
 import { normalizeRole } from '@/utils/roleRedirect'
 
 export default function RoleProtectedRoute({ children, allowedRoles = [] }) {
   const user = useAuthStore((s) => s.user)
   const role = useAuthStore((s) => s.role)
+  const token = useAuthStore((s) => s.token)
   const isLoading = useAuthStore((s) => s.isLoading)
 
   if (isLoading) {
@@ -15,7 +18,9 @@ export default function RoleProtectedRoute({ children, allowedRoles = [] }) {
     )
   }
 
-  const currentRole = normalizeRole(role || user?.role)
+  const currentRole = normalizeRole(
+    role || user?.role || getRoleFromToken(token || getStoredToken()),
+  )
   const normalized = allowedRoles.map((r) => normalizeRole(r))
 
   if (!currentRole || !normalized.includes(currentRole)) {
