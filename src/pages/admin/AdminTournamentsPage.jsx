@@ -270,9 +270,9 @@ function TournamentCard({ tournament }) {
             <Settings className="h-5 w-5" />
             Quản lý
           </Link>
-          <ActionButton label="Chỉnh sửa">
+          <ActionLink to={`/admin/tournaments/${tournament.id}?tab=races`} label="Chỉnh sửa cấu hình cuộc đua">
             <Pencil className="h-5 w-5" />
-          </ActionButton>
+          </ActionLink>
         </div>
       </div>
     </article>
@@ -329,14 +329,14 @@ function CardMeta({ icon: Icon, text, className = '' }) {
   )
 }
 
-function ActionButton({ children, label }) {
+function ActionLink({ children, label, to }) {
   return (
-    <button
-      type="button"
+    <Link
+      to={to}
       aria-label={label}
       className="rounded-xl p-3 text-white/60 transition hover:bg-white/10 hover:text-white"
     >
       {children}
-    </button>
+    </Link>
   )
 }
