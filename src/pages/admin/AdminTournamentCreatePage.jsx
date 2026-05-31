@@ -33,6 +33,14 @@ function dateTime(date, time) {
   return `${date}T${time}:00`
 }
 
+function getTodayDate() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function buildTournamentPayload(form, bannerUrl) {
   return {
     name: form.name.trim(),
@@ -68,15 +76,28 @@ export default function AdminTournamentCreatePage() {
   const [bannerFile, setBannerFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
+  const today = getTodayDate()
   const slug = createSlug(form.name)
   const valid =
     form.name.trim().length > 3 &&
     form.location.trim().length > 0 &&
     form.startDate &&
     form.endDate &&
+    form.startDate >= today &&
     form.startDate <= form.endDate
 
-  const update = (key, value) => setForm((previous) => ({ ...previous, [key]: value }))
+  const update = (key, value) =>
+    setForm((previous) => {
+      if (key === 'startDate') {
+        return {
+          ...previous,
+          startDate: value,
+          endDate: previous.endDate && previous.endDate < value ? value : previous.endDate,
+        }
+      }
+
+      return { ...previous, [key]: value }
+    })
 
   const uploadBanner = (event) => {
     const file = event.target.files?.[0]
@@ -173,10 +194,18 @@ export default function AdminTournamentCreatePage() {
               </div>
             </Field>
             <Field label="Ngày bắt đầu *">
-              <DateField value={form.startDate} onChange={(event) => update('startDate', event.target.value)} />
+              <DateField
+                value={form.startDate}
+                min={today}
+                onChange={(event) => update('startDate', event.target.value)}
+              />
             </Field>
             <Field label="Ngày kết thúc *">
-              <DateField value={form.endDate} onChange={(event) => update('endDate', event.target.value)} />
+              <DateField
+                value={form.endDate}
+                min={form.startDate || today}
+                onChange={(event) => update('endDate', event.target.value)}
+              />
             </Field>
             <Field label="Trạng thái">
               <Input variant="form" disabled value="Nháp" />
