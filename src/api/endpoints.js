@@ -19,6 +19,14 @@ export const ENDPOINTS = {
     activeUsers: '/admin/users/active',
     deactivatedUsers: '/admin/users/deactivated',
   },
+  tournaments: {
+    adminList: '/admin/tournaments',
+    adminById: (id) => `/admin/tournaments/${id}`,
+    adminBanners: '/admin/tournament-banners',
+    adminStatus: (id) => `/admin/tournaments/${id}/status`,
+    publicList: '/tournaments',
+    publicById: (id) => `/tournaments/${id}`,
+  },
   /** Ví dụ domain service — thay path khi có module blood-donation thật */
   blood: {
     list: '/blood-records',

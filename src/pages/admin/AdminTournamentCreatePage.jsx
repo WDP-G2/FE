@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   CalendarDays,
@@ -18,13 +19,40 @@ import { FormCard, FormCardHeader } from '@/components/admin/ui/Card'
 import Field from '@/components/admin/ui/Field'
 import { Input, TextArea } from '@/components/admin/ui/Input'
 import { controlClass, primaryButtonLg, secondaryButton } from '@/components/admin/ui/styles'
+import { tournamentService } from '@/services/tournamentService'
 import { createSlug } from '@/utils/createSlug'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 const defaultBanner =
   'https://images.unsplash.com/photo-1507514604110-ba3347c457f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
 
 const defaultRules =
   '1. Ngựa phải có giấy chứng nhận sức khỏe hợp lệ.\n2. Jockey phải có chứng chỉ FIA hoặc tương đương.\n3. Tiền phí hoàn lại sau khi giải đấu kết thúc.\n4. Kiểm tra doping bắt buộc với ngựa thắng cuộc.'
+
+function dateTime(date, time) {
+  return `${date}T${time}:00`
+}
+
+function buildTournamentPayload(form, bannerUrl) {
+  return {
+    name: form.name.trim(),
+    description: form.description.trim(),
+    location: form.location.trim(),
+    bannerUrl,
+    registrationOpenAt: dateTime(form.startDate, '00:00'),
+    registrationCloseAt: dateTime(form.startDate, '07:00'),
+    startAt: dateTime(form.startDate, '08:00'),
+    endAt: dateTime(form.endDate, '18:00'),
+    checkInDeadlineAt: dateTime(form.startDate, '07:30'),
+    minTeams: 1,
+    maxTeams: 100,
+    jockeyChallengeEnabled: false,
+    jockeyChallengeFirstPoints: 3,
+    jockeyChallengeSecondPoints: 2,
+    jockeyChallengeThirdPoints: 1,
+    jockeyChallengePrizes: [],
+  }
+}
 
 export default function AdminTournamentCreatePage() {
   const navigate = useNavigate()
@@ -34,10 +62,11 @@ export default function AdminTournamentCreatePage() {
     location: '',
     startDate: '',
     endDate: '',
-    status: 'Nháp',
     rules: defaultRules,
     banner: defaultBanner,
   })
+  const [bannerFile, setBannerFile] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const slug = createSlug(form.name)
   const valid =
@@ -51,21 +80,36 @@ export default function AdminTournamentCreatePage() {
 
   const uploadBanner = (event) => {
     const file = event.target.files?.[0]
-    if (file) update('banner', URL.createObjectURL(file))
+    if (!file) return
+
+    setBannerFile(file)
+    update('banner', URL.createObjectURL(file))
   }
 
-  const createTournament = () => {
-    if (!valid) return
+  const createTournament = async () => {
+    if (!valid || submitting) return
 
-    const tournament = {
-      ...form,
-      id: slug || `giai-dau-${Date.now()}`,
-      races: [],
+    try {
+      setSubmitting(true)
+      let bannerUrl = form.banner
+
+      if (bannerFile) {
+        const uploadResponse = await tournamentService.uploadTournamentBanner(bannerFile)
+        bannerUrl = uploadResponse?.bannerUrl || bannerUrl
+      }
+
+      const response = await tournamentService.createTournament(buildTournamentPayload(form, bannerUrl))
+      const tournamentId = response.raw?.id ?? response.data.id
+
+      toast.success('Tạo giải đấu thành công')
+      navigate(`/admin/tournaments/${tournamentId}?tab=races&new=1`, {
+        state: { tournament: response.data },
+      })
+    } catch (error) {
+      toast.error(getApiErrorMessage(error) || 'Không thể tạo giải đấu')
+    } finally {
+      setSubmitting(false)
     }
-
-    navigate(`/admin/tournaments/${tournament.id}?tab=races&new=1`, {
-      state: { tournament },
-    })
   }
 
   return (
@@ -79,18 +123,9 @@ export default function AdminTournamentCreatePage() {
             <ArrowLeft className="h-5 w-5" />
             Trở về danh sách
           </Link>
-          <button type="button" className={secondaryButton}>
+          <button type="button" disabled={!valid || submitting} onClick={createTournament} className={secondaryButton}>
             <Save className="h-5 w-5" />
-            Lưu nháp
-          </button>
-          <button
-            type="button"
-            disabled={!valid}
-            onClick={createTournament}
-            className={`${primaryButtonLg} disabled:cursor-not-allowed disabled:bg-[#a48123] disabled:text-white/50 disabled:shadow-none`}
-          >
-            <CheckCircle2 className="h-5 w-5" />
-            Tạo giải đấu
+            {submitting ? 'Đang lưu...' : 'Lưu nháp'}
           </button>
         </div>
       }
@@ -144,16 +179,7 @@ export default function AdminTournamentCreatePage() {
               <DateField value={form.endDate} onChange={(event) => update('endDate', event.target.value)} />
             </Field>
             <Field label="Trạng thái">
-              <select
-                value={form.status}
-                onChange={(event) => update('status', event.target.value)}
-                className={controlClass}
-              >
-                <option>Nháp</option>
-                <option>Đang mở đăng ký</option>
-                <option>Đang diễn ra</option>
-                <option>Đã kết thúc</option>
-              </select>
+              <Input variant="form" disabled value="Nháp" />
             </Field>
             <Field label="Mã giải đấu">
               <Input variant="form" disabled value={slug} placeholder="Tự sinh từ tên" />
@@ -170,6 +196,18 @@ export default function AdminTournamentCreatePage() {
                 <span className="text-[#dda50e]">Cấu hình cuộc đua</span>.
               </p>
             </Field>
+
+            <div className="flex justify-end md:col-span-2">
+              <button
+                type="button"
+                disabled={!valid || submitting}
+                onClick={createTournament}
+                className={`${primaryButtonLg} disabled:cursor-not-allowed disabled:bg-[#a48123] disabled:text-white/50 disabled:shadow-none`}
+              >
+                <CheckCircle2 className="h-5 w-5" />
+                {submitting ? 'Đang tạo...' : 'Tạo giải đấu'}
+              </button>
+            </div>
           </form>
         </FormCard>
 
@@ -191,7 +229,7 @@ export default function AdminTournamentCreatePage() {
                 Tải lên banner
                 <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={uploadBanner} />
               </label>
-              <p className="mt-4 text-center text-sm text-white/42">Khuyến nghị: 1920×600px · JPG/PNG · &lt; 5MB</p>
+              <p className="mt-4 text-center text-sm text-white/42">Khuyến nghị: 1920x600px · JPG/PNG · &lt; 5MB</p>
             </div>
           </FormCard>
 
@@ -228,4 +266,3 @@ function DateField(props) {
     </div>
   )
 }
-
