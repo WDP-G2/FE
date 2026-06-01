@@ -53,7 +53,9 @@ export default function RacesTab({ tournament, setTournament }) {
       no,
       name: `Cuộc đua ${no}`,
       date: tournament.startDate,
-      regDeadline: tournament.startDate,
+      registrationOpenDate: shiftDate(tournament.startDate, -2),
+      registrationCloseDate: shiftDate(tournament.startDate, -1),
+      regDeadline: shiftDate(tournament.startDate, -1),
     }
     setTournament({ ...tournament, races: [...tournament.races, race] })
     setSelectedId(race.id)
@@ -192,7 +194,15 @@ export default function RacesTab({ tournament, setTournament }) {
           </div>
         </Card>
 
-        {panel === 'info' && <RaceInfo race={selected} saving={saving} onSave={saveRaces} updateRace={updateRace} />}
+        {panel === 'info' && (
+          <RaceInfo
+            race={selected}
+            tournament={tournament}
+            saving={saving}
+            onSave={saveRaces}
+            updateRace={updateRace}
+          />
+        )}
         {panel === 'prizes' && <RacePrizes race={selected} saving={saving} onSave={saveRaces} updateRace={updateRace} />}
         {panel === 'registrations' && <RaceRegistrations race={selected} />}
         {panel === 'gates' && <RaceGates race={selected} />}
@@ -202,7 +212,44 @@ export default function RacesTab({ tournament, setTournament }) {
   )
 }
 
-function RaceInfo({ race, saving, onSave, updateRace }) {
+function shiftDate(date, days) {
+  if (!date) return ''
+
+  const [year, month, day] = date.split('-').map(Number)
+  if (!year || !month || !day) return ''
+
+  const next = new Date(Date.UTC(year, month - 1, day + days))
+  return next.toISOString().slice(0, 10)
+}
+
+function clampDate(date, min, max) {
+  if (!date) return ''
+  if (min && date < min) return min
+  if (max && date > max) return max
+  return date
+}
+
+function normalizeRegistrationDates(openDate, closeDate, raceDate) {
+  const latestOpenDate = shiftDate(raceDate, -2)
+  const latestCloseDate = shiftDate(raceDate, -1)
+  const registrationOpenDate = clampDate(openDate, '', latestOpenDate)
+  const earliestCloseDate = shiftDate(registrationOpenDate, 1)
+  const registrationCloseDate = clampDate(closeDate, earliestCloseDate, latestCloseDate)
+
+  return {
+    registrationOpenDate,
+    registrationCloseDate:
+      earliestCloseDate && latestCloseDate && earliestCloseDate > latestCloseDate ? '' : registrationCloseDate,
+  }
+}
+
+function RaceInfo({ race, tournament, saving, onSave, updateRace }) {
+  const raceDateMin = tournament.startDate || undefined
+  const raceDateMax = tournament.endDate || undefined
+  const registrationOpenMax = shiftDate(race.date, -2)
+  const registrationCloseMin = shiftDate(race.registrationOpenDate, 1)
+  const registrationCloseMax = shiftDate(race.date, -1)
+
   return (
     <Card>
       <PanelHeader
@@ -228,10 +275,70 @@ function RaceInfo({ race, saving, onSave, updateRace }) {
           />
         </Field>
         <Field label="Ngày thi đấu">
-          <Input type="date" value={race.date} onChange={(event) => updateRace({ date: event.target.value })} />
+          <Input
+            type="date"
+            min={raceDateMin}
+            max={raceDateMax}
+            value={race.date}
+            onChange={(event) => {
+              const date = clampDate(event.target.value, tournament.startDate, tournament.endDate)
+              const normalized = normalizeRegistrationDates(
+                race.registrationOpenDate,
+                race.registrationCloseDate || race.regDeadline,
+                date,
+              )
+
+              updateRace({
+                date,
+                ...normalized,
+                regDeadline: normalized.registrationCloseDate,
+              })
+            }}
+          />
+          <p className="mt-2 text-xs text-white/40">
+            Chỉ chọn trong thời gian mùa giải: {tournament.startDate} - {tournament.endDate}.
+          </p>
         </Field>
         <Field label="Giờ thi đấu">
           <Input type="time" value={race.time} onChange={(event) => updateRace({ time: event.target.value })} />
+        </Field>
+        <Field label="Ngày mở đăng ký">
+          <Input
+            type="date"
+            max={registrationOpenMax || undefined}
+            value={race.registrationOpenDate || ''}
+            onChange={(event) => {
+              const registrationOpenDate = clampDate(event.target.value, '', registrationOpenMax)
+              const normalized = normalizeRegistrationDates(
+                registrationOpenDate,
+                race.registrationCloseDate || race.regDeadline,
+                race.date,
+              )
+
+              updateRace({
+                ...normalized,
+                regDeadline: normalized.registrationCloseDate,
+              })
+            }}
+          />
+          <p className="mt-2 text-xs text-white/40">Phải trước ngày thi đấu ít nhất 2 ngày.</p>
+        </Field>
+        <Field label="Ngày kết thúc đăng ký">
+          <Input
+            type="date"
+            min={registrationCloseMin || undefined}
+            max={registrationCloseMax || undefined}
+            value={race.registrationCloseDate || race.regDeadline || ''}
+            onChange={(event) => {
+              const registrationCloseDate = clampDate(event.target.value, registrationCloseMin, registrationCloseMax)
+
+              updateRace({
+                registrationCloseDate,
+                regDeadline: registrationCloseDate,
+              })
+            }}
+          />
+          <p className="mt-2 text-xs text-white/40">Phải sau ngày mở đăng ký và trước ngày thi đấu.</p>
         </Field>
         <Field label="Khoảng cách">
           <Input value={race.distance} onChange={(event) => updateRace({ distance: event.target.value })} />

@@ -43,6 +43,9 @@ function mapRacePrizes(prizes = []) {
 function mapRace(race, index) {
   const scheduledStartAt = race?.scheduledStartAt ?? ''
   const scheduledEndAt = race?.scheduledEndAt ?? ''
+  const registrationOpenAt = race?.registrationOpenAt ?? race?.registrationStartAt ?? race?.registrationStartDate ?? ''
+  const registrationCloseAt =
+    race?.registrationCloseAt ?? race?.registrationEndAt ?? race?.registrationEndDate ?? race?.registrationDeadlineAt ?? ''
 
   return {
     id: String(race?.id ?? index + 1),
@@ -59,10 +62,14 @@ function mapRace(race, index) {
     maxHorses: Number(race?.maxParticipants ?? 0),
     registered: Number(race?.participantCount ?? 0),
     entryFee: Number(race?.entryFee ?? 0),
-    regDeadline: '',
+    registrationOpenDate: toDate(registrationOpenAt),
+    registrationCloseDate: toDate(registrationCloseAt),
+    regDeadline: toDate(registrationCloseAt),
     checkIn: toTime(scheduledStartAt),
     scheduledStartAt,
     scheduledEndAt,
+    registrationOpenAt,
+    registrationCloseAt,
     status: STATUS_LABELS[race?.status] ?? race?.status ?? 'Nháp',
     prizes: mapRacePrizes(Array.isArray(race?.prizes) ? race.prizes : []),
     raw: race,
@@ -76,6 +83,37 @@ function dateTime(date, time) {
 function addOneHour(time = '08:00') {
   const [hours = '08', minutes = '00'] = time.split(':')
   return `${String(Math.min(23, Number(hours) + 1)).padStart(2, '0')}:${minutes.padStart(2, '0')}`
+}
+
+function shiftDate(date, days) {
+  if (!date) return ''
+
+  const [year, month, day] = date.split('-').map(Number)
+  if (!year || !month || !day) return ''
+
+  const next = new Date(Date.UTC(year, month - 1, day + days))
+  return next.toISOString().slice(0, 10)
+}
+
+function clampDate(date, min, max) {
+  if (!date) return ''
+  if (min && date < min) return min
+  if (max && date > max) return max
+  return date
+}
+
+function normalizeRegistrationDates(openDate, closeDate, raceDate) {
+  const latestOpenDate = shiftDate(raceDate, -2)
+  const latestCloseDate = shiftDate(raceDate, -1)
+  const registrationOpenDate = clampDate(openDate, '', latestOpenDate)
+  const earliestCloseDate = shiftDate(registrationOpenDate, 1)
+  const registrationCloseDate = clampDate(closeDate, earliestCloseDate, latestCloseDate)
+
+  return {
+    registrationOpenDate,
+    registrationCloseDate:
+      earliestCloseDate && latestCloseDate && earliestCloseDate > latestCloseDate ? '' : registrationCloseDate,
+  }
 }
 
 function racePrizeRequests(race) {
@@ -107,12 +145,19 @@ function racePrizeRequests(race) {
 function raceRequest(race) {
   const date = race.date || new Date().toISOString().slice(0, 10)
   const time = race.time || '08:00'
+  const { registrationOpenDate, registrationCloseDate } = normalizeRegistrationDates(
+    race.registrationOpenDate || shiftDate(date, -2),
+    race.registrationCloseDate || race.regDeadline || shiftDate(date, -1),
+    date,
+  )
   const minParticipants = Math.max(1, Number(race.minHorses || 1))
   const maxParticipants = Math.max(minParticipants, Number(race.maxHorses || minParticipants))
 
   return {
     name: race.name,
     distance: race.distance || '1000m',
+    registrationOpenAt: dateTime(registrationOpenDate, '00:00'),
+    registrationCloseAt: dateTime(registrationCloseDate, '23:59'),
     scheduledStartAt: dateTime(date, time),
     scheduledEndAt: dateTime(date, addOneHour(time)),
     minParticipants,
