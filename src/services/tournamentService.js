@@ -16,6 +16,17 @@ const STATUS_LABELS = {
   CANCELLED: 'Đã hủy',
 }
 
+const STATUS_TONES = {
+  DRAFT: 'gray',
+  PUBLISHED: 'blue',
+  OPEN_REGISTRATION: 'green',
+  REGISTRATION_CLOSED: 'gold',
+  SCHEDULED: 'blue',
+  ONGOING: 'purple',
+  COMPLETED: 'green',
+  CANCELLED: 'red',
+}
+
 function toDate(value) {
   return value ? value.slice(0, 10) : ''
 }
@@ -26,6 +37,25 @@ function toTime(value) {
 
 function sumRegistrations(races = []) {
   return races.reduce((total, race) => total + Number(race?.registered ?? 0), 0)
+}
+
+function sumPrizePool(races = []) {
+  return races.reduce(
+    (total, race) =>
+      total +
+      (Array.isArray(race?.prizes)
+        ? race.prizes.reduce((sum, prize) => sum + Number(prize?.amount ?? 0), 0)
+        : 0),
+    0,
+  )
+}
+
+function sumRaceCapacity(races = []) {
+  return races.reduce((total, race) => total + Number(race?.maxHorses ?? 0), 0)
+}
+
+function firstPositiveEntryFee(races = []) {
+  return Number(races.find((race) => Number(race?.entryFee ?? 0) > 0)?.entryFee ?? 0)
 }
 
 function mapRacePrizes(prizes = []) {
@@ -133,6 +163,7 @@ export function mapTournament(tournament) {
   if (!tournament) return null
 
   const races = (Array.isArray(tournament.races) ? tournament.races : []).map(mapRace)
+  const registrations = sumRegistrations(races)
 
   return {
     id: String(tournament.id),
@@ -140,12 +171,23 @@ export function mapTournament(tournament) {
     description: tournament.description || 'Chưa có mô tả giải đấu.',
     rules: tournament.rules || 'Chưa có luật giải đấu. Bạn có thể bổ sung trong phần cấu hình.',
     status: STATUS_LABELS[tournament.status] ?? tournament.status ?? 'Nháp',
+    statusTone: STATUS_TONES[tournament.status] ?? 'gray',
     statusCode: tournament.status,
     location: tournament.location ?? '',
     startDate: toDate(tournament.startAt),
     endDate: toDate(tournament.endAt),
+    registrationOpenDate: toDate(tournament.registrationOpenAt),
+    registrationCloseDate: toDate(tournament.registrationCloseAt),
+    checkInDeadlineDate: toDate(tournament.checkInDeadlineAt),
+    deadline: toDate(tournament.registrationCloseAt || tournament.checkInDeadlineAt),
     raceCount: races.length,
-    registrations: sumRegistrations(races),
+    registrations,
+    registeredHorses: registrations,
+    minTeams: Number(tournament.minTeams ?? 0),
+    maxTeams: Number(tournament.maxTeams ?? 0),
+    maxHorses: Number(tournament.maxTeams ?? 0) || sumRaceCapacity(races),
+    entryFee: firstPositiveEntryFee(races),
+    prizePool: sumPrizePool(races),
     banner: tournament.bannerUrl || FALLBACK_BANNER,
     races,
     startTime: toTime(tournament.startAt),
@@ -205,6 +247,26 @@ export const tournamentService = {
   async getAdminTournament(id) {
     const tournament = await axiosClient
       .get(ENDPOINTS.tournaments.adminById(id))
+      .then(unwrapResponse)
+
+    const mapped = mapTournament(tournament)
+    if (!mapped) throw new Error('Tournament not found')
+    return { data: mapped, raw: tournament }
+  },
+
+  async getPublicTournaments(params = {}) {
+    const list = await axiosClient
+      .get(ENDPOINTS.tournaments.publicList, { params })
+      .then(unwrapResponse)
+
+    return {
+      data: (Array.isArray(list) ? list : []).map(mapTournament).filter(Boolean),
+    }
+  },
+
+  async getPublicTournament(id) {
+    const tournament = await axiosClient
+      .get(ENDPOINTS.tournaments.publicById(id))
       .then(unwrapResponse)
 
     const mapped = mapTournament(tournament)
