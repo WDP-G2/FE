@@ -119,7 +119,9 @@ export function InviteJockeyModal({ jockey, open, onClose, onSent }) {
         <form onSubmit={handleSubmit}>
           <div className="flex items-center justify-between border-b border-white/10 p-5">
             <div>
-              <h2 className="text-lg font-bold text-white">Mời jockey thi đấu</h2>
+              <h2 className="text-lg font-bold text-white">
+                Mời jockey thi đấu
+              </h2>
               <p className="text-sm text-white/45">
                 Gửi lời mời đến {jockey.name}
               </p>
@@ -143,13 +145,20 @@ export function InviteJockeyModal({ jockey, open, onClose, onSent }) {
                   <select
                     value={horseId}
                     onChange={(e) => setHorseId(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-[#D4A017]/50 focus:outline-none"
+                    style={{ colorScheme: "dark" }}
+                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#D4A017]/50 focus:outline-none"
                   >
                     {horses.length === 0 ? (
-                      <option value="">Chưa có ngựa</option>
+                      <option value="" className="bg-[#0F172A] text-white">
+                        Chưa có ngựa
+                      </option>
                     ) : (
                       horses.map((h) => (
-                        <option key={h.id} value={h.id}>
+                        <option
+                          key={h.id}
+                          value={h.id}
+                          className="bg-[#0F172A] text-white"
+                        >
                           {h.name}
                         </option>
                       ))
@@ -165,13 +174,20 @@ export function InviteJockeyModal({ jockey, open, onClose, onSent }) {
                       setTournamentId(e.target.value);
                       setRaceId("");
                     }}
-                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-[#D4A017]/50 focus:outline-none"
+                    style={{ colorScheme: "dark" }}
+                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#D4A017]/50 focus:outline-none"
                   >
                     {tournaments.length === 0 ? (
-                      <option value="">Không có giải đang mở</option>
+                      <option value="" className="bg-[#0F172A] text-white">
+                        Không có giải đang mở
+                      </option>
                     ) : (
                       tournaments.map((t) => (
-                        <option key={t.id} value={t.id}>
+                        <option
+                          key={t.id}
+                          value={t.id}
+                          className="bg-[#0F172A] text-white"
+                        >
                           {t.name}
                         </option>
                       ))
@@ -185,13 +201,20 @@ export function InviteJockeyModal({ jockey, open, onClose, onSent }) {
                     value={raceId}
                     onChange={(e) => setRaceId(e.target.value)}
                     disabled={!races.length}
-                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-[#D4A017]/50 focus:outline-none disabled:opacity-50"
+                    style={{ colorScheme: "dark" }}
+                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#D4A017]/50 focus:outline-none disabled:opacity-50"
                   >
                     {races.length === 0 ? (
-                      <option value="">Chưa có chặng mở đăng ký</option>
+                      <option value="" className="bg-[#0F172A] text-white">
+                        Chưa có chặng mở đăng ký
+                      </option>
                     ) : (
                       races.map((r) => (
-                        <option key={r.id} value={r.id}>
+                        <option
+                          key={r.id}
+                          value={r.id}
+                          className="bg-[#0F172A] text-white"
+                        >
                           {formatRaceLabel(r)}
                         </option>
                       ))
@@ -228,7 +251,11 @@ export function InviteJockeyModal({ jockey, open, onClose, onSent }) {
               type="submit"
               icon={Send}
               disabled={
-                submitting || loading || !horseId || !tournamentId || !horses.length
+                submitting ||
+                loading ||
+                !horseId ||
+                !tournamentId ||
+                !horses.length
               }
             >
               {submitting ? "Đang gửi..." : "Gửi lời mời"}

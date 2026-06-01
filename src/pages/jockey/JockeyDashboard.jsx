@@ -19,24 +19,28 @@ import {
   PrimaryButton,
   GhostButton,
 } from "../admin/AdminLayout";
-import {
-  jockeyProfile,
-  schedules,
-  jockeyResults,
-  jockeyNotifications,
-  assignedHorses,
-  fmt,
-} from "./data";
+import { jockeyProfile, jockeyResults, jockeyNotifications, fmt } from "./data";
 import { invitationService } from "@/services/invitationService";
+import { tournamentService } from "@/services/tournamentService";
 import { JockeyQuickAction } from "./components/JockeyQuickAction";
 import { JockeyStatRow } from "./components/JockeyStatRow";
+import { buildAssignedHorses, buildScheduleItems } from "./jockeyMappings";
 
 export function JockeyDashboard() {
   const [invs, setInvs] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
   const unread = jockeyNotifications.filter((n) => !n.read).length;
   const pendingInvitations = useMemo(
     () => invs.filter((i) => i.status === "Chờ xử lý"),
     [invs],
+  );
+  const schedules = useMemo(
+    () => buildScheduleItems(registrations),
+    [registrations],
+  );
+  const assignedHorses = useMemo(
+    () => buildAssignedHorses(registrations),
+    [registrations],
   );
   const totalPrize = jockeyResults.reduce((s, r) => s + r.prize, 0);
 
@@ -49,6 +53,21 @@ export function JockeyDashboard() {
       })
       .catch(() => {
         if (alive) setInvs([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    tournamentService
+      .listJockeyRegistrations()
+      .then((list) => {
+        if (alive) setRegistrations(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (alive) setRegistrations([]);
       });
     return () => {
       alive = false;
@@ -146,7 +165,7 @@ export function JockeyDashboard() {
                         </h3>
                       </div>
                       <div className="text-[11px] text-white/50">
-                        {s.race} · Ngựa: {s.horse} · Lane #{s.laneNo}
+                        {s.race} · Ngựa: {s.horse} · Lane #{s.laneNo ?? "-"}
                       </div>
                       <div className="text-[11px] text-white/40 mt-0.5">
                         {s.date} · {s.location}

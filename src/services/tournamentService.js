@@ -295,9 +295,12 @@ export const tournamentService = {
 
   async updateRegistrationStatus(tournamentId, registrationId, status) {
     const item = await axiosClient
-      .patch(ENDPOINTS.tournaments.registrationStatus(tournamentId, registrationId), {
-        status,
-      })
+      .patch(
+        ENDPOINTS.tournaments.registrationStatus(tournamentId, registrationId),
+        {
+          status,
+        },
+      )
       .then(unwrapResponse);
     return mapTournamentFromApi(item);
   },
@@ -323,6 +326,40 @@ export const tournamentService = {
       notes: item.notes || "",
       registeredAt: item.registeredAt,
       fullName: item.fullName || "",
+    }));
+  },
+
+  async listJockeyRegistrations() {
+    const list = await axiosClient
+      .get(ENDPOINTS.tournaments.jockeyRegistrations)
+      .then(unwrapResponse);
+    return (Array.isArray(list) ? list : []).map((item) => ({
+      id: item.id,
+      tournamentId: item.tournamentId || "",
+      tournamentName: item.tournamentName || "",
+      tournamentStatus: item.tournamentStatus || "",
+      raceId: item.raceId || "",
+      raceName: item.raceName || "",
+      raceNumber: item.raceNumber || "",
+      raceStatus: item.raceStatus || "",
+      raceDate: item.raceDate || "",
+      raceTime: item.raceTime || "",
+      location: item.location || "",
+      horseId: item.horseId || "",
+      horseName: item.horseName || "",
+      horseBreed: item.horseBreed || "",
+      horseAge: item.horseAge || null,
+      horseHealth: item.horseHealth || "",
+      horseBirthDate: item.horseBirthDate || "",
+      horseWins: item.horseWins || 0,
+      horseRaces: item.horseRaces || 0,
+      horseNotes: item.horseNotes || "",
+      horseGender: item.horseGender || "",
+      horseImageUrl: item.horseImageUrl || "",
+      ownerName: item.ownerName || item.fullName || "",
+      status: item.status || "",
+      notes: item.notes || "",
+      registeredAt: item.registeredAt || "",
     }));
   },
 };

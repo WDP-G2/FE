@@ -83,6 +83,13 @@ export function HorseOwnerTournaments() {
     <HorseOwnerLayout
       title="Horse Owner · Giải đấu"
       subtitle="Chỉ hiển thị giải đã mở đăng ký và các race đủ điều kiện"
+      actions={
+        <GhostButton
+          onClick={() => navigate("/horse-owner/tournaments/agreements")}
+        >
+          Race đã chốt
+        </GhostButton>
+      }
     >
       <div className="mb-6 flex items-center gap-3">
         <div className="relative max-w-sm flex-1">
@@ -197,12 +204,12 @@ export function HorseOwnerTournaments() {
                     className="flex-1"
                     onClick={() =>
                       navigate(
-                        `/horse-owner/tournaments/${tournament.id}/register`,
+                        `/horse-owner/tournaments/agreements?tournamentId=${tournament.id}`,
                       )
                     }
                     disabled={!tournament.races?.length}
                   >
-                    Đăng ký ngay
+                    Chọn race
                   </PrimaryButton>
                 </div>
               </div>

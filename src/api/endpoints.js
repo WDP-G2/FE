@@ -25,6 +25,7 @@ export const ENDPOINTS = {
     list: "/tournaments",
     ownerOpen: "/tournaments/owner/open",
     ownerRegistrations: "/tournaments/owner/registrations",
+    jockeyRegistrations: "/tournaments/jockey/registrations",
     byId: (id) => `/tournaments/${id}`,
     config: (id) => `/tournaments/${id}/config`,
     races: (id) => `/tournaments/${id}/races`,

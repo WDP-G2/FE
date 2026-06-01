@@ -51,8 +51,17 @@ function extractTournamentId(pathname) {
 
 export function HorseOwnerTournamentRegisterPage() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: queryString } = useLocation();
   const tournamentId = extractTournamentId(pathname);
+  const preselected = useMemo(() => {
+    const params = new URLSearchParams(queryString);
+    return {
+      raceId: params.get("raceId") || "",
+      horseId: params.get("horseId") || "",
+      jockeyId: params.get("jockeyId") || "",
+      fromAgreement: params.get("fromAgreement") === "1",
+    };
+  }, [queryString]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -69,6 +78,8 @@ export function HorseOwnerTournamentRegisterPage() {
   const [notes, setNotes] = useState("");
   const [search, setSearch] = useState("");
   const [detailModal, setDetailModal] = useState(null);
+  const [preselectApplied, setPreselectApplied] = useState(false);
+  const [paymentAgreed, setPaymentAgreed] = useState(false);
 
   const selectedRace = useMemo(
     () => openRaces.find((race) => race.id === selectedRaceId) || null,
@@ -85,11 +96,17 @@ export function HorseOwnerTournamentRegisterPage() {
     [jockeyId, options.jockeys],
   );
 
+  const entryFee = selectedRace?.entryFee || tournament?.config?.entryFee || 0;
+
   const closeDetailModal = () => setDetailModal(null);
   const openHorseModal = (horse) =>
     setDetailModal({ type: "horse", item: horse });
   const openJockeyModal = (jockey) =>
     setDetailModal({ type: "jockey", item: jockey });
+
+  useEffect(() => {
+    setPreselectApplied(false);
+  }, [preselected.horseId, preselected.jockeyId, tournamentId]);
 
   useEffect(() => {
     let active = true;
@@ -106,7 +123,22 @@ export function HorseOwnerTournamentRegisterPage() {
         );
         setTournament(data);
         setOpenRaces(races);
-        setSelectedRaceId((current) => current || races[0]?.id || "");
+        setSelectedRaceId((current) => {
+          if (current) return current;
+          if (
+            preselected.raceId &&
+            races.some((race) => race.id === preselected.raceId)
+          ) {
+            return preselected.raceId;
+          }
+          return races[0]?.id || "";
+        });
+        if (
+          preselected.raceId &&
+          !races.some((race) => race.id === preselected.raceId)
+        ) {
+          toast.error("Race da chot khong con mo dang ky");
+        }
       } catch (err) {
         console.error("Error loading tournament register page:", err);
         const message =
@@ -132,7 +164,7 @@ export function HorseOwnerTournamentRegisterPage() {
     return () => {
       active = false;
     };
-  }, [tournamentId]);
+  }, [tournamentId, preselected.raceId]);
 
   useEffect(() => {
     let active = true;
@@ -155,21 +187,52 @@ export function HorseOwnerTournamentRegisterPage() {
           jockeys: data.jockeys || [],
           registrations: data.registrations || [],
         });
-        setHorseId((current) =>
-          data.horses?.some(
-            (horse) => horse.id === current && horse.available !== false,
-          )
-            ? current
-            : data.horses?.find((horse) => horse.available !== false)?.id || "",
-        );
-        setJockeyId((current) =>
-          data.jockeys?.some(
-            (jockey) => jockey.id === current && jockey.available !== false,
-          )
-            ? current
-            : data.jockeys?.find((jockey) => jockey.available !== false)?.id ||
-                "",
-        );
+        setHorseId((current) => {
+          if (!preselectApplied && preselected.horseId) {
+            const preferred = data.horses?.find(
+              (horse) => horse.id === preselected.horseId,
+            );
+            if (preferred && preferred.available !== false) {
+              return preferred.id;
+            }
+          }
+          if (
+            data.horses?.some(
+              (horse) => horse.id === current && horse.available !== false,
+            )
+          ) {
+            return current;
+          }
+          return (
+            data.horses?.find((horse) => horse.available !== false)?.id || ""
+          );
+        });
+        setJockeyId((current) => {
+          if (!preselectApplied && preselected.jockeyId) {
+            const preferred = data.jockeys?.find(
+              (jockey) => jockey.id === preselected.jockeyId,
+            );
+            if (preferred && preferred.available !== false) {
+              return preferred.id;
+            }
+          }
+          if (
+            data.jockeys?.some(
+              (jockey) => jockey.id === current && jockey.available !== false,
+            )
+          ) {
+            return current;
+          }
+          return (
+            data.jockeys?.find((jockey) => jockey.available !== false)?.id || ""
+          );
+        });
+        if (
+          !preselectApplied &&
+          (preselected.horseId || preselected.jockeyId)
+        ) {
+          setPreselectApplied(true);
+        }
       } catch (err) {
         console.error("Error loading owner race options:", err);
         const message =
@@ -190,7 +253,13 @@ export function HorseOwnerTournamentRegisterPage() {
     return () => {
       active = false;
     };
-  }, [selectedRaceId, tournamentId]);
+  }, [
+    selectedRaceId,
+    tournamentId,
+    preselectApplied,
+    preselected.horseId,
+    preselected.jockeyId,
+  ]);
 
   const filteredHorses = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -212,7 +281,9 @@ export function HorseOwnerTournamentRegisterPage() {
       const email = (jockey.email || "").toLowerCase();
       const username = (jockey.username || "").toLowerCase();
       return (
-        name.includes(query) || email.includes(query) || username.includes(query)
+        name.includes(query) ||
+        email.includes(query) ||
+        username.includes(query)
       );
     });
   }, [options.jockeys, search]);
@@ -232,8 +303,13 @@ export function HorseOwnerTournamentRegisterPage() {
     }
     if (selectedJockey?.available === false) {
       toast.error(
-        selectedJockey.unavailableReason || "Jockey không khả dụng cho race này",
+        selectedJockey.unavailableReason ||
+          "Jockey không khả dụng cho race này",
       );
+      return;
+    }
+    if (!paymentAgreed) {
+      toast.error("Vui lòng đồng ý thanh toán lệ phí trước khi đăng ký");
       return;
     }
 
@@ -262,7 +338,9 @@ export function HorseOwnerTournamentRegisterPage() {
       title="Horse Owner · Đăng ký race"
       subtitle={
         tournament
-          ? `${tournament.name} · chọn race, ngựa và jockey`
+          ? preselected.fromAgreement
+            ? `${tournament.name} · dang ky tu race da chot`
+            : `${tournament.name} · chọn race, ngựa và jockey`
           : "Chọn race và hoàn tất đăng ký"
       }
       actions={
@@ -638,9 +716,38 @@ export function HorseOwnerTournamentRegisterPage() {
               />
             </GlassCard>
 
+            <GlassCard className="p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-[#dda50e]" />
+                <h3 className="text-base font-bold text-white">
+                  Lệ phí giải đấu
+                </h3>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
+                Lệ phí:{" "}
+                <span className="font-semibold text-white">
+                  {formatMoney(entryFee)}
+                </span>{" "}
+                VND
+              </div>
+              <GhostButton
+                className="mt-3 w-full"
+                onClick={() => setPaymentAgreed(true)}
+                disabled={paymentAgreed}
+              >
+                {paymentAgreed ? "Đã đồng ý thanh toán" : "Đồng ý thanh toán"}
+              </GhostButton>
+            </GlassCard>
+
             <PrimaryButton
               onClick={handleSubmit}
-              disabled={submitting || !selectedRaceId || !horseId || !jockeyId}
+              disabled={
+                submitting ||
+                !selectedRaceId ||
+                !horseId ||
+                !jockeyId ||
+                !paymentAgreed
+              }
             >
               {submitting ? "Đang gửi..." : "Xác nhận đăng ký"}
             </PrimaryButton>

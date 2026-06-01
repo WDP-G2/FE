@@ -6,8 +6,15 @@ function mapInvitation(item) {
   if (!item) return null;
   return {
     id: String(item.id),
+    ownerId: item.ownerId || "",
+    jockeyId: item.jockeyId || "",
+    horseId: item.horseId || "",
+    tournamentId: item.tournamentId || "",
+    raceId: item.raceId || "",
     owner: item.owner || item.ownerName || "",
     ownerName: item.ownerName || item.owner || "",
+    jockey: item.jockey || item.jockeyName || "",
+    jockeyName: item.jockeyName || item.jockey || "",
     horse: item.horse || item.horseName || "",
     horseName: item.horseName || item.horse || "",
     horseBread: item.horseBread || item.horseBreed || "",
