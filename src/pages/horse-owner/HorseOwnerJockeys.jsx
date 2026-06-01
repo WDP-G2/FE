@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Users, Search, Trophy, Send, CheckCircle } from "lucide-react";
 import { HorseOwnerLayout } from "./HorseOwnerLayout";
-import {
-  GlassCard,
-  Pill,
-  GhostButton,
-} from "../admin/AdminLayout";
+import { GlassCard, Pill, GhostButton } from "../admin/AdminLayout";
 import { jockeyService } from "@/services/jockeyService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { toast } from "sonner";
@@ -42,9 +38,7 @@ export function HorseOwnerJockeys() {
       setJockeys(Array.isArray(list) ? list : []);
     } catch (err) {
       setJockeys([]);
-      toast.error(
-        getApiErrorMessage(err) || "Không tải được danh sách jockey",
-      );
+      toast.error(getApiErrorMessage(err) || "Không tải được danh sách jockey");
     } finally {
       setLoading(false);
     }
@@ -80,14 +74,12 @@ export function HorseOwnerJockeys() {
   );
 
   const pendingInviteCount = useMemo(
-    () =>
-      jockeys.filter((j) => j.invitationStatus === "Chờ xử lý").length,
+    () => jockeys.filter((j) => j.invitationStatus === "Chờ xử lý").length,
     [jockeys],
   );
 
   const acceptedInviteCount = useMemo(
-    () =>
-      jockeys.filter((j) => j.invitationStatus === "Đã chấp nhận").length,
+    () => jockeys.filter((j) => j.invitationStatus === "Đã chấp nhận").length,
     [jockeys],
   );
 
@@ -200,7 +192,9 @@ export function HorseOwnerJockeys() {
                   <div className="text-[10px] text-white/40">Thắng</div>
                 </div>
                 <div className="border-x border-white/10 text-center">
-                  <div className="text-base font-bold text-white">{j.races}</div>
+                  <div className="text-base font-bold text-white">
+                    {j.races}
+                  </div>
                   <div className="text-[10px] text-white/40">Race</div>
                 </div>
                 <div className="text-center">
@@ -261,14 +255,15 @@ export function HorseOwnerJockeys() {
               <GhostButton
                 className="w-full"
                 icon={Send}
-                disabled={j.canInvite === false}
                 onClick={() => setInviteTarget(j)}
               >
                 {j.invitationStatus === "Chờ xử lý"
-                  ? "Đang chờ jockey"
+                  ? "Mời thêm"
                   : j.invitationStatus === "Đã từ chối"
                     ? "Mời lại"
-                    : "Mời thi đấu"}
+                    : j.invitationStatus === "Đã chấp nhận"
+                      ? "Mời thêm"
+                      : "Mời thi đấu"}
               </GhostButton>
             </GlassCard>
           ))}
