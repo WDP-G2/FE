@@ -26,7 +26,6 @@ export default function NewsPage() {
       deps: [debouncedSearch],
     }
   )
-
   const news = data ?? []
 
   return (

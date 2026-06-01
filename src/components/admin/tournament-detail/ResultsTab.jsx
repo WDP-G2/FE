@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react'
 import Badge from '@/components/admin/ui/Badge'
 import Card from '@/components/admin/ui/Card'
 import { SimpleTable } from '@/components/admin/ui/Panel'
-import { formatVnd, getTotalPrize, resultsFor, toneForStatus } from './utils'
+import { formatVnd, getPrizeAmountByRank, getTotalPrize, resultsFor, toneForStatus } from './utils'
 
 export default function ResultsTab({ tournament }) {
   const [expanded, setExpanded] = useState(tournament.races[0]?.id)
@@ -14,7 +14,6 @@ export default function ResultsTab({ tournament }) {
         const open = expanded === race.id
         const results = resultsFor(race)
         const champion = results[0]?.horse ?? 'Chưa có'
-        const prizes = race.prizes || {}
 
         return (
           <Card key={race.id} className="overflow-hidden">
@@ -46,11 +45,7 @@ export default function ResultsTab({ tournament }) {
                     item.owner,
                     item.jockey,
                     item.time,
-                    item.position < 4
-                      ? formatVnd(
-                          [prizes.first, prizes.second, prizes.third][item.position - 1] || 0,
-                        )
-                      : '—',
+                    item.position < 4 ? formatVnd(getPrizeAmountByRank(race, item.position)) : '—',
                   ])}
                 />
               ) : (

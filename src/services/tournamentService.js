@@ -29,22 +29,15 @@ function sumRegistrations(races = []) {
 }
 
 function mapRacePrizes(prizes = []) {
-  const result = {
-    first: 0,
-    second: 0,
-    third: 0,
-    bonus: 0,
-  }
-
-  for (const prize of prizes) {
-    const amount = Number(prize?.amount ?? 0)
-    if (prize?.rank === 1) result.first = amount
-    else if (prize?.rank === 2) result.second = amount
-    else if (prize?.rank === 3) result.third = amount
-    else result.bonus += amount
-  }
-
-  return result
+  return prizes
+    .filter(Boolean)
+    .map((prize, index) => ({
+      id: String(prize?.id ?? `prize-${prize?.rank ?? index + 1}-${index}`),
+      rank: Number(prize?.rank ?? index + 1),
+      itemName: String(prize?.itemName || prize?.name || `Giải ${index + 1}`),
+      amount: Number(prize?.amount ?? 0),
+    }))
+    .sort((firstPrize, secondPrize) => firstPrize.rank - secondPrize.rank)
 }
 
 function mapRace(race, index) {
@@ -86,15 +79,29 @@ function addOneHour(time = '08:00') {
 }
 
 function racePrizeRequests(race) {
-  const prizes = race.prizes || {}
-  const items = [
-    { rank: 1, amount: Number(prizes.first ?? 0), itemName: 'Giải nhất' },
-    { rank: 2, amount: Number(prizes.second ?? 0), itemName: 'Giải nhì' },
-    { rank: 3, amount: Number(prizes.third ?? 0), itemName: 'Giải ba' },
-    { rank: 4, amount: Number(prizes.bonus ?? 0), itemName: 'Thưởng phụ' },
-  ]
+  const legacyPrizeNames = {
+    first: { rank: 1, itemName: 'Giải nhất' },
+    second: { rank: 2, itemName: 'Giải nhì' },
+    third: { rank: 3, itemName: 'Giải ba' },
+    bonus: { rank: 4, itemName: 'Thưởng phụ' },
+  }
+  const rawPrizes = race.prizes || []
+  const items = Array.isArray(rawPrizes)
+    ? rawPrizes
+    : Object.entries(rawPrizes).map(([key, amount], index) => ({
+        rank: legacyPrizeNames[key]?.rank ?? index + 1,
+        itemName: legacyPrizeNames[key]?.itemName ?? key,
+        amount,
+      }))
 
-  return items.filter((item) => item.amount > 0 || item.rank === 1)
+  return items
+    .map((item, index) => ({
+      rank: Number(item.rank || index + 1),
+      amount: Math.max(0, Number(item.amount ?? 0)),
+      itemName: String(item.itemName || item.label || `Giải ${index + 1}`),
+    }))
+    .filter((item) => item.itemName.trim() && item.rank > 0)
+    .sort((firstPrize, secondPrize) => firstPrize.rank - secondPrize.rank)
 }
 
 function raceRequest(race) {

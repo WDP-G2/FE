@@ -30,14 +30,40 @@ export function resultsFor(race) {
   }))
 }
 
+const legacyPrizeNames = {
+  first: { rank: 1, itemName: 'Giải nhất' },
+  second: { rank: 2, itemName: 'Giải nhì' },
+  third: { rank: 3, itemName: 'Giải ba' },
+  bonus: { rank: 4, itemName: 'Thưởng phụ' },
+}
+
+export function normalizePrizeList(prizes) {
+  const rawPrizes = Array.isArray(prizes)
+    ? prizes
+    : Object.entries(prizes || {}).map(([key, amount], index) => ({
+        id: key,
+        rank: legacyPrizeNames[key]?.rank ?? index + 1,
+        itemName: legacyPrizeNames[key]?.itemName ?? key,
+        amount,
+      }))
+
+  return rawPrizes
+    .filter(Boolean)
+    .map((item, index) => ({
+      id: String(item.id ?? `prize-${item.rank ?? index + 1}-${index}`),
+      rank: Number(item.rank || index + 1),
+      itemName: String(item.itemName || item.label || `Giải ${index + 1}`),
+      amount: Math.max(0, Number(item.amount ?? 0)),
+    }))
+    .sort((firstPrize, secondPrize) => firstPrize.rank - secondPrize.rank)
+}
+
+export function getPrizeAmountByRank(race, rank) {
+  return normalizePrizeList(race.prizes).find((prize) => prize.rank === rank)?.amount ?? 0
+}
+
 export function getTotalPrize(race) {
-  const prizes = race.prizes || {}
-  return (
-    (prizes.first || 0) +
-    (prizes.second || 0) +
-    (prizes.third || 0) +
-    (prizes.bonus || 0)
-  )
+  return normalizePrizeList(race.prizes).reduce((total, prize) => total + prize.amount, 0)
 }
 
 export function formatVnd(value) {

@@ -24,7 +24,9 @@ import { tournamentService } from '@/services/tournamentService'
 import { getApiErrorMessage } from '@/utils/apiError'
 import {
   formatVnd,
+  getPrizeAmountByRank,
   getTotalPrize,
+  normalizePrizeList,
   registrationsFor,
   resultsFor,
   toneForStatus,
@@ -291,51 +293,136 @@ function RaceInfo({ race, saving, onSave, updateRace }) {
 }
 
 function RacePrizes({ race, saving, onSave, updateRace }) {
-  const items = [
-    { key: 'first', label: 'Vô địch', icon: Crown, color: 'text-[#dda50e]' },
-    { key: 'second', label: 'Á quân', icon: Medal, color: 'text-white' },
-    { key: 'third', label: 'Hạng ba', icon: Medal, color: 'text-orange-300' },
-    { key: 'bonus', label: 'Thưởng phụ', icon: Gift, color: 'text-emerald-300' },
-  ]
+  const prizes = normalizePrizeList(race.prizes)
   const total = getTotalPrize(race)
+  const updatePrize = (id, patch) => {
+    updateRace({
+      prizes: prizes.map((prize) => (prize.id === id ? { ...prize, ...patch } : prize)),
+    })
+  }
+  const addPrize = () => {
+    const nextRank = Math.max(0, ...prizes.map((prize) => Number(prize.rank || 0))) + 1
+    let suffix = prizes.length + 1
+    let nextId = `new-prize-${race.id}-${nextRank}-${suffix}`
+
+    while (prizes.some((prize) => prize.id === nextId)) {
+      suffix += 1
+      nextId = `new-prize-${race.id}-${nextRank}-${suffix}`
+    }
+
+    updateRace({
+      prizes: [
+        ...prizes,
+        {
+          id: nextId,
+          rank: nextRank,
+          itemName: `Giải ${nextRank}`,
+          amount: 0,
+        },
+      ],
+    })
+  }
+  const removePrize = (id) => {
+    updateRace({ prizes: prizes.filter((prize) => prize.id !== id) })
+  }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_290px]">
-      <Card>
+    <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <style>
+        {`
+          @media (min-width: 768px) {
+            .race-prize-grid {
+              grid-template-columns: 40px minmax(0, 1fr) 120px 180px 44px;
+            }
+          }
+        `}
+      </style>
+      <Card className="overflow-hidden">
         <PanelHeader icon={Crown} title="Cấu hình giải thưởng" subtitle="Mỗi cuộc đua có giải thưởng riêng" />
-        <div className="space-y-4 p-6">
-          {items.map((item) => {
-            const Icon = item.icon
+        <div className="flex justify-end border-b border-white/10 bg-white/[0.018] px-6 py-4">
+          <button
+            type="button"
+            onClick={addPrize}
+            className={`${primaryButton} h-11 rounded-xl px-5 text-sm shadow-[#dda50e]/15`}
+          >
+            <Plus className="h-4 w-4" />
+            Thêm giải thưởng
+          </button>
+        </div>
+        <div className="space-y-3 p-6">
+          <div
+            className="race-prize-grid hidden items-center gap-4 rounded-2xl border border-[#dda50e]/20 bg-gradient-to-r from-[#dda50e]/12 to-white/[0.035] px-4 py-3 text-xs font-bold uppercase text-white/60 shadow-inner shadow-white/[0.025] md:grid"
+          >
+            <span aria-hidden="true" />
+            <span className="whitespace-nowrap text-white/70">Tên giải thưởng</span>
+            <span className="text-center text-white/70">Hạng</span>
+            <span className="text-center text-white/70">Số tiền</span>
+            <span aria-hidden="true" />
+          </div>
+          {prizes.map((prize) => {
+            const Icon = prize.rank === 1 ? Crown : prize.rank <= 3 ? Medal : Gift
+            const color =
+              prize.rank === 1 ? 'text-[#dda50e]' : prize.rank <= 3 ? 'text-orange-300' : 'text-emerald-300'
             return (
               <div
-                key={item.key}
-                className="flex items-center gap-5 rounded-2xl border border-white/10 bg-white/[0.035] p-4"
+                key={prize.id}
+                className="race-prize-grid grid gap-3 rounded-2xl border border-white/10 bg-white/[0.028] p-4 transition hover:border-[#dda50e]/25 hover:bg-white/[0.045] md:items-center md:gap-4"
               >
-                <Icon className={`h-7 w-7 ${item.color}`} />
-                <span className="flex-1 font-semibold">{item.label}</span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-[#07111f]/65">
+                  <Icon className={`h-5 w-5 ${color}`} />
+                </span>
+                <Input
+                  className="font-semibold"
+                  value={prize.itemName}
+                  onChange={(event) => updatePrize(prize.id, { itemName: event.target.value })}
+                  placeholder="Tên giải thưởng"
+                />
                 <Input
                   type="number"
-                  className="max-w-52"
-                  value={race.prizes[item.key]}
-                  onChange={(event) =>
-                    updateRace({ prizes: { ...race.prizes, [item.key]: Number(event.target.value) } })
-                  }
+                  min="1"
+                  value={prize.rank}
+                  onChange={(event) => updatePrize(prize.id, { rank: Number(event.target.value) })}
+                  aria-label="Hạng nhận thưởng"
+                  className="font-bold tabular-nums md:text-center"
+                  placeholder="Hạng"
                 />
+                <Input
+                  type="number"
+                  min="0"
+                  value={prize.amount}
+                  onChange={(event) => updatePrize(prize.id, { amount: Number(event.target.value) })}
+                  aria-label="Số tiền thưởng"
+                  className="font-semibold tabular-nums md:text-right"
+                  placeholder="Số tiền"
+                />
+                <button
+                  type="button"
+                  aria-label="Xóa giải thưởng"
+                  onClick={() => removePrize(prize.id)}
+                  disabled={prizes.length === 1}
+                  className="justify-self-end rounded-xl border border-transparent p-3 text-white/45 transition hover:border-rose-300/20 hover:bg-rose-400/10 hover:text-rose-300 disabled:cursor-not-allowed disabled:hover:border-transparent disabled:hover:bg-transparent disabled:text-white/20"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
               </div>
             )
           })}
         </div>
         <PanelActions saving={saving} onSave={onSave} />
       </Card>
-      <Card className="h-fit p-6">
-        <h3 className="text-lg font-bold">Tổng giải thưởng</h3>
-        <p className="mb-6 mt-2 text-2xl font-bold text-[#dda50e]">{formatVnd(total)}</p>
-        {items.map((item) => (
-          <div key={item.key} className="mb-3 flex justify-between text-sm text-white/65">
-            <span>{item.label}</span>
-            <span className="font-semibold text-white">{formatVnd(race.prizes[item.key])}</span>
+      <Card className="h-fit overflow-hidden">
+        <div className="border-b border-white/10 bg-[#dda50e]/10 p-6">
+          <h3 className="text-sm font-bold uppercase text-white/58">Tổng giải thưởng</h3>
+          <p className="mt-2 text-3xl font-bold text-[#dda50e]">{formatVnd(total)}</p>
+        </div>
+        <div className="p-6">
+        {prizes.map((prize) => (
+          <div key={prize.id} className="mb-3 flex justify-between gap-4 rounded-xl bg-white/[0.035] px-4 py-3 text-sm text-white/65">
+            <span className="min-w-0 truncate">{prize.itemName}</span>
+            <span className="shrink-0 font-semibold text-white">{formatVnd(prize.amount)}</span>
           </div>
         ))}
+        </div>
       </Card>
     </div>
   )
@@ -399,7 +486,7 @@ function RaceResults({ race }) {
           item.jockey,
           item.time,
           item.position < 4
-            ? formatVnd([race.prizes.first, race.prizes.second, race.prizes.third][item.position - 1])
+            ? formatVnd(getPrizeAmountByRank(race, item.position))
             : '—',
         ])}
       />
