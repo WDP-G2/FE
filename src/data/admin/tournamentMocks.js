@@ -29,6 +29,8 @@ export function createRaces(prefix, counts, datePrefix = '2026-06', startDay = 1
       maxHorses: 12,
       registered,
       entryFee: 5000000 + index * 1000000,
+      registrationOpenDate: `${datePrefix}-${String(Math.max(1, startDay - 10 + index)).padStart(2, '0')}`,
+      registrationCloseDate: `${datePrefix}-${String(Math.max(1, startDay - 5 + index)).padStart(2, '0')}`,
       regDeadline: `${datePrefix}-${String(Math.max(1, startDay - 5 + index)).padStart(2, '0')}`,
       checkIn: '13:00',
       status: no < 3 ? 'Mở đăng ký' : 'Sắp diễn ra',
