@@ -1,7 +1,7 @@
 import { DollarSign, Flag, TrendingUp, Trophy, Users } from 'lucide-react'
-import Card from '@/components/admin/ui/Card'
-import StatCard from '@/components/admin/ui/StatCard'
-import { BarSummary, SectionHeading } from '@/components/admin/ui/Panel'
+import Card from '@/components/ui/Card'
+import StatCard from '@/components/ui/StatCard'
+import { BarSummary, SectionHeading } from '@/components/ui/Panel'
 import { formatVnd, getTotalPrize } from './utils'
 
 export default function StatisticsTab({ tournament, totalPrize, totalRegistered }) {

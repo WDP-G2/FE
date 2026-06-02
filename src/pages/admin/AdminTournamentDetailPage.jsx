@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { Trophy } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
-import Card from '@/components/admin/ui/Card'
+import AdminLayout from '@/components/AdminLayout'
+import Card from '@/components/ui/Card'
 import {
   OverviewTab,
   ParticipantsTab,
@@ -12,8 +12,8 @@ import {
   SettingsTab,
   TournamentHero,
   detailTabs,
-} from '@/components/admin/tournament-detail'
-import { getTotalPrize } from '@/components/admin/tournament-detail/utils'
+} from '@/components/tournament-detail'
+import { getTotalPrize } from '@/components/tournament-detail/utils'
 import { tournamentService } from '@/services/tournamentService'
 
 export default function AdminTournamentDetailPage() {

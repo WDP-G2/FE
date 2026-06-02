@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { BadgeCheck, Search, Shield, UserCheck, UserX, Users } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
-import InviteUserModal from '@/components/admin/InviteUserModal'
-import { PrimaryButton } from '@/components/admin/ui/AdminButton'
+import AdminLayout from '@/components/AdminLayout'
+import InviteUserModal from '@/components/InviteUserModal'
+import { PrimaryButton } from '@/components/ui/AdminButton'
 
 const userRows = [
   {

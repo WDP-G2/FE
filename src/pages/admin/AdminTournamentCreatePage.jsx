@@ -14,11 +14,11 @@ import {
   Trophy,
   Upload,
 } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
-import { FormCard, FormCardHeader } from '@/components/admin/ui/Card'
-import Field from '@/components/admin/ui/Field'
-import { Input, TextArea } from '@/components/admin/ui/Input'
-import { controlClass, primaryButtonLg, secondaryButton } from '@/components/admin/ui/styles'
+import AdminLayout from '@/components/AdminLayout'
+import { FormCard, FormCardHeader } from '@/components/ui/Card'
+import Field from '@/components/ui/Field'
+import { Input, TextArea } from '@/components/ui/Input'
+import { controlClass, primaryButtonLg, secondaryButton } from '@/components/ui/styles'
 import { tournamentService } from '@/services/tournamentService'
 import { createSlug } from '@/utils/createSlug'
 import { getApiErrorMessage } from '@/utils/apiError'

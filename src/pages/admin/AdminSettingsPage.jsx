@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { DollarSign, FileText, Mail, Palette, Settings, Shield } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
-import Field from '@/components/admin/ui/Field'
-import { inputClass } from '@/components/admin/ui/styles'
+import AdminLayout from '@/components/AdminLayout'
+import Field from '@/components/ui/Field'
+import { inputClass } from '@/components/ui/styles'
 
 const tabs = [
   { key: 'fees', label: 'Lệ phí mặc định', icon: DollarSign },

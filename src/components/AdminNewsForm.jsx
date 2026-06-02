@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Send, Upload } from 'lucide-react'
 import { toast } from 'sonner'
-import AdminLayout from '@/components/admin/AdminLayout'
-import { GhostButton, PrimaryButton } from '@/components/admin/ui/AdminButton'
-import { inputClass } from '@/components/admin/ui/styles'
+import AdminLayout from '@/components/AdminLayout'
+import { GhostButton, PrimaryButton } from '@/components/ui/AdminButton'
+import { inputClass } from '@/components/ui/styles'
 import { newsService } from '@/services/newsService'
 
 const CATEGORIES = ['Kết quả đua', 'Sự kiện', 'Chân dung', 'Công nghệ', 'Quy định', 'Phỏng vấn']

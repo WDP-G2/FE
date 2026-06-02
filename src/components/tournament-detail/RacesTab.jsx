@@ -14,12 +14,12 @@ import {
   Users,
 } from 'lucide-react'
 import { createRaces } from '@/data/admin/tournamentMocks'
-import Badge from '@/components/admin/ui/Badge'
-import Card from '@/components/admin/ui/Card'
-import Field from '@/components/admin/ui/Field'
-import { Input, Select, TextArea } from '@/components/admin/ui/Input'
-import { PanelActions, PanelHeader, SimpleTable } from '@/components/admin/ui/Panel'
-import { primaryButton } from '@/components/admin/ui/styles'
+import Badge from '@/components/ui/Badge'
+import Card from '@/components/ui/Card'
+import Field from '@/components/ui/Field'
+import { Input, Select, TextArea } from '@/components/ui/Input'
+import { PanelActions, PanelHeader, SimpleTable } from '@/components/ui/Panel'
+import { primaryButton } from '@/components/ui/styles'
 import { tournamentService } from '@/services/tournamentService'
 import { getApiErrorMessage } from '@/utils/apiError'
 import {

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import Badge from '@/components/admin/ui/Badge'
-import Card from '@/components/admin/ui/Card'
-import { SimpleTable } from '@/components/admin/ui/Panel'
+import Badge from '@/components/ui/Badge'
+import Card from '@/components/ui/Card'
+import { SimpleTable } from '@/components/ui/Panel'
 import { formatVnd, getPrizeAmountByRank, getTotalPrize, resultsFor, toneForStatus } from './utils'
 
 export default function ResultsTab({ tournament }) {

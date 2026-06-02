@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarDays, Edit, Newspaper, Plus, Search, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import AdminLayout from '@/components/admin/AdminLayout'
-import { PrimaryLink } from '@/components/admin/ui/AdminButton'
+import AdminLayout from '@/components/AdminLayout'
+import { PrimaryLink } from '@/components/ui/AdminButton'
 import { newsService } from '@/services/newsService'
 
 function formatDate(dateString) {

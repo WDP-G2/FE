@@ -1,5 +1,5 @@
 import { Activity, Award, DollarSign, Flag, Trophy, Users } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
+import AdminLayout from '@/components/AdminLayout'
 
 const revenue = [
   { label: 'T1', value: 120 },
