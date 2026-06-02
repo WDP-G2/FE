@@ -3,26 +3,25 @@ import {
   Trophy,
   MapPin,
   Calendar,
-  DollarSign,
   Users,
   Search,
   Eye,
-  X,
-  Flag,
   RefreshCw,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { tournamentService } from "@/services/tournamentService";
+import {
+  setTournamentBannerFallback,
+  tournamentService,
+} from "@/services/tournamentService";
 import { HorseOwnerLayout } from "./HorseOwnerLayout";
 import {
   GlassCard,
   Pill,
   PrimaryButton,
-  GhostButton,
 } from "../admin/AdminLayout";
 import { fmt } from "./data";
 import { HorseOwnerInfoRow } from "./components/HorseOwnerInfoRow";
-import { HorseOwnerStatBox } from "./components/HorseOwnerStatBox";
 
 function formatDate(value) {
   return value || "-";
@@ -42,7 +41,6 @@ function isOpenRegistration(tournament) {
 
 export function HorseOwnerTournaments() {
   const [search, setSearch] = useState("");
-  const [detail, setDetail] = useState(null);
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -130,6 +128,7 @@ export function HorseOwnerTournaments() {
                 <img
                   src={tournament.banner}
                   alt=""
+                  onError={setTournamentBannerFallback}
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A1628] via-[#0A1628]/20 to-transparent" />
@@ -169,23 +168,19 @@ export function HorseOwnerTournaments() {
                     highlight
                   />
                   <HorseOwnerInfoRow
-                    icon={DollarSign}
-                    text={`Entry fee: ${fmt(tournament.entryFee)}`}
-                  />
-                  <HorseOwnerInfoRow
                     icon={Users}
                     text={formatCapacity(tournament)}
                   />
                 </div>
 
                 <div className="flex gap-2">
-                  <GhostButton
-                    icon={Eye}
-                    className="flex-1"
-                    onClick={() => setDetail(tournament)}
+                  <Link
+                    to={`/horse-owner/tournaments/${tournament.id}`}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
                   >
+                    <Eye className="h-4 w-4" />
                     Chi tiết
-                  </GhostButton>
+                  </Link>
                   {isOpenRegistration(tournament) && (
                     <PrimaryButton
                       className="flex-1"
@@ -201,96 +196,6 @@ export function HorseOwnerTournaments() {
         </div>
       )}
 
-      {detail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-          <GlassCard className="max-h-[90vh] w-full max-w-2xl overflow-hidden">
-            <div className="flex items-center justify-between border-b border-white/10 p-5">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#D4A017]/15">
-                  <Trophy className="h-4 w-4 text-[#D4A017]" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="truncate text-base font-bold text-white">
-                    {detail.name}
-                  </h2>
-                  <p className="truncate text-xs text-white/50">
-                    {detail.location || "Chưa cập nhật địa điểm"}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setDetail(null)}
-                className="rounded-lg p-1.5 hover:bg-white/10"
-              >
-                <X className="h-4 w-4 text-white/60" />
-              </button>
-            </div>
-
-            <div className="max-h-[calc(90vh-80px)] space-y-4 overflow-y-auto p-5">
-              <div className="grid grid-cols-2 gap-3">
-                <HorseOwnerStatBox
-                  label="Prize Pool"
-                  value={fmt(detail.prizePool)}
-                  tone="gold"
-                />
-                <HorseOwnerStatBox
-                  label="Entry Fee"
-                  value={fmt(detail.entryFee)}
-                  tone="blue"
-                />
-                <HorseOwnerStatBox
-                  label="Ngựa đã đăng ký"
-                  value={
-                    Number(detail.maxHorses ?? 0) > 0
-                      ? `${detail.registeredHorses}/${detail.maxHorses}`
-                      : String(detail.registeredHorses ?? 0)
-                  }
-                  tone="green"
-                />
-                <HorseOwnerStatBox
-                  label="Trạng thái"
-                  value={detail.status}
-                  tone={detail.statusTone}
-                />
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-bold text-white">
-                  <Flag className="h-4 w-4 text-[#D4A017]" />
-                  Cuộc đua trong giải
-                </div>
-                <div className="space-y-2">
-                  {detail.races.length === 0 ? (
-                    <p className="text-sm text-white/45">
-                      Chưa có cuộc đua được công bố.
-                    </p>
-                  ) : (
-                    detail.races.map((race) => (
-                      <div
-                        key={race.id}
-                        className="rounded-xl border border-white/10 bg-white/[0.04] p-3"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-white">
-                              {race.name}
-                            </div>
-                            <div className="mt-1 text-xs text-white/45">
-                              {formatDate(race.date)} · {race.time || "--:--"} ·{" "}
-                              {race.distance || "Chưa cập nhật cự ly"}
-                            </div>
-                          </div>
-                          <Pill tone="blue">{race.status}</Pill>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-      )}
     </HorseOwnerLayout>
   );
 }

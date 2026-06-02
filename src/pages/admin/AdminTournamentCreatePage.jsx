@@ -41,17 +41,27 @@ function getTodayDate() {
   return `${year}-${month}-${day}`
 }
 
+function addDays(date, days) {
+  if (!date) return ''
+  const value = new Date(`${date}T00:00:00`)
+  value.setDate(value.getDate() + days)
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function buildTournamentPayload(form, bannerUrl) {
   return {
     name: form.name.trim(),
     description: form.description.trim(),
     location: form.location.trim(),
     bannerUrl,
-    registrationOpenAt: dateTime(form.startDate, '00:00'),
-    registrationCloseAt: dateTime(form.startDate, '07:00'),
+    registrationOpenAt: dateTime(form.registrationOpenDate, '08:00'),
+    registrationCloseAt: dateTime(form.registrationCloseDate, '17:00'),
     startAt: dateTime(form.startDate, '08:00'),
     endAt: dateTime(form.endDate, '18:00'),
-    checkInDeadlineAt: dateTime(form.startDate, '07:30'),
+    checkInDeadlineAt: dateTime(form.registrationCloseDate, '17:30'),
     minTeams: 1,
     maxTeams: 100,
     jockeyChallengeEnabled: false,
@@ -68,6 +78,8 @@ export default function AdminTournamentCreatePage() {
     name: '',
     description: '',
     location: '',
+    registrationOpenDate: '',
+    registrationCloseDate: '',
     startDate: '',
     endDate: '',
     rules: defaultRules,
@@ -77,22 +89,47 @@ export default function AdminTournamentCreatePage() {
   const [submitting, setSubmitting] = useState(false)
 
   const today = getTodayDate()
+  const registrationOpenMin = addDays(today, 1)
+  const startDateMin = addDays(today, 7)
+  const registrationCloseMax = form.startDate ? addDays(form.startDate, -2) : ''
+  const endDateMin = form.startDate ? addDays(form.startDate, 1) : startDateMin
   const slug = createSlug(form.name)
   const valid =
     form.name.trim().length > 3 &&
     form.location.trim().length > 0 &&
+    form.registrationOpenDate &&
+    form.registrationCloseDate &&
     form.startDate &&
     form.endDate &&
-    form.startDate >= today &&
-    form.startDate <= form.endDate
+    form.registrationOpenDate >= registrationOpenMin &&
+    form.registrationOpenDate <= form.registrationCloseDate &&
+    (!registrationCloseMax || form.registrationCloseDate <= registrationCloseMax) &&
+    form.startDate >= startDateMin &&
+    form.endDate > form.startDate
 
   const update = (key, value) =>
     setForm((previous) => {
       if (key === 'startDate') {
+        const nextRegistrationCloseMax = addDays(value, -2)
         return {
           ...previous,
           startDate: value,
-          endDate: previous.endDate && previous.endDate < value ? value : previous.endDate,
+          endDate: previous.endDate && previous.endDate <= value ? addDays(value, 1) : previous.endDate,
+          registrationCloseDate:
+            previous.registrationCloseDate && previous.registrationCloseDate > nextRegistrationCloseMax
+              ? nextRegistrationCloseMax
+              : previous.registrationCloseDate,
+        }
+      }
+
+      if (key === 'registrationOpenDate') {
+        return {
+          ...previous,
+          registrationOpenDate: value,
+          registrationCloseDate:
+            previous.registrationCloseDate && previous.registrationCloseDate < value
+              ? value
+              : previous.registrationCloseDate,
         }
       }
 
@@ -196,23 +233,37 @@ export default function AdminTournamentCreatePage() {
             <Field label="Ngày bắt đầu *">
               <DateField
                 value={form.startDate}
-                min={today}
+                min={startDateMin}
                 onChange={(event) => update('startDate', event.target.value)}
               />
             </Field>
             <Field label="Ngày kết thúc *">
               <DateField
                 value={form.endDate}
-                min={form.startDate || today}
+                min={endDateMin}
                 onChange={(event) => update('endDate', event.target.value)}
+              />
+            </Field>
+            <Field label="Ngày mở đăng ký *">
+              <DateField
+                value={form.registrationOpenDate}
+                min={registrationOpenMin}
+                max={form.registrationCloseDate || registrationCloseMax}
+                onChange={(event) => update('registrationOpenDate', event.target.value)}
+              />
+            </Field>
+            <Field label="Ngày kết thúc đăng ký *">
+              <DateField
+                value={form.registrationCloseDate}
+                min={form.registrationOpenDate || registrationOpenMin}
+                max={registrationCloseMax}
+                onChange={(event) => update('registrationCloseDate', event.target.value)}
               />
             </Field>
             <Field label="Trạng thái">
               <Input variant="form" disabled value="Nháp" />
             </Field>
-            <Field label="Mã giải đấu">
-              <Input variant="form" disabled value={slug} placeholder="Tự sinh từ tên" />
-            </Field>
+           
             <Field label="Tóm tắt luật giải đấu" full icon={FileText}>
               <textarea
                 rows={6}

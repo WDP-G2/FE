@@ -16,7 +16,10 @@ import {
 } from "lucide-react";
 import { PrimaryLink } from "@/components/ui/AdminButton";
 import AdminLayout from "@/components/AdminLayout";
-import { tournamentService } from "@/services/tournamentService";
+import {
+  setTournamentBannerFallback,
+  tournamentService,
+} from "@/services/tournamentService";
 
 const STATUS_TABS = [
   "Tất cả",
@@ -265,6 +268,7 @@ function TournamentCard({ tournament }) {
         <img
           src={tournament.banner}
           alt=""
+          onError={setTournamentBannerFallback}
           className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111d32] via-transparent to-transparent" />

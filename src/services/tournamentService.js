@@ -2,8 +2,22 @@ import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
 
-const FALLBACK_BANNER =
+export const FALLBACK_TOURNAMENT_BANNER =
   'https://images.unsplash.com/photo-1507514604110-ba3347c457f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
+
+function normalizeBannerUrl(value) {
+  if (!value || typeof value !== 'string') return FALLBACK_TOURNAMENT_BANNER
+
+  const trimmedValue = value.trim()
+  if (!trimmedValue) return FALLBACK_TOURNAMENT_BANNER
+
+  return trimmedValue
+}
+
+export function setTournamentBannerFallback(event) {
+  event.currentTarget.onerror = null
+  event.currentTarget.src = FALLBACK_TOURNAMENT_BANNER
+}
 
 const STATUS_LABELS = {
   DRAFT: 'Nháp',
@@ -188,7 +202,7 @@ export function mapTournament(tournament) {
     maxHorses: Number(tournament.maxTeams ?? 0) || sumRaceCapacity(races),
     entryFee: firstPositiveEntryFee(races),
     prizePool: sumPrizePool(races),
-    banner: tournament.bannerUrl || FALLBACK_BANNER,
+    banner: normalizeBannerUrl(tournament.bannerUrl),
     races,
     startTime: toTime(tournament.startAt),
     endTime: toTime(tournament.endAt),

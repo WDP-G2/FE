@@ -3,6 +3,7 @@ import { HorseOwnerDashboard } from "./HorseOwnerDashboard";
 import { HorseOwnerProfile } from "./HorseOwnerProfile";
 import { HorseOwnerHorses } from "./HorseOwnerHorses";
 import { HorseOwnerTournaments } from "./HorseOwnerTournaments";
+import { HorseOwnerTournamentDetailPage } from "./HorseOwnerTournamentDetailPage";
 import { HorseOwnerRegistrations } from "./HorseOwnerRegistrations";
 import { HorseOwnerJockeys } from "./HorseOwnerJockeys";
 import { HorseOwnerPayments } from "./HorseOwnerPayments";
@@ -15,6 +16,8 @@ export default function HorseOwnerPage() {
 
   if (pathname.startsWith("/horse-owner/profile")) return <HorseOwnerProfile />;
   if (pathname.startsWith("/horse-owner/horses")) return <HorseOwnerHorses />;
+  if (/^\/horse-owner\/tournaments\/[^/]+/.test(pathname))
+    return <HorseOwnerTournamentDetailPage />;
   if (pathname.startsWith("/horse-owner/tournaments"))
     return <HorseOwnerTournaments />;
   if (pathname.startsWith("/horse-owner/registrations"))

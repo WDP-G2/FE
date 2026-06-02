@@ -23,11 +23,31 @@ function dateTime(date, time = '08:00') {
   return `${date}T${time || '08:00'}:00`
 }
 
+function getTodayDate() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function addDays(date, days) {
+  if (!date) return ''
+  const value = new Date(`${date}T00:00:00`)
+  value.setDate(value.getDate() + days)
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function makeDraft(tournament) {
   return {
     name: tournament.name ?? '',
     description: tournament.description ?? '',
     location: tournament.location ?? '',
+    registrationOpenDate: tournament.registrationOpenDate ?? '',
+    registrationCloseDate: tournament.registrationCloseDate ?? '',
     startDate: tournament.startDate ?? '',
     endDate: tournament.endDate ?? '',
     statusCode: tournament.statusCode ?? 'DRAFT',
@@ -42,14 +62,11 @@ function buildUpdatePayload(tournament, draft) {
     description: draft.description.trim(),
     location: draft.location.trim(),
     bannerUrl: raw.bannerUrl ?? null,
-    registrationOpenAt:
-      raw.registrationOpenAt ?? dateTime(tournament.registrationOpenDate || draft.startDate, '08:00'),
-    registrationCloseAt:
-      raw.registrationCloseAt ?? dateTime(tournament.registrationCloseDate || draft.startDate, '17:00'),
+    registrationOpenAt: dateTime(draft.registrationOpenDate, '08:00'),
+    registrationCloseAt: dateTime(draft.registrationCloseDate, '17:00'),
     startAt: dateTime(draft.startDate, tournament.startTime || '08:00'),
     endAt: dateTime(draft.endDate, tournament.endTime || '17:00'),
-    checkInDeadlineAt:
-      raw.checkInDeadlineAt ?? dateTime(tournament.checkInDeadlineDate || draft.startDate, '07:30'),
+    checkInDeadlineAt: dateTime(draft.registrationCloseDate, '17:30'),
     minTeams: Number(tournament.minTeams || raw.minTeams || 1),
     maxTeams: Number(tournament.maxTeams || raw.maxTeams || 1),
     jockeyChallengeEnabled: Boolean(raw.jockeyChallengeEnabled),
@@ -67,19 +84,65 @@ function buildUpdatePayload(tournament, draft) {
 }
 
 function getValidationError(draft) {
+  const today = getTodayDate()
+  const registrationOpenMin = addDays(today, 1)
+  const startDateMin = addDays(today, 7)
+  const registrationCloseMax = draft.startDate ? addDays(draft.startDate, -2) : ''
+
   if (!draft.name.trim()) return 'Tên giải đấu không được để trống'
   if (!draft.location.trim()) return 'Địa điểm không được để trống'
+  if (!draft.registrationOpenDate || !draft.registrationCloseDate) return 'Ngày mở và kết thúc đăng ký không được để trống'
+  if (draft.registrationOpenDate < registrationOpenMin) return 'Ngày mở đăng ký phải sau ngày tạo ít nhất 1 ngày'
+  if (draft.registrationOpenDate > draft.registrationCloseDate) return 'Ngày mở đăng ký không được sau ngày kết thúc đăng ký'
+  if (registrationCloseMax && draft.registrationCloseDate > registrationCloseMax) return 'Ngày kết thúc đăng ký phải trước ngày bắt đầu giải ít nhất 2 ngày'
   if (!draft.startDate || !draft.endDate) return 'Ngày bắt đầu và kết thúc không được để trống'
-  if (draft.startDate > draft.endDate) return 'Ngày bắt đầu không được sau ngày kết thúc'
+  if (draft.startDate < startDateMin) return 'Ngày bắt đầu giải phải sau thời gian thực tế ít nhất 1 tuần'
+  if (draft.endDate <= draft.startDate) return 'Ngày kết thúc phải sau ngày bắt đầu'
   return ''
 }
 
 export default function SettingsTab({ tournament, setTournament }) {
   const [draft, setDraft] = useState(() => makeDraft(tournament))
   const [saving, setSaving] = useState(false)
+  const today = getTodayDate()
+  const registrationOpenMin = addDays(today, 1)
+  const startDateMin = addDays(today, 7)
+  const registrationCloseMax = draft.startDate ? addDays(draft.startDate, -2) : ''
+  const endDateMin = draft.startDate ? addDays(draft.startDate, 1) : startDateMin
 
   const updateDraft = (patch) => {
-    setDraft((previous) => ({ ...previous, ...patch }))
+    setDraft((previous) => {
+      if ('startDate' in patch) {
+        const nextStartDate = patch.startDate
+        const nextRegistrationCloseMax = addDays(nextStartDate, -2)
+        return {
+          ...previous,
+          ...patch,
+          endDate:
+            previous.endDate && previous.endDate <= nextStartDate
+              ? addDays(nextStartDate, 1)
+              : previous.endDate,
+          registrationCloseDate:
+            previous.registrationCloseDate && previous.registrationCloseDate > nextRegistrationCloseMax
+              ? nextRegistrationCloseMax
+              : previous.registrationCloseDate,
+        }
+      }
+
+      if ('registrationOpenDate' in patch) {
+        const nextRegistrationOpenDate = patch.registrationOpenDate
+        return {
+          ...previous,
+          ...patch,
+          registrationCloseDate:
+            previous.registrationCloseDate && previous.registrationCloseDate < nextRegistrationOpenDate
+              ? nextRegistrationOpenDate
+              : previous.registrationCloseDate,
+        }
+      }
+
+      return { ...previous, ...patch }
+    })
   }
 
   const saveSettings = async () => {
@@ -97,6 +160,8 @@ export default function SettingsTab({ tournament, setTournament }) {
         draft.name !== tournament.name ||
         draft.description !== tournament.description ||
         draft.location !== tournament.location ||
+        draft.registrationOpenDate !== tournament.registrationOpenDate ||
+        draft.registrationCloseDate !== tournament.registrationCloseDate ||
         draft.startDate !== tournament.startDate ||
         draft.endDate !== tournament.endDate
 
@@ -144,10 +209,29 @@ export default function SettingsTab({ tournament, setTournament }) {
           <Field label="Địa điểm" full>
             <Input value={draft.location} onChange={(event) => updateDraft({ location: event.target.value })} />
           </Field>
+          <Field label="Ngày mở đăng ký">
+            <Input
+              type="date"
+              value={draft.registrationOpenDate}
+              min={registrationOpenMin}
+              max={draft.registrationCloseDate || registrationCloseMax}
+              onChange={(event) => updateDraft({ registrationOpenDate: event.target.value })}
+            />
+          </Field>
+          <Field label="Ngày kết thúc đăng ký">
+            <Input
+              type="date"
+              value={draft.registrationCloseDate}
+              min={draft.registrationOpenDate || registrationOpenMin}
+              max={registrationCloseMax}
+              onChange={(event) => updateDraft({ registrationCloseDate: event.target.value })}
+            />
+          </Field>
           <Field label="Ngày bắt đầu">
             <Input
               type="date"
               value={draft.startDate}
+              min={startDateMin}
               onChange={(event) => updateDraft({ startDate: event.target.value })}
             />
           </Field>
@@ -155,6 +239,7 @@ export default function SettingsTab({ tournament, setTournament }) {
             <Input
               type="date"
               value={draft.endDate}
+              min={endDateMin}
               onChange={(event) => updateDraft({ endDate: event.target.value })}
             />
           </Field>
