@@ -1,6 +1,6 @@
 import { CalendarDays, Flag, Hash, MapPin, Users } from 'lucide-react'
-import Badge from '@/components/admin/ui/Badge'
-import { Meta } from '@/components/admin/ui/Panel'
+import Badge from '@/components/ui/Badge'
+import { Meta } from '@/components/ui/Panel'
 
 export default function TournamentHero({ tournament, totalRegistered }) {
   return (

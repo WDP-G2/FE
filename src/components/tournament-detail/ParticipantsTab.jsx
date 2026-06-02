@@ -1,7 +1,7 @@
 import { Users } from 'lucide-react'
-import Badge from '@/components/admin/ui/Badge'
-import Card from '@/components/admin/ui/Card'
-import { PanelHeader, SimpleTable } from '@/components/admin/ui/Panel'
+import Badge from '@/components/ui/Badge'
+import Card from '@/components/ui/Card'
+import { PanelHeader, SimpleTable } from '@/components/ui/Panel'
 import { registrationsFor } from './utils'
 
 export default function ParticipantsTab({ tournament }) {

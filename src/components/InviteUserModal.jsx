@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Mail, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { GhostButton, PrimaryButton } from '@/components/admin/ui/AdminButton'
-import { inputClass } from '@/components/admin/ui/styles'
+import { GhostButton, PrimaryButton } from '@/components/ui/AdminButton'
+import { inputClass } from '@/components/ui/styles'
 
 export default function InviteUserModal({ open, onClose }) {
   const [email, setEmail] = useState('')

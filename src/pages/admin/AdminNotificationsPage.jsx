@@ -1,7 +1,7 @@
 import { Bell, Clock, Mail, MessageSquare, Send, Smartphone } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
-import Field from '@/components/admin/ui/Field'
-import { inputClass } from '@/components/admin/ui/styles'
+import AdminLayout from '@/components/AdminLayout'
+import Field from '@/components/ui/Field'
+import { inputClass } from '@/components/ui/styles'
 
 const history = [
   { id: 'N-1', title: 'Mở đăng ký Vietnam Grand Prix 2026', channel: 'Email + Push', when: '2 giờ trước', sent: 1248 },

@@ -14,8 +14,8 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { PrimaryLink } from "@/components/admin/ui/AdminButton";
-import AdminLayout from "@/components/admin/AdminLayout";
+import { PrimaryLink } from "@/components/ui/AdminButton";
+import AdminLayout from "@/components/AdminLayout";
 import { tournamentService } from "@/services/tournamentService";
 
 const STATUS_TABS = [

@@ -1,7 +1,7 @@
 import { Activity, FileText, Flag, Trophy, Users } from 'lucide-react'
-import Card from '@/components/admin/ui/Card'
-import StatCard from '@/components/admin/ui/StatCard'
-import { SectionHeading } from '@/components/admin/ui/Panel'
+import Card from '@/components/ui/Card'
+import StatCard from '@/components/ui/StatCard'
+import { SectionHeading } from '@/components/ui/Panel'
 import { formatVnd } from './utils'
 
 export default function OverviewTab({ tournament, totalPrize, totalRegistered }) {

@@ -1,7 +1,7 @@
 import { CalendarRange, MapPin, Route, Timer } from 'lucide-react'
-import Badge from '@/components/admin/ui/Badge'
-import Card from '@/components/admin/ui/Card'
-import { Meta, PanelHeader } from '@/components/admin/ui/Panel'
+import Badge from '@/components/ui/Badge'
+import Card from '@/components/ui/Card'
+import { Meta, PanelHeader } from '@/components/ui/Panel'
 import { formatVnd, getTotalPrize, toneForStatus } from './utils'
 
 export default function ScheduleTab({ tournament }) {

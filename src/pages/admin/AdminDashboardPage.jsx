@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { PrimaryLink } from '@/components/admin/ui/AdminButton'
+import { PrimaryLink } from '@/components/ui/AdminButton'
 import {
   Activity,
   ArrowRight,
@@ -10,7 +10,7 @@ import {
   Trophy,
   Users,
 } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
+import AdminLayout from '@/components/AdminLayout'
 
 const statistics = [
   { label: 'Tổng giải đấu', value: '4', delta: '+12%', icon: Trophy, tone: 'gold' },
