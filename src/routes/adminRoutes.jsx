@@ -9,6 +9,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage'
 import AdminStatisticsPage from '@/pages/admin/AdminStatisticsPage'
 import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
+import AdminWalletPage from '@/pages/admin/AdminWalletPage'
 import { withAdminRole } from './guards'
 
 function adminRoute(path, Page) {
@@ -25,6 +26,7 @@ export const adminRoutes = [
   adminRoute('/admin/news/:id/edit', AdminNewsEditPage),
   adminRoute('/admin/users', AdminUsersPage),
   adminRoute('/admin/statistics', AdminStatisticsPage),
+  adminRoute('/admin/wallet', AdminWalletPage),
   adminRoute('/admin/notifications', AdminNotificationsPage),
   adminRoute('/admin/settings', AdminSettingsPage),
 ]

@@ -1,9 +1,9 @@
-import { FACEBOOK_APP_ID } from '@/config/env'
+import { ENV } from '@/config/env'
 
 let sdkPromise = null
 
 export function loadFacebookSdk() {
-  if (typeof window === 'undefined' || !FACEBOOK_APP_ID) {
+  if (typeof window === 'undefined' || !ENV.FACEBOOK_APP_ID) {
     return Promise.reject(new Error('Facebook App ID chưa được cấu hình'))
   }
 
@@ -15,7 +15,7 @@ export function loadFacebookSdk() {
     sdkPromise = new Promise((resolve, reject) => {
       window.fbAsyncInit = () => {
         window.FB.init({
-          appId: FACEBOOK_APP_ID,
+          appId: ENV.FACEBOOK_APP_ID,
           cookie: true,
           xfbml: false,
           version: 'v19.0',

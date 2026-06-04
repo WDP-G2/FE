@@ -1,0 +1,9 @@
+#!/bin/sh
+# Gỡ trailer Cursor nếu IDE chèn vào template commit
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+tmp="${msg_file}.tmp"
+grep -viE '^co-authored-by:.*(cursor|cursoragent|cursor agent)' "$msg_file" > "$tmp" || true
+mv "$tmp" "$msg_file"
+exit 0

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Send, Upload } from 'lucide-react'
+import { ArrowLeft, Send } from 'lucide-react'
+import NewsImageUpload from '@/components/news/NewsImageUpload'
 import { toast } from 'sonner'
 import AdminLayout from '@/components/AdminLayout'
 import { GhostButton, PrimaryButton } from '@/components/ui/AdminButton'
-import { inputClass } from '@/components/ui/styles'
+import { inputClass, selectClass, selectOptionClass } from '@/components/ui/styles'
 import { newsService } from '@/services/newsService'
 
 const CATEGORIES = ['Kết quả đua', 'Sự kiện', 'Chân dung', 'Công nghệ', 'Quy định', 'Phỏng vấn']
@@ -15,7 +16,6 @@ const emptyForm = {
   content: '',
   category: 'Kết quả đua',
   featured: false,
-  thumbnail: '',
 }
 
 export default function AdminNewsForm({ articleId }) {
@@ -24,6 +24,7 @@ export default function AdminNewsForm({ articleId }) {
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [imageFile, setImageFile] = useState(null)
+  const [existingImageUrl, setExistingImageUrl] = useState('')
   const [form, setForm] = useState(emptyForm)
 
   useEffect(() => {
@@ -39,8 +40,8 @@ export default function AdminNewsForm({ articleId }) {
           content: data.content,
           category: data.category,
           featured: data.featured,
-          thumbnail: data.thumbnail,
         })
+        setExistingImageUrl(data.imageUrl || '')
       } catch (error) {
         console.error(error)
         toast.error('Không thể tải bài viết')
@@ -162,34 +163,11 @@ export default function AdminNewsForm({ articleId }) {
 
         <div className="space-y-6">
           <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
-            <label className="mb-2 block text-sm font-semibold text-white/70">Hình ảnh đại diện</label>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-              className="mb-3 w-full text-sm text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-[#dda50e] file:px-4 file:py-2 file:font-semibold file:text-white"
-            />
-            {(form.thumbnail || imageFile) && (
-              <div className="overflow-hidden rounded-xl border border-white/10">
-                <img
-                  src={imageFile ? URL.createObjectURL(imageFile) : form.thumbnail}
-                  alt=""
-                  className="h-48 w-full object-cover"
-                />
-              </div>
-            )}
-            {!form.thumbnail && !imageFile && (
-              <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] text-white/45">
-                <Upload className="mb-2 h-10 w-10" />
-                <p className="text-sm">Chọn ảnh hoặc dùng URL bên dưới</p>
-              </div>
-            )}
-            <input
-              type="url"
-              value={form.thumbnail}
-              onChange={(e) => update('thumbnail', e.target.value)}
-              placeholder="URL hình ảnh (tùy chọn)..."
-              className={`${inputClass} mt-3`}
+            <NewsImageUpload
+              existingUrl={existingImageUrl}
+              file={imageFile}
+              onFileChange={setImageFile}
+              disabled={saving}
             />
           </section>
 
@@ -198,10 +176,10 @@ export default function AdminNewsForm({ articleId }) {
             <select
               value={form.category}
               onChange={(e) => update('category', e.target.value)}
-              className={`${inputClass} bg-[#162338]`}
+              className={selectClass}
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
+                <option key={cat} value={cat} className={selectOptionClass}>
                   {cat}
                 </option>
               ))}

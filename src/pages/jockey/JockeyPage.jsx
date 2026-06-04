@@ -10,6 +10,7 @@ import { JockeyResults } from "./JockeyResults";
 import { JockeyRankings } from "./JockeyRankings";
 import { JockeyNotifications } from "./JockeyNotifications";
 import { JockeySettings } from "./JockeySettings";
+import { JockeyWallet } from "./JockeyWallet";
 
 export default function JockeyPage() {
   const { pathname } = useLocation();
@@ -22,6 +23,7 @@ export default function JockeyPage() {
   if (pathname.startsWith("/jockey/horses")) return <JockeyHorses />;
   if (pathname.startsWith("/jockey/results")) return <JockeyResults />;
   if (pathname.startsWith("/jockey/rankings")) return <JockeyRankings />;
+  if (pathname.startsWith("/jockey/wallet")) return <JockeyWallet />;
   if (pathname.startsWith("/jockey/notifications"))
     return <JockeyNotifications />;
   if (pathname.startsWith("/jockey/settings")) return <JockeySettings />;

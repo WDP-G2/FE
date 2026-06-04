@@ -6,14 +6,19 @@ import {
   ChevronDown,
   LayoutDashboard,
   LogOut,
+  Mail,
   Menu,
   Newspaper,
   Search,
   Settings,
   Trophy,
   Users,
+  Wallet,
   X,
 } from 'lucide-react'
+import RoleWalletBadge from '@/components/wallet/RoleWalletBadge'
+import { WALLET_PATHS } from '@/constants/walletPaths'
+import { useAuthStore } from '@/store/authStore'
 
 const ADMIN_NAV = [
   { label: 'Tổng quan', to: '/admin', icon: LayoutDashboard },
@@ -21,6 +26,7 @@ const ADMIN_NAV = [
   { label: 'Tin tức', to: '/admin/news', icon: Newspaper },
   { label: 'Người dùng', to: '/admin/users', icon: Users },
   { label: 'Thống kê', to: '/admin/statistics', icon: BarChart3 },
+  { label: 'Ví hệ thống', to: '/admin/wallet', icon: Wallet },
   { label: 'Thông báo', to: '/admin/notifications', icon: Bell },
   { label: 'Cài đặt', to: '/admin/settings', icon: Settings },
 ]
@@ -35,10 +41,11 @@ export default function AdminLayout({
 }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const logout = useAuthStore((s) => s.logout)
   const [open, setOpen] = useState(false)
 
-  const logout = () => {
-    localStorage.removeItem('auth_user')
+  const handleLogout = async () => {
+    await logout()
     navigate('/login')
   }
 
@@ -90,7 +97,7 @@ export default function AdminLayout({
         <div className="border-t border-white/10 px-4 py-6">
           <button
             type="button"
-            onClick={logout}
+            onClick={handleLogout}
             className="flex h-14 w-full items-center gap-5 rounded-2xl px-5 font-semibold text-white/60 transition hover:bg-red-500/10 hover:text-red-300"
           >
             <LogOut className="h-5 w-5" />
@@ -121,8 +128,17 @@ export default function AdminLayout({
             </label>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-5">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <RoleWalletBadge to={WALLET_PATHS.ADMIN} walletMode="admin" theme="dark" />
+            <button type="button" className="relative rounded-lg p-2 hover:bg-white/5">
+              <Mail className="h-5 w-5 text-white/60" />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#dda50e]" />
+            </button>
+            <button type="button" className="relative rounded-lg p-2 hover:bg-white/5">
+              <Bell className="h-5 w-5 text-white/60" />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-400" />
+            </button>
+            <div className="ml-2 flex items-center gap-4 border-l border-white/10 pl-4">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dda50e] text-xl font-bold shadow-lg shadow-[#d4a017]/30">
                 A
               </span>

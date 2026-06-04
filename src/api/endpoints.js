@@ -51,6 +51,10 @@ export const ENDPOINTS = {
   wallet: {
     me: '/wallets/me',
     transactions: '/wallets/me/transactions',
+    depositOrders: '/wallets/me/deposit-orders',
+    withdrawals: '/wallets/me/withdrawals',
+    admin: '/admin/wallet',
+    adminTransactions: '/admin/wallet/transactions',
   },
   roleApplications: {
     me: '/role-applications/me',
@@ -63,4 +67,3 @@ export const ENDPOINTS = {
     adminReject: (profileId) => `/admin/role-applications/${profileId}/reject`,
   },
 }
-

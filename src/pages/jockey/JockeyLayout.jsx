@@ -17,7 +17,11 @@ import {
   Menu,
   X,
   Zap,
+  Wallet,
 } from "lucide-react";
+import RoleWalletBadge from "@/components/wallet/RoleWalletBadge";
+import { WALLET_PATHS } from "@/constants/walletPaths";
+import { useAuthStore } from "@/store/authStore";
 
 const JOCKEY_NAV = [
   { label: "Dashboard", to: "/jockey", icon: LayoutDashboard },
@@ -28,6 +32,7 @@ const JOCKEY_NAV = [
   { label: "Ngựa được assign", to: "/jockey/horses", icon: PawPrint },
   { label: "Kết quả thi đấu", to: "/jockey/results", icon: BarChart3 },
   { label: "Bảng xếp hạng", to: "/jockey/rankings", icon: Trophy },
+  { label: "Ví của tôi", to: "/jockey/wallet", icon: Wallet },
   { label: "Thông báo", to: "/jockey/notifications", icon: Bell },
   { label: "Cài đặt", to: "/jockey/settings", icon: Settings },
 ];
@@ -36,12 +41,13 @@ export function JockeyLayout({ children, title, subtitle, actions }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const logout = () => {
-    try {
-      localStorage.removeItem("auth_user");
-    } catch {
-      // Ignore storage failures and continue logout navigation.
-    }
+  const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
+  const displayName = user?.fullName || user?.username || "Jockey";
+  const avatarLetter = displayName.charAt(0).toUpperCase();
+
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
   const isActive = (to) =>
@@ -103,7 +109,7 @@ export function JockeyLayout({ children, title, subtitle, actions }) {
             </div>
           </div>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/60 hover:text-red-300 hover:bg-red-500/10 transition-all"
           >
             <LogOut className="w-4 h-4" />
@@ -129,7 +135,8 @@ export function JockeyLayout({ children, title, subtitle, actions }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-white/5 rounded-lg relative">
+            <RoleWalletBadge to={WALLET_PATHS.JOCKEY} walletMode="user" theme="dark" />
+            <button type="button" className="p-2 hover:bg-white/5 rounded-lg relative">
               <Mail className="w-5 h-5 text-white/60" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#D4A017] rounded-full" />
             </button>
@@ -142,15 +149,11 @@ export function JockeyLayout({ children, title, subtitle, actions }) {
             </Link>
             <div className="flex items-center gap-2 pl-2 ml-2 border-l border-white/10">
               <div className="w-9 h-9 bg-gradient-to-br from-[#D4A017] to-[#B8941F] rounded-xl flex items-center justify-center font-bold shadow-md shadow-[#D4A017]/30">
-                A
+                {avatarLetter}
               </div>
               <div className="hidden md:block">
-                <div className="text-sm font-semibold leading-tight">
-                  Nguyễn Văn A
-                </div>
-                <div className="text-[10px] text-white/40">
-                  Jockey · Rank #3
-                </div>
+                <div className="text-sm font-semibold leading-tight">{displayName}</div>
+                <div className="text-[10px] text-white/40">Jockey</div>
               </div>
               <ChevronDown className="w-4 h-4 text-white/40" />
             </div>

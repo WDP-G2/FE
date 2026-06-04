@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import { newsService } from '@/services/newsService'
+import NewsImage from '@/components/news/NewsImage'
+import { NEWS_IMAGE_PRESETS } from '@/utils/cloudinary'
 
 function titleClampStyle() {
   return {
@@ -77,9 +79,10 @@ export default function RelatedNews({ currentNewsId }) {
             className="group flex gap-4 rounded-2xl border border-gray-50 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#D4A017]/20 hover:bg-gradient-to-r hover:from-[#FFF8F0] hover:to-white hover:shadow-lg"
           >
             <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl shadow-md">
-              <img
-                src={news.thumbnail}
+              <NewsImage
+                src={news.imageUrl || news.thumbnail}
                 alt={news.title}
+                preset={NEWS_IMAGE_PRESETS.related}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
             </div>

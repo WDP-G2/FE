@@ -1,22 +1,49 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
+import { FALLBACK_NEWS_IMAGE } from '@/utils/cloudinary'
 
-const FALLBACK_THUMBNAIL =
-  'https://images.unsplash.com/photo-1507514604110-ba3347c457f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
+function appendIfPresent(formData, key, value) {
+  if (value === undefined || value === null || value === '') return
+  formData.append(key, value)
+}
+
+/** FormData khớp @ModelAttribute NewsArticleMultipartRequest trên BE */
+function buildNewsFormData(payload, imageFile) {
+  const formData = new FormData()
+
+  appendIfPresent(formData, 'title', payload.title)
+  appendIfPresent(formData, 'summary', payload.summary ?? payload.shortDescription)
+  appendIfPresent(formData, 'content', payload.content)
+  appendIfPresent(formData, 'category', payload.category)
+
+  if (payload.featured !== undefined) {
+    formData.append('featured', String(Boolean(payload.featured)))
+  }
+
+  appendIfPresent(formData, 'publishedAt', payload.publishedAt)
+
+  if (imageFile) {
+    formData.append('image', imageFile)
+  }
+
+  return formData
+}
 
 /** Map BE NewsArticleResponse -> shape used by FE components */
 export function mapNewsArticle(article) {
   if (!article) return null
 
   const publishedAt = article.publishedAt ?? article.createdAt
+  const imageUrl = article.imageUrl?.trim() || ''
 
   return {
     id: String(article.id),
     title: article.title ?? '',
     shortDescription: article.summary ?? '',
     content: article.content ?? '',
-    thumbnail: article.imageUrl || FALLBACK_THUMBNAIL,
+    imageUrl,
+    thumbnail: imageUrl || FALLBACK_NEWS_IMAGE,
     category: article.category || 'Tin tuc',
     author: article.createdBy || 'Ban quan tri',
     createdAt: publishedAt,
@@ -55,6 +82,8 @@ function applyFilters(items, params = {}) {
 
   return filtered
 }
+
+const multipartHeaders = { 'Content-Type': 'multipart/form-data' }
 
 export const newsService = {
   async getAllNews(params = {}) {
@@ -115,11 +144,10 @@ export const newsService = {
     }
 
     if (imageFile) {
-      const formData = new FormData()
-      formData.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }))
-      formData.append('image', imageFile)
       const article = await axiosClient
-        .post(ENDPOINTS.news.adminList, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        .post(ENDPOINTS.news.adminList, buildNewsFormData(body, imageFile), {
+          headers: multipartHeaders,
+        })
         .then(unwrapResponse)
       return { data: mapNewsArticle(article) }
     }
@@ -138,11 +166,10 @@ export const newsService = {
     }
 
     if (imageFile) {
-      const formData = new FormData()
-      formData.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }))
-      formData.append('image', imageFile)
       const article = await axiosClient
-        .put(ENDPOINTS.news.adminById(id), formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        .put(ENDPOINTS.news.adminById(id), buildNewsFormData(body, imageFile), {
+          headers: multipartHeaders,
+        })
         .then(unwrapResponse)
       return { data: mapNewsArticle(article) }
     }

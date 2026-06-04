@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Calendar } from 'lucide-react'
+import NewsImage from '@/components/news/NewsImage'
+import { NEWS_IMAGE_PRESETS } from '@/utils/cloudinary'
 
 function clampStyle(lines) {
   return {
@@ -25,9 +27,10 @@ export default function NewsCard({ news }) {
       className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-lg transition-all duration-500 hover:-translate-y-2 hover:border-[#D4A017]/30 hover:shadow-2xl"
     >
       <div className="relative h-56 overflow-hidden">
-        <img
-          src={news.thumbnail}
+        <NewsImage
+          src={news.imageUrl || news.thumbnail}
           alt={news.title}
+          preset={NEWS_IMAGE_PRESETS.card}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />

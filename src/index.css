@@ -17,6 +17,16 @@ body {
   width: 100%;
 }
 
+/* Dropdown native: chữ đọc được trên admin / layout tối */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #162338;
+  color: #ffffff;
+}
+
 .google-signin-btn > div {
   width: 100% !important;
   display: flex;

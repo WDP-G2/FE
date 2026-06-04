@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:hooks": "node -e \"require('child_process').execSync(process.platform==='win32'?'powershell -ExecutionPolicy Bypass -File scripts/setup-git-hooks.ps1':'sh scripts/setup-git-hooks.sh',{stdio:'inherit'})\""
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",

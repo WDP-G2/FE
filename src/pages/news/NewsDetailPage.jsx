@@ -4,6 +4,8 @@ import { ArrowLeft, Calendar, Tag, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { newsService } from '@/services/newsService'
 import RelatedNews from '@/components/news/RelatedNews'
+import NewsImage from '@/components/news/NewsImage'
+import { NEWS_IMAGE_PRESETS } from '@/utils/cloudinary'
 
 function formatLongDate(dateString) {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -88,9 +90,10 @@ export default function NewsDetailPage() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <div className="group relative mb-10 h-[500px] overflow-hidden rounded-3xl shadow-2xl">
-                <img
-                  src={news.thumbnail}
+                <NewsImage
+                  src={news.imageUrl || news.thumbnail}
                   alt={news.title}
+                  preset={NEWS_IMAGE_PRESETS.detail}
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />

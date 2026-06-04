@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom'
 import { CalendarDays, Edit, Newspaper, Plus, Search, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import AdminLayout from '@/components/AdminLayout'
+import { selectClass, selectOptionClass } from '@/components/ui/styles'
 import { PrimaryLink } from '@/components/ui/AdminButton'
 import { newsService } from '@/services/newsService'
+import NewsImage from '@/components/news/NewsImage'
+import { NEWS_IMAGE_PRESETS } from '@/utils/cloudinary'
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -108,10 +111,14 @@ export default function AdminNewsPage() {
           <select
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
-            className="h-14 rounded-2xl border border-white/10 bg-[#162338] px-5 text-white outline-none focus:border-[#dda50e]/60 lg:w-64"
+            className={`${selectClass} lg:w-64`}
           >
-            <option value="all">Tất cả bài viết</option>
-            <option value="featured">Chỉ tin nổi bật</option>
+            <option value="all" className={selectOptionClass}>
+              Tất cả bài viết
+            </option>
+            <option value="featured" className={selectOptionClass}>
+              Chỉ tin nổi bật
+            </option>
           </select>
         </div>
       </section>
@@ -147,9 +154,10 @@ export default function AdminNewsPage() {
                   <tr key={item.id} className="border-b border-white/5 align-top text-white/70 last:border-0">
                     <td className="px-6 py-5">
                       <div className="flex gap-4">
-                        <img
-                          src={item.thumbnail}
+                        <NewsImage
+                          src={item.imageUrl || item.thumbnail}
                           alt={item.title}
+                          preset={NEWS_IMAGE_PRESETS.thumb}
                           className="h-16 w-24 rounded-xl border border-white/10 object-cover"
                         />
                         <div className="min-w-0">

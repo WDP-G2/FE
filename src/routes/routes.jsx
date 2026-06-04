@@ -16,7 +16,8 @@ import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ProfilePage from '@/pages/profile/ProfilePage'
 import HorseOwnerPage from '@/pages/horse-owner/HorseOwnerPage'
 import JockeyPage from '@/pages/jockey/JockeyPage'
-import RefereePage from '@/pages/dashboard/RefereePage'
+import RefereePage from '@/pages/referee/RefereePage'
+import SpectatorWalletPage from '@/pages/dashboard/SpectatorWalletPage'
 import NotFoundPage from '@/pages/errors/NotFoundPage'
 import UnauthorizedPage from '@/pages/errors/UnauthorizedPage'
 import { adminRoutes } from './adminRoutes'
@@ -32,10 +33,11 @@ export const router = createBrowserRouter([
       { path: '/tournaments', Component: HomePage },
       { path: '/rankings', Component: HomePage },
       { path: '/dashboard', element: withAuth(<DashboardPage />) },
+      { path: '/dashboard/wallet', element: withAuth(<SpectatorWalletPage />) },
       { path: '/profile', element: withAuth(<ProfilePage />) },
       { path: '/unauthorized', element: withAuth(<UnauthorizedPage />) },
       {
-        path: '/referee',
+        path: '/referee/*',
         element: withAuth(
           <RoleProtectedRoute allowedRoles={['REFEREE']}>
             <RefereePage />

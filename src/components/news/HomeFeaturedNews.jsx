@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, ChevronRight, Newspaper } from 'lucide-react'
 import { newsService } from '@/services/newsService'
+import NewsImage from '@/components/news/NewsImage'
+import { NEWS_IMAGE_PRESETS } from '@/utils/cloudinary'
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -77,9 +79,10 @@ export default function HomeFeaturedNews() {
                 className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={item.thumbnail}
+                  <NewsImage
+                    src={item.imageUrl || item.thumbnail}
                     alt={item.title}
+                    preset={NEWS_IMAGE_PRESETS.card}
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                   />
                   <span className="absolute left-4 top-4 rounded-full bg-[#D4A017] px-3 py-1 text-xs font-bold text-white">
