@@ -38,9 +38,15 @@ function formatDateTime(value) {
   }).format(date)
 }
 
+function parseUserActive(value) {
+  if (value === true || value === 1 || value === 'true') return true
+  if (value === false || value === 0 || value === 'false') return false
+  return true
+}
+
 export function mapUser(user) {
   const roleCode = user?.role ?? 'USER'
-  const active = user?.active !== false
+  const active = parseUserActive(user?.active)
   const displayName = user?.fullName || user?.username || user?.email || `User #${user?.id ?? ''}`
   const pendingRoleCode = user?.pendingRole ?? null
 
@@ -125,11 +131,15 @@ export const adminUserService = {
   },
 
   async activateUser(id) {
-    await axiosClient.put(ENDPOINTS.admin.activateUser(id)).then(unwrapResponse)
+    await axiosClient
+      .put(ENDPOINTS.admin.activateUser(id), {}, { headers: { 'Content-Type': 'application/json' } })
+      .then(unwrapResponse)
   },
 
   async deactivateUser(id) {
-    await axiosClient.put(ENDPOINTS.admin.deactivateUser(id)).then(unwrapResponse)
+    await axiosClient
+      .put(ENDPOINTS.admin.deactivateUser(id), {}, { headers: { 'Content-Type': 'application/json' } })
+      .then(unwrapResponse)
   },
 
   async updateUserRole(id, role) {

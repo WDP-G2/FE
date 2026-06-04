@@ -96,18 +96,40 @@ export default function AdminUsersPage() {
       return
     }
 
+    const userId = Number(item.rawId)
+    if (!Number.isFinite(userId)) {
+      toast.error('Không xác định được người dùng')
+      return
+    }
+
+    const nextActive = !item.active
+
     try {
-      setTogglingUserId(item.rawId)
+      setTogglingUserId(userId)
       if (item.active) {
-        await adminUserService.deactivateUser(item.rawId)
+        await adminUserService.deactivateUser(userId)
         toast.success(`Đã khóa tài khoản ${item.name}`)
       } else {
-        await adminUserService.activateUser(item.rawId)
+        await adminUserService.activateUser(userId)
         toast.success(`Đã mở khóa tài khoản ${item.name}`)
       }
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.rawId === item.rawId
+            ? {
+                ...u,
+                active: nextActive,
+                status: nextActive ? 'Đang hoạt động' : 'Tạm khóa',
+              }
+            : u,
+        ),
+      )
+
       await loadUsers()
     } catch (error) {
       toast.error(getApiErrorMessage(error) || 'Không thể cập nhật trạng thái tài khoản')
+      await loadUsers()
     } finally {
       setTogglingUserId(null)
     }
@@ -290,7 +312,7 @@ export default function AdminUsersPage() {
                           ) : (
                             <button
                               type="button"
-                              disabled={togglingUserId === item.rawId}
+                              disabled={togglingUserId === Number(item.rawId)}
                               onClick={() => handleToggleUserActive(item)}
                               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
                                 item.active
