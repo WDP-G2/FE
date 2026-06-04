@@ -15,10 +15,9 @@ export const roleApplicationService = {
   submitSpectator: (payload) =>
     axiosClient.post(ENDPOINTS.roleApplications.spectator, payload).then(unwrapResponse),
 
-  submitOwner: (fields, verificationDocument) => {
+  submitOwner: (fields) => {
     const formData = new FormData()
     appendFormFields(formData, fields)
-    if (verificationDocument) formData.append('verificationDocument', verificationDocument)
     return axiosClient
       .post(ENDPOINTS.roleApplications.owner, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -26,12 +25,9 @@ export const roleApplicationService = {
       .then(unwrapResponse)
   },
 
-  submitJockey: (fields, files = {}) => {
+  submitJockey: (fields) => {
     const formData = new FormData()
     appendFormFields(formData, fields)
-    if (files.avatar) formData.append('avatar', files.avatar)
-    if (files.achievements) formData.append('achievements', files.achievements)
-    if (files.licenseDocument) formData.append('licenseDocument', files.licenseDocument)
     return axiosClient
       .post(ENDPOINTS.roleApplications.jockey, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -39,10 +35,9 @@ export const roleApplicationService = {
       .then(unwrapResponse)
   },
 
-  submitReferee: (fields, certificationDocument) => {
+  submitReferee: (fields) => {
     const formData = new FormData()
     appendFormFields(formData, fields)
-    if (certificationDocument) formData.append('certificationDocument', certificationDocument)
     return axiosClient
       .post(ENDPOINTS.roleApplications.referee, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FileText, Upload, X } from 'lucide-react'
 import { ROLE_LABELS } from '@/constants/roleApplication'
 
@@ -61,11 +61,39 @@ function buildInitialValues(role, fullName) {
   return values
 }
 
+function FilePreview({ file }) {
+  const [previewUrl, setPreviewUrl] = useState(null)
+
+  useEffect(() => {
+    if (!file || file.type === 'application/pdf') {
+      setPreviewUrl(null)
+      return undefined
+    }
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  if (!file) return null
+  if (file.type === 'application/pdf') {
+    return <p className="mt-2 text-xs text-[#1E3A5F]/60">PDF: {file.name}</p>
+  }
+  if (!previewUrl) return null
+  return (
+    <img
+      src={previewUrl}
+      alt=""
+      className="mt-2 h-28 w-full rounded-lg border border-gray-200 object-cover"
+    />
+  )
+}
+
 export default function RoleRequestModal({ role, fullName, onClose, onSubmit }) {
   const fields = ROLE_FIELDS[role] || []
   const [values, setValues] = useState(() => buildInitialValues(role, fullName))
   const [files, setFiles] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const fileFieldNames = useMemo(
     () => new Set(fields.filter((f) => f.type === 'file').map((f) => f.name)),
@@ -77,10 +105,12 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit }) 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
+    setUploading(true)
     try {
       await onSubmit({ values, files, fileFieldNames })
       onClose()
     } finally {
+      setUploading(false)
       setSubmitting(false)
     }
   }
@@ -128,22 +158,28 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit }) 
                   className="w-full px-4 py-3 bg-[#FAFAFA] border border-gray-200 rounded-xl text-[#1E3A5F] focus:outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20 resize-none"
                 />
               ) : f.type === 'file' ? (
-                <label className="flex items-center gap-3 px-4 py-3 bg-[#FAFAFA] border border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-[#D4A017] hover:bg-[#FFF8F0] transition-all">
-                  <Upload className="w-5 h-5 text-[#D4A017]" />
-                  <span className="text-[#1E3A5F]/70 text-sm flex-1 truncate">
-                    {files[f.name]?.name || 'Chọn file để tải lên...'}
-                  </span>
-                  <input
-                    type="file"
-                    required={f.required && !files[f.name]}
-                    accept="image/*,application/pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) setFiles((prev) => ({ ...prev, [f.name]: file }))
-                    }}
-                  />
-                </label>
+                <>
+                  <label className="flex items-center gap-3 px-4 py-3 bg-[#FAFAFA] border border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-[#D4A017] hover:bg-[#FFF8F0] transition-all">
+                    <Upload className="w-5 h-5 text-[#D4A017]" />
+                    <span className="text-[#1E3A5F]/70 text-sm flex-1 truncate">
+                      {files[f.name]?.name || 'Chọn file để tải lên...'}
+                    </span>
+                    <input
+                      type="file"
+                      required={f.required && !files[f.name]}
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) setFiles((prev) => ({ ...prev, [f.name]: file }))
+                      }}
+                    />
+                  </label>
+                  <FilePreview file={files[f.name]} />
+                  <p className="mt-1 text-xs text-[#1E3A5F]/50">
+                    File được tải lên Cloudinary trước khi gửi hồ sơ.
+                  </p>
+                </>
               ) : (
                 <input
                   type={f.type || 'text'}
@@ -171,7 +207,7 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit }) 
               disabled={submitting}
               className="flex-1 py-3 bg-[#D4A017] text-white rounded-xl hover:bg-[#B8941F] font-semibold shadow-lg shadow-[#D4A017]/20 disabled:opacity-50"
             >
-              {submitting ? 'Đang gửi...' : 'Gửi hồ sơ'}
+              {uploading ? 'Đang tải lên Cloudinary...' : submitting ? 'Đang gửi...' : 'Gửi hồ sơ'}
             </button>
           </div>
         </form>

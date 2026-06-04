@@ -9,7 +9,7 @@ import AuthButton from '@/components/ui/AuthButton'
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons'
 import { useAuthStore } from '@/store/authStore'
 import { getApiErrorMessage } from '@/utils/apiError'
-import { getRoleHomePath, normalizeRole } from '@/utils/roleRedirect'
+import { getPostLoginPath } from '@/utils/roleRedirect'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -23,9 +23,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
 
   const redirectAfterAuth = (user) => {
-    const from = location.state?.from?.pathname
-    const home = from || getRoleHomePath(normalizeRole(user?.role))
-    navigate(home, { replace: true })
+    navigate(getPostLoginPath(user, location.state?.from?.pathname), { replace: true })
   }
 
   const handleSubmit = async (e) => {

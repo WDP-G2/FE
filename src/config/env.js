@@ -8,4 +8,6 @@ export const ENV = {
   CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME ?? 'dehtgp5iq',
   CLOUDINARY_UPLOAD_PRESET: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET ?? '',
   CLOUDINARY_NEWS_FOLDER: import.meta.env.VITE_CLOUDINARY_NEWS_FOLDER ?? 'hoser/news/images',
+  CLOUDINARY_ROLE_FOLDER:
+    import.meta.env.VITE_CLOUDINARY_ROLE_FOLDER ?? 'hoser/role-applications',
 }

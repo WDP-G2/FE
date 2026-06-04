@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BadgeCheck, RefreshCw, Search, Shield, UserCheck, UserX, Users } from 'lucide-react'
+import { BadgeCheck, Eye, RefreshCw, Search, Shield, UserCheck, UserX, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import AdminLayout from '@/components/AdminLayout'
+import RoleApplicationDetailModal from '@/components/admin/RoleApplicationDetailModal'
 import InviteUserModal from '@/components/InviteUserModal'
 import { PrimaryButton } from '@/components/ui/AdminButton'
 import { adminUserService, ROLE_VALUES } from '@/services/adminUserService'
@@ -34,6 +35,7 @@ export default function AdminUsersPage() {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [requestsLoading, setRequestsLoading] = useState(true)
+  const [detailRequest, setDetailRequest] = useState(null)
 
   const loadUsers = async () => {
     try {
@@ -113,6 +115,14 @@ export default function AdminUsersPage() {
       }
     >
       <InviteUserModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
+      <RoleApplicationDetailModal
+        request={detailRequest}
+        onClose={() => setDetailRequest(null)}
+        onResolved={() => {
+          loadUsers()
+          loadRequests()
+        }}
+      />
 
       <section className="mb-8 grid gap-5 md:grid-cols-4">
         {stats.map((item) => {
@@ -258,12 +268,13 @@ export default function AdminUsersPage() {
                   <th className="px-6 py-4">Chuyển quyền</th>
                   <th className="px-6 py-4">Trạng thái</th>
                   <th className="px-6 py-4">Gửi lúc</th>
+                  <th className="px-6 py-4 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {requestsLoading ? (
                   <tr>
-                    <td className="px-6 py-10 text-center text-white/50" colSpan={5}>
+                    <td className="px-6 py-10 text-center text-white/50" colSpan={6}>
                       Đang tải yêu cầu cấp quyền...
                     </td>
                   </tr>
@@ -292,11 +303,21 @@ export default function AdminUsersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-5 text-sm text-white/50">{item.submittedAt}</td>
+                      <td className="px-6 py-5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setDetailRequest(item)}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:border-[#dda50e]/40 hover:text-[#dda50e]"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Xem chi tiết
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="px-6 py-10 text-center text-white/50" colSpan={5}>
+                    <td className="px-6 py-10 text-center text-white/50" colSpan={6}>
                       Chưa có yêu cầu cấp quyền
                     </td>
                   </tr>

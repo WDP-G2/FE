@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Calendar,
   CheckCircle2,
@@ -17,7 +17,7 @@ import {
   ROLE_KEYS,
   ROLE_LABELS,
 } from '@/constants/roleApplication'
-import { roleApplicationService } from '@/services/roleApplicationService'
+import { submitRoleApplication } from '@/utils/roleApplicationSubmit'
 import { useAuthStore } from '@/store/authStore'
 import { getApiErrorMessage } from '@/utils/apiError'
 import {
@@ -25,7 +25,7 @@ import {
   getRoleCardStatus,
   hasPendingOtherRole,
 } from '@/utils/roleApplicationStatus'
-import { normalizeRole } from '@/utils/roleRedirect'
+import { getRoleHomePath, hasApprovedRole, normalizeRole } from '@/utils/roleRedirect'
 
 function formatJoinDate(createdAt) {
   if (!createdAt) return new Date().toLocaleDateString('vi-VN')
@@ -36,66 +36,8 @@ function formatJoinDate(createdAt) {
   }
 }
 
-function buildSubmitPayload(role, { values, files, fileFieldNames }) {
-  const textFields = {}
-  Object.entries(values).forEach(([key, value]) => {
-    if (!fileFieldNames.has(key) && value !== '') textFields[key] = value
-  })
-
-  if (role === 'SPECTATOR') {
-    return roleApplicationService.submitSpectator({
-      displayName: textFields.displayName,
-      phone: textFields.phone,
-      location: textFields.location,
-      favoriteHorseBreed: textFields.favoriteHorseBreed,
-      bio: textFields.bio,
-    })
-  }
-
-  if (role === 'OWNER') {
-    return roleApplicationService.submitOwner(
-      {
-        stableName: textFields.stableName,
-        address: textFields.address,
-        experienceYears: textFields.experienceYears,
-        bio: textFields.bio,
-      },
-      files.verificationDocument,
-    )
-  }
-
-  if (role === 'JOCKEY') {
-    return roleApplicationService.submitJockey(
-      {
-        licenseNumber: textFields.licenseNumber,
-        experienceYears: textFields.experienceYears,
-        heightCm: textFields.heightCm,
-        weightKg: textFields.weightKg,
-        hirePrice: textFields.hirePrice,
-        bio: textFields.bio,
-        awards: textFields.awards,
-        specialties: textFields.specialties,
-      },
-      {
-        avatar: files.avatar,
-        achievements: files.achievements,
-        licenseDocument: files.licenseDocument,
-      },
-    )
-  }
-
-  return roleApplicationService.submitReferee(
-    {
-      licenseNumber: textFields.licenseNumber,
-      experienceYears: textFields.experienceYears,
-      specialty: textFields.specialty,
-      bio: textFields.bio,
-    },
-    files.certificationDocument,
-  )
-}
-
 export default function ProfilePage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const fetchProfile = useAuthStore((s) => s.fetchProfile)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -110,6 +52,40 @@ export default function ProfilePage() {
     if (isAuthenticated) fetchProfile().catch(() => {})
   }, [isAuthenticated, fetchProfile])
 
+  useEffect(() => {
+    if (!isAuthenticated || !user || !location.pathname.startsWith('/profile')) return
+
+    if (hasApprovedRole(user)) {
+      navigate(getRoleHomePath(normalizeRole(user.role)), { replace: true })
+      return
+    }
+
+    if (user.roleApprovalStatus !== 'PENDING') return
+
+    const syncApproval = async () => {
+      try {
+        const fresh = await fetchProfile()
+        if (hasApprovedRole(fresh)) {
+          const role = normalizeRole(fresh.role)
+          toast.success(`Yêu cầu đã được duyệt! Chào mừng ${ROLE_LABELS[role] || role}.`)
+          navigate(getRoleHomePath(role), { replace: true })
+        }
+      } catch {
+        /* ignore polling errors */
+      }
+    }
+
+    const interval = setInterval(syncApproval, 8000)
+    const onFocus = () => syncApproval()
+    window.addEventListener('focus', onFocus)
+    syncApproval()
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [isAuthenticated, user, fetchProfile, navigate, location.pathname])
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: '/profile' }} />
   }
@@ -121,13 +97,15 @@ export default function ProfilePage() {
 
   const handleRoleSubmit = async (role, payload) => {
     try {
-      await buildSubmitPayload(role, payload)
-      await fetchProfile()
-      if (role === 'SPECTATOR') {
-        toast.success(`${displayName}, vai trò Khán giả đã được kích hoạt`)
-      } else {
-        toast.success(`Đã gửi hồ sơ xin cấp quyền ${ROLE_LABELS[role]} cho ${displayName}`)
+      await submitRoleApplication(role, payload)
+      const fresh = await fetchProfile()
+      if (role === 'SPECTATOR' || hasApprovedRole(fresh)) {
+        const approved = normalizeRole(fresh?.role)
+        toast.success(`${displayName}, vai trò ${ROLE_LABELS[approved] || approved} đã được kích hoạt`)
+        navigate(getRoleHomePath(approved), { replace: true })
+        return
       }
+      toast.success(`Đã gửi hồ sơ xin cấp quyền ${ROLE_LABELS[role]} cho ${displayName}`)
     } catch (err) {
       toast.error(getApiErrorMessage(err))
       throw err

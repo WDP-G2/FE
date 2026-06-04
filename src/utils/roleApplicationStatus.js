@@ -7,7 +7,10 @@ export function getRoleCardStatus(roleKey, user) {
   const pending = normalizeRole(user.pendingRole)
   const status = user.roleApprovalStatus
 
+  if (current === roleKey && current !== 'USER') return 'approved'
   if (current === roleKey && status === 'APPROVED') return 'approved'
+  if (pending === roleKey && status === 'APPROVED') return 'approved'
+
   if (pending === roleKey) {
     if (status === 'PENDING') return 'pending'
     if (status === 'REJECTED') return 'rejected'
