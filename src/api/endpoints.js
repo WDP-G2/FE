@@ -12,6 +12,7 @@ export const ENDPOINTS = {
   users: {
     byId: (id) => `/users/${id}`,
     profile: '/users/me/profile',
+    jockeys: '/users/jockeys',
   },
   admin: {
     users: '/admin/users',
@@ -51,6 +52,14 @@ export const ENDPOINTS = {
     adminApprove: (id) => `/admin/horses/${id}/approve`,
     adminReject: (id) => `/admin/horses/${id}/reject`,
     adminSuspend: (id) => `/admin/horses/${id}/suspend`,
+  },
+  jockeys: {
+    available: '/jockeys/available',
+    publicById: (id) => `/jockeys/${id}`,
+    ownerInvitations: '/owner/jockey-invitations',
+    ownerInvitationById: (id) => `/owner/jockey-invitations/${id}`,
+    ownerCancelInvitation: (id) => `/owner/jockey-invitations/${id}/cancel`,
+    ownerAccepted: '/owners/me/jockeys',
   },
   wallet: {
     me: '/wallets/me',

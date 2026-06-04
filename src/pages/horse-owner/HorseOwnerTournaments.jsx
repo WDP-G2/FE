@@ -20,19 +20,42 @@ import {
   Pill,
   PrimaryButton,
 } from "../admin/AdminLayout";
-import { fmt } from "./data";
 import { HorseOwnerInfoRow } from "./components/HorseOwnerInfoRow";
 
 function formatDate(value) {
   return value || "-";
 }
 
+function formatRegistrationRange(tournament) {
+  return `${formatDate(tournament.registrationOpenDate)} → ${formatDate(
+    tournament.registrationCloseDate,
+  )}`;
+}
+
+function dateOnly(value, endOfDay = false) {
+  if (!value) return null;
+
+  const [datePart] = String(value).split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  return endOfDay
+    ? new Date(year, month - 1, day, 23, 59, 59, 999)
+    : new Date(year, month - 1, day);
+}
+
+function isWithinRegistrationDates(tournament) {
+  const openDate = dateOnly(tournament.registrationOpenDate);
+  const closeDate = dateOnly(tournament.registrationCloseDate, true);
+  if (!openDate || !closeDate) return false;
+
+  const now = new Date();
+  return now >= openDate && now <= closeDate;
+}
+
 function formatCapacity(tournament) {
-  const maxHorses = Number(tournament.maxHorses ?? 0);
   const registeredHorses = Number(tournament.registeredHorses ?? 0);
-  return maxHorses > 0
-    ? `${registeredHorses} / ${maxHorses} ngựa đã đăng ký`
-    : `${registeredHorses} ngựa đã đăng ký`;
+  return `${registeredHorses} ngựa đã đăng ký`;
 }
 
 function isOpenRegistration(tournament) {
@@ -135,12 +158,6 @@ export function HorseOwnerTournaments() {
                 <div className="absolute left-3 top-3">
                   <Pill tone={tournament.statusTone}>{tournament.status}</Pill>
                 </div>
-                <div className="absolute bottom-3 right-3 text-right">
-                  <div className="text-[10px] text-white/60">Prize Pool</div>
-                  <div className="text-sm font-bold text-[#D4A017]">
-                    {fmt(tournament.prizePool)}
-                  </div>
-                </div>
               </div>
 
               <div className="p-5">
@@ -164,8 +181,9 @@ export function HorseOwnerTournaments() {
                   />
                   <HorseOwnerInfoRow
                     icon={Calendar}
-                    text={`Hạn đăng ký: ${formatDate(tournament.deadline)}`}
+                    text={`Đăng ký: ${formatRegistrationRange(tournament)}`}
                     highlight
+                    tone={isWithinRegistrationDates(tournament) ? "green" : "red"}
                   />
                   <HorseOwnerInfoRow
                     icon={Users}
