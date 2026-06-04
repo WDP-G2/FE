@@ -61,10 +61,12 @@ export default function HomePage() {
     { label: 'Spectators', value: '2,845', icon: BarChart3 }
   ];
 
-
+   
   return (
+    
     <div className="min-h-screen bg-gradient-to-b from-[#FFF8F0] via-white to-[#FAFAFA]">
       {/* Hero Section */}
+       
       <section className="relative min-h-[85vh] pt-28 pb-20 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
@@ -76,7 +78,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/80"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-[#FFF8F0]/50 via-transparent to-white"></div>
         </div>
-
+        
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
           <div className="max-w-3xl">
@@ -84,7 +86,7 @@ export default function HomePage() {
               <Trophy className="w-4 h-4 text-[#D4A017]" />
               <span className="text-[#D4A017] font-semibold text-sm">Nền tảng quản lý giải đua ngựa chuyên nghiệp</span>
             </div>
-
+            
             <h1 className="text-5xl md:text-7xl font-bold text-[#1E3A5F] mb-6 leading-tight">
               Trải nghiệm giải đua ngựa
               <span className="block text-[#D4A017]">chuyên nghiệp</span>

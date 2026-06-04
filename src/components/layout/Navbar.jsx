@@ -1,55 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Trophy, Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react'
+import { Trophy, Menu, X, User, LogOut, UserCircle2, LayoutDashboard } from 'lucide-react'
 import { toast } from 'sonner'
+import NavWalletMenu from '@/components/layout/NavWalletMenu'
 import { useAuthStore } from '@/store/authStore'
 import { normalizeRole, getRoleHomePath } from '@/utils/roleRedirect'
 
-const PUBLIC_LINKS = [
+const NAV_LINKS = [
   { name: 'Trang chủ', path: '/' },
   { name: 'Giải đấu', path: '/tournaments' },
   { name: 'Bảng xếp hạng', path: '/rankings' },
   { name: 'Tin tức', path: '/news' },
   { name: 'Giới thiệu', path: '/about' },
-
 ]
-
-const ROLE_LINKS = {
-  ADMIN: [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Quản trị', path: '/admin' },
-    { name: 'Giải đấu', path: '/tournaments' },
-    { name: 'Tin tức', path: '/news' },
-
-  ],
-  OWNER: [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Chủ ngựa', path: '/horse-owner' },
-    { name: 'Tin tức', path: '/news' },
-  ],
-  JOCKEY: [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Kỵ sĩ', path: '/jockey' },
-    { name: 'Tin tức', path: '/news' },
-  ],
-  REFEREE: [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Trọng tài', path: '/referee' },
-    { name: 'Tin tức', path: '/news' },
-  ],
-  SPECTATOR: [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Tin tức', path: '/news' },
-  ],
-  USER: [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Tin tức', path: '/news' },
-  
-  ],
-}
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -58,17 +26,23 @@ export default function Navbar() {
   const storeRole = useAuthStore((s) => s.role)
   const role = normalizeRole(storeRole || user?.role)
 
-  const isActive = (path) => {
-    if (path === '/') {
-      return location.pathname === path
-    }
+  const displayName = user?.fullName || user?.username || 'Tài khoản'
+  const dashboardPath = getRoleHomePath(role)
 
+  const isActive = (path) => {
+    if (path === '/') return location.pathname === path
     return location.pathname === path || location.pathname.startsWith(`${path}/`)
   }
 
-  const navLinks = isAuthenticated
-    ? ROLE_LINKS[role] || ROLE_LINKS.USER
-    : PUBLIC_LINKS
+  useEffect(() => {
+    const handler = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -79,9 +53,8 @@ export default function Navbar() {
       toast.error('Không thể đăng xuất')
     }
     setIsMenuOpen(false)
+    setIsUserMenuOpen(false)
   }
-
-  const dashboardPath = getRoleHomePath(role)
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm">
@@ -99,7 +72,7 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -114,31 +87,50 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <Link
-                  to={dashboardPath}
-                  className="px-4 py-2.5 text-[#1E3A5F] rounded-xl hover:bg-[#FFF8F0] flex items-center gap-2 font-medium"
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  to="/profile"
-                  className="px-4 py-2.5 text-[#1E3A5F] border border-[#1E3A5F]/20 rounded-xl hover:bg-[#1E3A5F]/5 flex items-center gap-2 font-medium"
-                >
-                  <User className="w-4 h-4" />
-                  Hồ sơ
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="px-4 py-2.5 bg-[#1E3A5F] text-white rounded-xl hover:bg-[#152a45] flex items-center gap-2 font-medium"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Đăng xuất
-                </button>
+                <NavWalletMenu userRole={role} />
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="px-4 py-2.5 text-[#1E3A5F] border border-[#1E3A5F]/20 rounded-xl hover:bg-[#1E3A5F]/5 hover:border-[#D4A017] transition-all flex items-center space-x-2 font-medium"
+                  >
+                    <UserCircle2 className="w-5 h-5 text-[#D4A017]" />
+                    <span className="max-w-[140px] truncate">{displayName}</span>
+                  </button>
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-50">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center space-x-3 px-4 py-3 hover:bg-[#FFF8F0] text-[#1E3A5F]"
+                      >
+                        <User className="w-4 h-4 text-[#D4A017]" />
+                        <span>Hồ sơ của tôi</span>
+                      </Link>
+                      {role && role !== 'USER' && (
+                        <Link
+                          to={dashboardPath}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center space-x-3 px-4 py-3 hover:bg-[#FFF8F0] text-[#1E3A5F] border-t border-gray-100"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-[#D4A017]" />
+                          <span>Dashboard</span>
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-red-600 border-t border-gray-100"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Đăng xuất</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -172,7 +164,7 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
           <div className="px-4 py-6 space-y-3">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -189,8 +181,12 @@ export default function Navbar() {
             <div className="pt-4 border-t border-gray-200 space-y-3">
               {isAuthenticated ? (
                 <>
-                  <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-center border rounded-xl">
-                    Hồ sơ
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-3 text-center border rounded-xl font-medium"
+                  >
+                    Hồ sơ — {displayName}
                   </Link>
                   <button
                     type="button"
@@ -202,7 +198,11 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-center border rounded-xl">
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-3 text-center border rounded-xl"
+                  >
                     Đăng nhập
                   </Link>
                   <Link

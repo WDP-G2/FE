@@ -1,15 +1,20 @@
 import { normalizeRole } from '@/utils/roleRedirect'
 
-/** Map AuthResponse từ BE sang user object trong store */
+/** Map AuthResponse / UserResponse từ BE sang user object trong store */
 export function mapAuthResponseToUser(auth) {
   if (!auth) return null
   return {
-    id: auth.userId,
+    id: auth.userId ?? auth.id,
     username: auth.username,
     email: auth.email,
     role: auth.role,
     fullName: auth.fullName,
     phone: auth.phone,
+    pendingRole: auth.pendingRole,
+    roleApprovalStatus: auth.roleApprovalStatus,
+    roleReviewReason: auth.roleReviewReason,
+    avatarUrl: auth.avatarUrl,
+    createdAt: auth.createdAt,
   }
 }
 

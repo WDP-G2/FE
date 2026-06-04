@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { authService } from '@/services/authService'
 import { getStoredToken, setStoredToken, removeStoredToken } from '@/utils/tokenStorage'
 import { isTokenExpired, getRoleFromToken } from '@/utils/jwtDecode'
-import { applyAuthToState } from '@/utils/mapAuthResponse'
+import { applyAuthToState, mapAuthResponseToUser } from '@/utils/mapAuthResponse'
 import { normalizeRole } from '@/utils/roleRedirect'
 import { horseOwnerAccount } from '@/pages/horse-owner/data'
 import { jockeyAccount } from '@/pages/jockey/data'
@@ -53,7 +53,8 @@ export const useAuthStore = create((set, get) => ({
   },
 
   fetchProfile: async () => {
-    const user = await authService.getMe()
+    const raw = await authService.getMe()
+    const user = mapAuthResponseToUser(raw)
     const role = normalizeRole(user?.role)
     set({ user, role, isAuthenticated: true })
     return user
@@ -111,7 +112,12 @@ export const useAuthStore = create((set, get) => ({
     return { auth, user: session.user }
   },
 
-  register: (payload) => authService.register(payload),
+  register: async (payload) => {
+    const auth = await authService.register(payload)
+    const session = persistLogin(auth)
+    set({ ...session, isLoading: false })
+    return { auth, user: session.user }
+  },
 
   logout: async () => {
     try {

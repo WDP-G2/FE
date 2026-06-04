@@ -48,4 +48,19 @@ export const ENDPOINTS = {
     ownerById: (id) => `/owner/horses/${id}`,
     approved: '/horses/approved',
   },
+  wallet: {
+    me: '/wallets/me',
+    transactions: '/wallets/me/transactions',
+  },
+  roleApplications: {
+    me: '/role-applications/me',
+    owner: '/role-applications/owner',
+    jockey: '/role-applications/jockey',
+    spectator: '/role-applications/spectator',
+    referee: '/role-applications/referee',
+    adminList: '/admin/role-applications',
+    adminApprove: (profileId) => `/admin/role-applications/${profileId}/approve`,
+    adminReject: (profileId) => `/admin/role-applications/${profileId}/reject`,
+  },
 }
+

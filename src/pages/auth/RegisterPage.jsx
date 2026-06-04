@@ -47,8 +47,8 @@ export default function RegisterPage() {
         email: form.email,
         password: form.password,
       })
-      toast.success('Đăng ký thành công')
-      navigate('/login', { replace: true })
+      toast.success(`Đăng ký thành công! Xin chào ${form.fullName.trim()}`)
+      navigate('/profile?welcome=1&tab=roles', { replace: true, state: { welcome: true } })
     } catch (err) {
       toast.error(getApiErrorMessage(err))
     } finally {
