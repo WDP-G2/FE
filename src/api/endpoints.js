@@ -47,6 +47,7 @@ export const ENDPOINTS = {
     ownerList: '/owner/horses',
     ownerById: (id) => `/owner/horses/${id}`,
     approved: '/horses/approved',
+  },
   wallet: {
     me: '/wallets/me',
     transactions: '/wallets/me/transactions',
@@ -62,3 +63,4 @@ export const ENDPOINTS = {
     adminReject: (profileId) => `/admin/role-applications/${profileId}/reject`,
   },
 }
+

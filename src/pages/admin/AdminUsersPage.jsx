@@ -1,78 +1,11 @@
-import { useMemo, useState } from 'react'
-import { BadgeCheck, Search, Shield, UserCheck, UserX, Users } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { BadgeCheck, RefreshCw, Search, Shield, UserCheck, UserX, Users } from 'lucide-react'
+import { toast } from 'sonner'
 import AdminLayout from '@/components/AdminLayout'
 import InviteUserModal from '@/components/InviteUserModal'
 import { PrimaryButton } from '@/components/ui/AdminButton'
-
-const userRows = [
-  {
-    id: 'U-101',
-    name: 'Nguyễn Văn A',
-    email: 'vana@hr.vn',
-    role: 'Chủ ngựa',
-    status: 'Đang hoạt động',
-    meta: '3 ngựa · 12 giải đấu',
-  },
-  {
-    id: 'U-102',
-    name: 'Trần Minh Tú',
-    email: 'tu.tm@hr.vn',
-    role: 'Jockey',
-    status: 'Đang hoạt động',
-    meta: '24 chiến thắng',
-  },
-  {
-    id: 'U-103',
-    name: 'Phạm Hoàng',
-    email: 'hoang.p@hr.vn',
-    role: 'Jockey',
-    status: 'Tạm khóa',
-    meta: 'Win rate 65%',
-  },
-  {
-    id: 'U-104',
-    name: 'Lê Trọng Tài',
-    email: 'le.tt@hr.vn',
-    role: 'Trọng tài',
-    status: 'Đang hoạt động',
-    meta: 'FIA Cert · 8 giải',
-  },
-  {
-    id: 'U-105',
-    name: 'spectator_01',
-    email: 'sp01@gmail.com',
-    role: 'Khán giả',
-    status: 'Đang hoạt động',
-    meta: '28/30 dự đoán đúng',
-  },
-]
-
-const requestRows = [
-  {
-    id: 'REQ-2026-014',
-    user: 'Đặng Quang Huy',
-    from: 'Khán giả',
-    to: 'Jockey',
-    status: 'Chờ duyệt',
-    submittedAt: '2026-05-20 09:14',
-  },
-  {
-    id: 'REQ-2026-013',
-    user: 'Vũ Đức Mạnh',
-    from: 'Khán giả',
-    to: 'Chủ ngựa',
-    status: 'Chờ duyệt',
-    submittedAt: '2026-05-18 16:42',
-  },
-  {
-    id: 'REQ-2026-012',
-    user: 'Hồ Quốc Bảo',
-    from: 'Khán giả',
-    to: 'Trọng tài',
-    status: 'Đã duyệt',
-    submittedAt: '2026-05-15 11:08',
-  },
-]
+import { adminUserService, ROLE_VALUES } from '@/services/adminUserService'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 function pillTone(value) {
   const tones = {
