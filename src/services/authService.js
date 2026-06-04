@@ -14,7 +14,13 @@ export const authService = {
       })
       .then(unwrapResponse),
 
-  login: (payload) => axiosClient.post(ENDPOINTS.auth.login, payload).then(unwrapResponse),
+  login: (payload) =>
+    axiosClient
+      .post(ENDPOINTS.auth.login, {
+        email: payload.email?.trim?.() ?? payload.email,
+        password: payload.password,
+      })
+      .then(unwrapResponse),
 
   loginGoogle: (idToken) =>
     axiosClient.post(ENDPOINTS.auth.google, { idToken }).then(unwrapResponse),

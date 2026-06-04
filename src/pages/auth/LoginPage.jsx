@@ -38,7 +38,7 @@ export default function LoginPage() {
       toast.success('Đăng nhập thành công')
       redirectAfterAuth(user)
     } catch (err) {
-      toast.error(getApiErrorMessage(err) || 'Sai email hoặc mật khẩu')
+      toast.error(getApiErrorMessage(err, { scene: 'login' }))
     } finally {
       setLoading(false)
     }
