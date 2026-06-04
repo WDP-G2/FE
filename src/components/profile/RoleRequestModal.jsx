@@ -177,7 +177,7 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit }) 
                   </label>
                   <FilePreview file={files[f.name]} />
                   <p className="mt-1 text-xs text-[#1E3A5F]/50">
-                    File được tải lên Cloudinary trước khi gửi hồ sơ.
+                    File sẽ được server tải lên khi gửi hồ sơ.
                   </p>
                 </>
               ) : (
@@ -207,7 +207,7 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit }) 
               disabled={submitting}
               className="flex-1 py-3 bg-[#D4A017] text-white rounded-xl hover:bg-[#B8941F] font-semibold shadow-lg shadow-[#D4A017]/20 disabled:opacity-50"
             >
-              {uploading ? 'Đang tải lên Cloudinary...' : submitting ? 'Đang gửi...' : 'Gửi hồ sơ'}
+              {uploading ? 'Đang tải lên server...' : submitting ? 'Đang gửi...' : 'Gửi hồ sơ'}
             </button>
           </div>
         </form>

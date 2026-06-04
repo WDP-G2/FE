@@ -50,7 +50,7 @@ export default function NewsImageUpload({ existingUrl, file, onFileChange, disab
 
       <p className="mt-3 flex items-start gap-2 text-xs text-white/45">
         <ImagePlus className="mt-0.5 h-4 w-4 shrink-0" />
-        Ảnh gửi lên server khi lưu bài; hiển thị qua CDN Cloudinary (cấu hình trong .env).
+        Ảnh gửi lên server khi lưu bài; hiển thị qua CDN Cloudinary (BE cấu hình).
       </p>
     </div>
   )

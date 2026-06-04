@@ -86,7 +86,11 @@ export default function RoleApplicationDetailModal({ request, onClose, onResolve
             <h2 className="mt-1 text-xl font-bold text-white">Chi tiết yêu cầu cấp quyền</h2>
             <p className="mt-1 text-sm text-white/50">
               {request.user}
-              {request.username ? ` (@${request.username})` : ''}
+              {request.email
+                ? ` · ${request.email}`
+                : request.username
+                  ? ` · @${request.username}`
+                  : ''}
             </p>
           </div>
           <button

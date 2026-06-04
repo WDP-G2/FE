@@ -70,15 +70,19 @@ export function mapUser(user) {
   }
 }
 
-export function mapRoleApplication(application) {
+export function mapRoleApplication(application, emailFromUser = '') {
   const roleCode = application?.role ?? 'USER'
   const statusCode = application?.status ?? 'PENDING'
+  const email = application?.email ?? emailFromUser ?? ''
   const name =
     application?.fullName ||
     application?.displayName ||
     application?.stableName ||
     application?.username ||
+    email ||
     `User #${application?.userId ?? ''}`
+
+  const raw = { ...application, email }
 
   return {
     id: String(application?.profileId ?? ''),
@@ -86,6 +90,7 @@ export function mapRoleApplication(application) {
     userId: application?.userId,
     user: name,
     username: application?.username ?? '',
+    email,
     from: 'Người dùng',
     to: ROLE_LABELS[roleCode] ?? roleCode,
     roleCode,
@@ -94,7 +99,7 @@ export function mapRoleApplication(application) {
     reviewReason: application?.reviewReason ?? '',
     submittedAt: formatDateTime(application?.createdAt),
     updatedAt: application?.updatedAt ?? null,
-    raw: application,
+    raw,
   }
 }
 
@@ -105,10 +110,18 @@ export const adminUserService = {
   },
 
   async getRoleApplications(params = {}) {
-    const data = await axiosClient
-      .get(ENDPOINTS.admin.roleApplications, { params })
-      .then(unwrapResponse)
-    return Array.isArray(data) ? data.map(mapRoleApplication) : []
+    const [applications, users] = await Promise.all([
+      axiosClient.get(ENDPOINTS.admin.roleApplications, { params }).then(unwrapResponse),
+      axiosClient.get(ENDPOINTS.admin.users).then(unwrapResponse),
+    ])
+
+    const emailByUserId = new Map(
+      (Array.isArray(users) ? users : []).map((user) => [user.id, user.email ?? '']),
+    )
+
+    return (Array.isArray(applications) ? applications : []).map((application) =>
+      mapRoleApplication(application, emailByUserId.get(application?.userId) ?? ''),
+    )
   },
 
   async activateUser(id) {

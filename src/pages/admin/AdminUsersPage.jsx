@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BadgeCheck, Eye, RefreshCw, Search, Shield, UserCheck, UserX, Users } from 'lucide-react'
+import {
+  BadgeCheck,
+  Eye,
+  Lock,
+  RefreshCw,
+  Search,
+  Shield,
+  Unlock,
+  UserCheck,
+  UserX,
+  Users,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import AdminLayout from '@/components/AdminLayout'
 import RoleApplicationDetailModal from '@/components/admin/RoleApplicationDetailModal'
@@ -36,6 +47,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [requestsLoading, setRequestsLoading] = useState(true)
   const [detailRequest, setDetailRequest] = useState(null)
+  const [togglingUserId, setTogglingUserId] = useState(null)
 
   const loadUsers = async () => {
     try {
@@ -53,7 +65,7 @@ export default function AdminUsersPage() {
   const loadRequests = async () => {
     try {
       setRequestsLoading(true)
-      const data = await adminUserService.getRoleApplications()
+      const data = await adminUserService.getRoleApplications({ status: 'PENDING' })
       setRequests(data)
     } catch (error) {
       console.error('Không thể tải yêu cầu cấp quyền', error?.response?.data || error)
@@ -77,6 +89,29 @@ export default function AdminUsersPage() {
       return `${item.name} ${item.username} ${item.email}`.toLocaleLowerCase('vi').includes(normalized)
     })
   }, [query, role, users])
+
+  const handleToggleUserActive = async (item) => {
+    if (item.roleCode === 'ADMIN') {
+      toast.error('Không thể khóa tài khoản Admin')
+      return
+    }
+
+    try {
+      setTogglingUserId(item.rawId)
+      if (item.active) {
+        await adminUserService.deactivateUser(item.rawId)
+        toast.success(`Đã khóa tài khoản ${item.name}`)
+      } else {
+        await adminUserService.activateUser(item.rawId)
+        toast.success(`Đã mở khóa tài khoản ${item.name}`)
+      }
+      await loadUsers()
+    } catch (error) {
+      toast.error(getApiErrorMessage(error) || 'Không thể cập nhật trạng thái tài khoản')
+    } finally {
+      setTogglingUserId(null)
+    }
+  }
 
   const stats = useMemo(
     () => [
@@ -162,6 +197,11 @@ export default function AdminUsersPage() {
             }`}
           >
             Yêu cầu cấp quyền
+            {requests.length > 0 && (
+              <span className="ml-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-white/20 px-1.5 text-xs">
+                {requests.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -216,12 +256,13 @@ export default function AdminUsersPage() {
                     <th className="px-6 py-4">Vai trò</th>
                     <th className="px-6 py-4">Trạng thái</th>
                     <th className="px-6 py-4">Ghi chú</th>
+                    <th className="px-6 py-4 text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td className="px-6 py-10 text-center text-white/50" colSpan={4}>
+                      <td className="px-6 py-10 text-center text-white/50" colSpan={5}>
                         Đang tải danh sách người dùng...
                       </td>
                     </tr>
@@ -243,11 +284,39 @@ export default function AdminUsersPage() {
                           </span>
                         </td>
                         <td className="px-6 py-5 text-sm text-white/50">{item.meta}</td>
+                        <td className="px-6 py-5 text-right">
+                          {item.roleCode === 'ADMIN' ? (
+                            <span className="text-xs text-white/35">—</span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={togglingUserId === item.rawId}
+                              onClick={() => handleToggleUserActive(item)}
+                              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
+                                item.active
+                                  ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+                                  : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                              }`}
+                            >
+                              {item.active ? (
+                                <>
+                                  <Lock className="h-4 w-4" />
+                                  Khóa tài khoản
+                                </>
+                              ) : (
+                                <>
+                                  <Unlock className="h-4 w-4" />
+                                  Mở khóa
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td className="px-6 py-10 text-center text-white/50" colSpan={4}>
+                      <td className="px-6 py-10 text-center text-white/50" colSpan={5}>
                         Không tìm thấy người dùng nào
                       </td>
                     </tr>
@@ -259,6 +328,9 @@ export default function AdminUsersPage() {
         </>
       ) : (
         <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.045]">
+          <p className="border-b border-white/10 px-6 py-4 text-sm text-white/50">
+            Chỉ hiển thị yêu cầu đang chờ duyệt. Yêu cầu đã duyệt hoặc từ chối không còn trong danh sách này.
+          </p>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px]">
               <thead>
@@ -283,8 +355,10 @@ export default function AdminUsersPage() {
                     <tr key={item.id} className="border-b border-white/5 text-white/70 last:border-0">
                       <td className="px-6 py-5 font-semibold text-white">REQ-{item.id}</td>
                       <td className="px-6 py-5">
-                        <p>{item.user}</p>
-                        {item.username && <p className="mt-1 text-xs text-white/40">@{item.username}</p>}
+                        <p className="font-semibold text-white">{item.user}</p>
+                        <p className="mt-1 text-sm text-white/45">
+                          {item.email || (item.username ? `@${item.username}` : '—')}
+                        </p>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
@@ -318,7 +392,7 @@ export default function AdminUsersPage() {
                 ) : (
                   <tr>
                     <td className="px-6 py-10 text-center text-white/50" colSpan={6}>
-                      Chưa có yêu cầu cấp quyền
+                      Không có yêu cầu đang chờ duyệt
                     </td>
                   </tr>
                 )}

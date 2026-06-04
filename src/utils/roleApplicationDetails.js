@@ -1,6 +1,7 @@
 import { ROLE_LABELS } from '@/services/adminUserService'
 
 const COMMON_FIELDS = [
+  { key: 'email', label: 'Email' },
   { key: 'username', label: 'Username' },
   { key: 'fullName', label: 'Họ và tên' },
   { key: 'displayName', label: 'Tên hiển thị' },

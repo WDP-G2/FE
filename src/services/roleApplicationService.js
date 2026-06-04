@@ -9,39 +9,41 @@ function appendFormFields(formData, fields) {
   })
 }
 
+const multipartHeaders = { 'Content-Type': 'multipart/form-data' }
+
 export const roleApplicationService = {
   getMyApplication: () => axiosClient.get(ENDPOINTS.roleApplications.me).then(unwrapResponse),
 
   submitSpectator: (payload) =>
     axiosClient.post(ENDPOINTS.roleApplications.spectator, payload).then(unwrapResponse),
 
-  submitOwner: (fields) => {
+  /** BE upload Cloudinary — gửi file multipart, không cần key FE */
+  submitOwner: (fields, verificationDocument) => {
     const formData = new FormData()
     appendFormFields(formData, fields)
+    if (verificationDocument) formData.append('verificationDocument', verificationDocument)
     return axiosClient
-      .post(ENDPOINTS.roleApplications.owner, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      .post(ENDPOINTS.roleApplications.owner, formData, { headers: multipartHeaders })
       .then(unwrapResponse)
   },
 
-  submitJockey: (fields) => {
+  submitJockey: (fields, files = {}) => {
     const formData = new FormData()
     appendFormFields(formData, fields)
+    if (files.avatar) formData.append('avatar', files.avatar)
+    if (files.achievements) formData.append('achievements', files.achievements)
+    if (files.licenseDocument) formData.append('licenseDocument', files.licenseDocument)
     return axiosClient
-      .post(ENDPOINTS.roleApplications.jockey, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      .post(ENDPOINTS.roleApplications.jockey, formData, { headers: multipartHeaders })
       .then(unwrapResponse)
   },
 
-  submitReferee: (fields) => {
+  submitReferee: (fields, certificationDocument) => {
     const formData = new FormData()
     appendFormFields(formData, fields)
+    if (certificationDocument) formData.append('certificationDocument', certificationDocument)
     return axiosClient
-      .post(ENDPOINTS.roleApplications.referee, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      .post(ENDPOINTS.roleApplications.referee, formData, { headers: multipartHeaders })
       .then(unwrapResponse)
   },
 }
