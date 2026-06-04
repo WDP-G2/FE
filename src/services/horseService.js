@@ -16,6 +16,13 @@ const STATUS_TONES = {
   SUSPENDED: 'gray',
 }
 
+export const HORSE_STATUS_VALUES = [
+  { value: 'PENDING', label: STATUS_LABELS.PENDING },
+  { value: 'APPROVED', label: STATUS_LABELS.APPROVED },
+  { value: 'REJECTED', label: STATUS_LABELS.REJECTED },
+  { value: 'SUSPENDED', label: STATUS_LABELS.SUSPENDED },
+]
+
 function appendIfPresent(formData, key, value) {
   if (value === undefined || value === null || value === '') return
   formData.append(key, value)
@@ -42,6 +49,9 @@ export function mapHorse(horse) {
 
   return {
     id: String(horse?.id ?? ''),
+    rawId: horse?.id,
+    ownerId: horse?.ownerId == null ? '' : String(horse.ownerId),
+    ownerUsername: horse?.ownerUsername ?? '',
     name: horse?.name ?? '',
     breed: horse?.breed ?? '',
     age: Number(horse?.age ?? 0),
@@ -89,5 +99,38 @@ export const horseService = {
 
   async deleteOwnerHorse(id) {
     await axiosClient.delete(ENDPOINTS.horses.ownerById(id)).then(unwrapResponse)
+  },
+
+  async getAdminHorses(status) {
+    const data = await axiosClient
+      .get(ENDPOINTS.horses.adminList, { params: status ? { status } : undefined })
+      .then(unwrapResponse)
+    return Array.isArray(data) ? data.map(mapHorse) : []
+  },
+
+  async getAllAdminHorses() {
+    const results = await Promise.all(
+      HORSE_STATUS_VALUES.map((status) => this.getAdminHorses(status.value)),
+    )
+    return results.flat()
+  },
+
+  async approveHorse(id) {
+    const data = await axiosClient.put(ENDPOINTS.horses.adminApprove(id)).then(unwrapResponse)
+    return mapHorse(data)
+  },
+
+  async rejectHorse(id, reason) {
+    const data = await axiosClient
+      .put(ENDPOINTS.horses.adminReject(id), { reason })
+      .then(unwrapResponse)
+    return mapHorse(data)
+  },
+
+  async suspendHorse(id, reason) {
+    const data = await axiosClient
+      .put(ENDPOINTS.horses.adminSuspend(id), { reason })
+      .then(unwrapResponse)
+    return mapHorse(data)
   },
 }

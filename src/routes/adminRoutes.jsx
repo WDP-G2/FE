@@ -6,6 +6,7 @@ import AdminNewsPage from '@/pages/admin/AdminNewsPage'
 import AdminNewsCreatePage from '@/pages/admin/AdminNewsCreatePage'
 import AdminNewsEditPage from '@/pages/admin/AdminNewsEditPage'
 import AdminUsersPage from '@/pages/admin/AdminUsersPage'
+import AdminHorsesPage from '@/pages/admin/AdminHorsesPage'
 import AdminStatisticsPage from '@/pages/admin/AdminStatisticsPage'
 import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
@@ -25,6 +26,7 @@ export const adminRoutes = [
   adminRoute('/admin/news/create', AdminNewsCreatePage),
   adminRoute('/admin/news/:id/edit', AdminNewsEditPage),
   adminRoute('/admin/users', AdminUsersPage),
+  adminRoute('/admin/horses', AdminHorsesPage),
   adminRoute('/admin/statistics', AdminStatisticsPage),
   adminRoute('/admin/wallet', AdminWalletPage),
   adminRoute('/admin/notifications', AdminNotificationsPage),
