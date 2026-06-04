@@ -34,16 +34,16 @@ export function StatCard({ label, value, delta, icon: Icon, tone = 'gold' }) {
 
 export function Pill({ children, tone = 'gold' }) {
   const tones = {
-    gold: 'bg-[#D4A017]/15 text-[#D4A017] border-[#D4A017]/30',
-    green: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-    red: 'bg-red-500/15 text-red-300 border-red-500/30',
-    blue: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-    purple: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
-    gray: 'bg-white/10 text-white/60 border-white/10',
+    gold: 'bg-[#D4A017]/35 text-[#fff4c2] border-[#f2c94c]/70',
+    green: 'bg-emerald-500/30 text-emerald-100 border-emerald-300/65',
+    red: 'bg-red-500/30 text-red-100 border-red-300/65',
+    blue: 'bg-sky-500/30 text-sky-100 border-sky-300/65',
+    purple: 'bg-purple-500/30 text-purple-100 border-purple-300/65',
+    gray: 'bg-white/18 text-white border-white/35',
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold border rounded-full whitespace-nowrap ${tones[tone]}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold border rounded-full whitespace-nowrap shadow-sm shadow-black/30 backdrop-blur-md ${tones[tone]}`}>
       {children}
     </span>
   )

@@ -245,19 +245,19 @@ function ViewButton({ active, children, label, onClick }) {
 
 function StatusBadge({ status }) {
   const tones = {
-    "Đang mở đăng ký": "border-[#dda50e]/40 bg-[#dda50e]/15 text-[#efbb2c]",
-    "Đang diễn ra": "border-emerald-400/35 bg-emerald-500/15 text-emerald-300",
-    "Đã kết thúc": "border-purple-400/35 bg-purple-500/15 text-purple-300",
-    "Đã hủy": "border-red-400/35 bg-red-500/15 text-red-300",
-    "Đã đóng đăng ký": "border-cyan-400/35 bg-cyan-500/15 text-cyan-300",
-    "Đã lên lịch": "border-blue-400/35 bg-blue-500/15 text-blue-300",
-    "Đã công bố": "border-sky-400/35 bg-sky-500/15 text-sky-300",
-    Nháp: "border-white/20 bg-white/10 text-white/65",
+    "Đang mở đăng ký": "border-[#f2c94c]/75 bg-[#dda50e]/40 text-[#fff4c2]",
+    "Đang diễn ra": "border-emerald-300/70 bg-emerald-500/35 text-emerald-100",
+    "Đã kết thúc": "border-purple-300/70 bg-purple-500/35 text-purple-100",
+    "Đã hủy": "border-red-300/70 bg-red-500/35 text-red-100",
+    "Đã đóng đăng ký": "border-cyan-300/70 bg-cyan-500/35 text-cyan-100",
+    "Đã lên lịch": "border-blue-300/70 bg-blue-500/35 text-blue-100",
+    "Đã công bố": "border-sky-300/70 bg-sky-500/35 text-sky-100",
+    Nháp: "border-white/40 bg-white/20 text-white",
   };
 
   return (
     <span
-      className={`inline-flex rounded-full border px-4 py-2 text-sm font-semibold ${tones[status] ?? tones.Nháp}`}
+      className={`inline-flex rounded-full border px-4 py-2 text-sm font-bold shadow-md shadow-black/35 backdrop-blur-md ${tones[status] ?? tones.Nháp}`}
     >
       {status}
     </span>
