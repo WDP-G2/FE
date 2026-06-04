@@ -35,10 +35,29 @@ export function getRecentUnlock(email) {
   return { ...entry, ageMs: age, remainingMs: UNLOCK_CACHE_WAIT_MS - age }
 }
 
+function isLoginRequest(error) {
+  return String(error?.config?.url ?? '').includes('/auth/login')
+}
+
+/** Lỗi có thể do cache user BE (~120s) sau khi admin mở/khóa — không phải sai mật khẩu. */
 export function isLoginLockError(error) {
+  if (!isLoginRequest(error)) return false
   const status = error?.response?.status
+  if (status === 401) return false
   const message = String(error?.response?.data?.message ?? '').toLowerCase()
-  return status === 403 || (status === 500 && message.includes('internal server'))
+  if (status === 403) return true
+  if (status === 500 && message.includes('internal server')) return true
+  return false
+}
+
+export function getLoginRetryPlan(email, error) {
+  if (!isLoginLockError(error)) return null
+  const recent = getRecentUnlock(email)
+  const stepMs = 15_000
+  const maxAttempts = recent
+    ? Math.min(8, Math.ceil(recent.remainingMs / stepMs) || 1)
+    : 8
+  return { stepMs, maxAttempts }
 }
 
 export function sleep(ms) {

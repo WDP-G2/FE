@@ -33,7 +33,7 @@ export default function LoginPage() {
       return
     }
     setLoading(true)
-    const loadingToast = toast.loading('Đang đăng nhập...')
+    const loadingToast = toast.loading('Đang đăng nhập... (có thể mất tới ~2 phút nếu vừa được mở khóa)')
     try {
       const { user } = await login(form)
       toast.dismiss(loadingToast)
