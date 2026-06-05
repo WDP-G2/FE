@@ -63,7 +63,6 @@ export default function ParticipantsTab({
       <PanelHeader
         icon={Users}
         title="Tất cả đăng ký trong giải đấu"
-        subtitle="Dữ liệu thật từ database — duyệt tại đây hoặc tab Cấu hình cuộc đua"
       />
       {rows.length === 0 ? (
         <div className="p-8 text-center text-sm text-white/45">

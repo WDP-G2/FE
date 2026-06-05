@@ -35,6 +35,8 @@ const EMPTY_FORM = {
   licenseImageUrl: "",
 };
 
+const GENDER_OPTIONS = ["Đực", "Cái"];
+
 function formatDate(value) {
   if (!value) return "Chưa cập nhật";
   const date = new Date(value);
@@ -220,7 +222,6 @@ export function HorseOwnerHorses() {
         breed: form.breed.trim(),
         gender: form.gender.trim(),
         birthDate: form.birthDate || undefined,
-        ownerName: form.ownerName.trim(),
         notes: form.notes.trim(),
       };
 
@@ -270,7 +271,7 @@ export function HorseOwnerHorses() {
   return (
     <HorseOwnerLayout
       title="Horse Owner · Quản lý ngựa"
-      subtitle={`${horses.length} ngựa trong đội · Upload ảnh Cloudinary và tài liệu liên quan`}
+      subtitle={`${horses.length} ngựa trong đội`}
       actions={
         <PrimaryButton icon={Plus} onClick={openAdd}>
           Thêm ngựa
@@ -399,7 +400,7 @@ export function HorseOwnerHorses() {
                   {editTarget ? "Chỉnh sửa ngựa" : "Thêm ngựa mới"}
                 </h2>
                 <p className="text-sm text-white/45">
-                  Upload ảnh ngựa và giấy phép qua Cloudinary
+                  Cập nhật thông tin, ảnh ngựa và tài liệu liên quan
                 </p>
               </div>
               <button
@@ -430,13 +431,20 @@ export function HorseOwnerHorses() {
                   />
                 </Field>
                 <Field label="Giới tính">
-                  <TextInput
+                  <select
                     value={form.gender}
                     onChange={(e) =>
                       setForm({ ...form, gender: e.target.value })
                     }
-                    placeholder="Đực / Cái"
-                  />
+                    className="h-14 w-full rounded-2xl border border-white/10 bg-[#162338] px-4 text-white outline-none focus:border-[#dda50e]/60"
+                  >
+                    <option value="">Chọn giới tính</option>
+                    {GENDER_OPTIONS.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Ngày sinh">
                   <TextInput
@@ -445,15 +453,6 @@ export function HorseOwnerHorses() {
                     onChange={(e) =>
                       setForm({ ...form, birthDate: e.target.value })
                     }
-                  />
-                </Field>
-                <Field label="Chủ ngựa">
-                  <TextInput
-                    value={form.ownerName}
-                    onChange={(e) =>
-                      setForm({ ...form, ownerName: e.target.value })
-                    }
-                    placeholder="Tên chủ sở hữu"
                   />
                 </Field>
                 <Field label="Tình trạng sức khỏe" disabled={!editTarget}>

@@ -329,7 +329,7 @@ function RaceInfo({ race, updateRace, onSave, saving }) {
             <option>Open</option>
           </Select>
         </Field>
-        <Field label="Tối đa ngựa">
+        <Field label="Số ngựa tối đa">
           <Input
             type="number"
             value={race.maxHorses}
@@ -338,7 +338,7 @@ function RaceInfo({ race, updateRace, onSave, saving }) {
             }
           />
         </Field>
-        <Field label="Tối thiểu ngựa">
+        <Field label="Số ngựa tối thiểu">
           <Input
             type="number"
             value={race.minHorses}
@@ -463,7 +463,7 @@ function RaceRegistrations({ race, onUpdateStatus, updatingId }) {
       <PanelHeader
         icon={Users}
         title="Đăng ký cuộc đua"
-        subtitle={`${registrations.length} hồ sơ đăng ký từ database`}
+        subtitle={`${registrations.length} hồ sơ đăng ký`}
       />
       {registrations.length === 0 ? (
         <div className="p-8 text-center text-sm text-white/45">
