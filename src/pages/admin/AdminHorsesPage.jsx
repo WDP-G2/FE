@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Ban,
   CheckCircle2,
+  ChevronDown,
   FileText,
   PawPrint,
   RefreshCw,
@@ -30,9 +31,10 @@ function actionButtonClass(tone) {
     green: 'border-emerald-400/25 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15',
     red: 'border-rose-400/25 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15',
     gray: 'border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white',
+    gold: 'border-[#dda50e]/30 bg-[#dda50e]/10 text-[#efbb2c] hover:bg-[#dda50e]/15',
   }
 
-  return `inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${tones[tone]}`
+  return `inline-flex min-w-[92px] items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${tones[tone]}`
 }
 
 export default function AdminHorsesPage() {
@@ -43,6 +45,7 @@ export default function AdminHorsesPage() {
   const [query, setQuery] = useState('')
   const [ownerFilter, setOwnerFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [openReasonId, setOpenReasonId] = useState(null)
 
   const loadHorses = async () => {
     try {
@@ -127,6 +130,20 @@ export default function AdminHorsesPage() {
     } catch (error) {
       console.error('Không thể duyệt ngựa', error?.response?.data || error)
       toast.error(getApiErrorMessage(error) || 'Không thể duyệt ngựa')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const unlockHorse = async (horse) => {
+    try {
+      setBusyId(horse.id)
+      const nextHorse = await horseService.approveHorse(horse.id)
+      replaceHorse(nextHorse)
+      toast.success('Đã mở khóa ngựa')
+    } catch (error) {
+      console.error('Không thể mở khóa ngựa', error?.response?.data || error)
+      toast.error(getApiErrorMessage(error) || 'Không thể mở khóa ngựa')
     } finally {
       setBusyId(null)
     }
@@ -331,11 +348,33 @@ export default function AdminHorsesPage() {
                       <span className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${pillTone(horse.statusCode)}`}>
                         {horse.status}
                       </span>
-                      {horse.reviewReason && <p className="mt-2 max-w-[220px] text-xs text-rose-200">{horse.reviewReason}</p>}
+                      {horse.reviewReason && (
+                        <div className="mt-2 max-w-[220px]">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenReasonId((currentId) =>
+                                currentId === horse.id ? null : horse.id,
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/20 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-200 transition hover:border-rose-400/35 hover:bg-rose-500/15"
+                          >
+                            Lý do
+                            <ChevronDown
+                              className={`h-3.5 w-3.5 transition ${openReasonId === horse.id ? 'rotate-180' : ''}`}
+                            />
+                          </button>
+                          {openReasonId === horse.id && (
+                            <p className="mt-2 rounded-lg border border-rose-400/15 bg-rose-500/10 p-2 text-xs leading-5 text-rose-100">
+                              {horse.reviewReason}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex justify-end gap-2">
-                        {horse.statusCode !== 'APPROVED' && (
+                        {['PENDING', 'REJECTED'].includes(horse.statusCode) && (
                           <button
                             type="button"
                             onClick={() => approveHorse(horse)}
@@ -346,7 +385,7 @@ export default function AdminHorsesPage() {
                             Duyệt
                           </button>
                         )}
-                        {horse.statusCode !== 'REJECTED' && (
+                        {horse.statusCode === 'PENDING' && (
                           <button
                             type="button"
                             onClick={() => rejectHorse(horse)}
@@ -357,15 +396,26 @@ export default function AdminHorsesPage() {
                             Từ chối
                           </button>
                         )}
-                        {horse.statusCode !== 'SUSPENDED' && (
+                        {horse.statusCode === 'APPROVED' && (
                           <button
                             type="button"
                             onClick={() => suspendHorse(horse)}
                             disabled={busyId === horse.id}
-                            className={actionButtonClass('gray')}
+                            className={actionButtonClass('gold')}
                           >
                             <Ban className="h-4 w-4" />
-                            Tạm khóa
+                            Khóa
+                          </button>
+                        )}
+                        {horse.statusCode === 'SUSPENDED' && (
+                          <button
+                            type="button"
+                            onClick={() => unlockHorse(horse)}
+                            disabled={busyId === horse.id}
+                            className={actionButtonClass('green')}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            Mở khóa
                           </button>
                         )}
                       </div>

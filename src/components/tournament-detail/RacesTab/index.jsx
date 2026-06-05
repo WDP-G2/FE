@@ -3,7 +3,6 @@ import { Flag, Plus } from "lucide-react";
 import { toast } from "sonner";
 import Card from "@/components/ui/Card";
 import { primaryButton } from "@/components/ui/styles";
-import { createRaces } from "@/data/admin/tournamentMocks";
 import { tournamentService } from "@/services/tournamentService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import RaceHeader from "./RaceHeader";
@@ -28,12 +27,23 @@ export default function RacesTab({ tournament, setTournament }) {
   const addRace = () => {
     const no = tournament.races.length + 1;
     const race = {
-      ...createRaces(tournament.id, [0])[0],
       id: `${tournament.id}-r${no}`,
       no,
-      name: `Cuộc đua ${no}`,
-      date: tournament.startDate,
+      name: "",
+      description: "",
+      date: "",
+      time: "",
+      distance: "",
+      track: "",
+      surface: "",
+      category: "",
+      minHorses: "",
+      maxHorses: "",
+      registered: 0,
+      entryFee: "",
+      checkIn: "",
       status: "Nháp",
+      prizes: [],
       isNew: true,
     };
     setTournament({ ...tournament, races: [...tournament.races, race] });

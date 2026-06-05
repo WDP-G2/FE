@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Edit2, FileText, PawPrint, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { ChevronDown, Edit2, FileText, PawPrint, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { horseService } from "@/services/horseService";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -36,6 +36,7 @@ export function HorseOwnerHorses() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [openReasonId, setOpenReasonId] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -219,8 +220,26 @@ export function HorseOwnerHorses() {
                 </div>
 
                 {horse.reviewReason && (
-                  <div className="mb-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-200">
-                    {horse.reviewReason}
+                  <div className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenReasonId((currentId) =>
+                          currentId === horse.id ? null : horse.id,
+                        )
+                      }
+                      className="flex w-full items-center justify-between rounded-xl border border-red-400/20 bg-red-500/8 px-3 py-2 text-left text-xs font-semibold text-red-200 transition hover:border-red-400/35 hover:bg-red-500/12"
+                    >
+                      <span>Lý do từ chối</span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition ${openReasonId === horse.id ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {openReasonId === horse.id && (
+                      <div className="mt-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs leading-5 text-red-100">
+                        {horse.reviewReason}
+                      </div>
+                    )}
                   </div>
                 )}
 

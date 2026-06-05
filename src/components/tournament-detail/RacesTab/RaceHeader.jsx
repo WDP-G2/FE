@@ -1,11 +1,4 @@
-import {
-  Award,
-  Crown,
-  Grid3x3,
-  Info,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Award, Crown, Grid3x3, Info, Trash2, Users } from "lucide-react";
 import Card from "@/components/ui/Card";
 import { formatDistance } from "./helpers";
 
@@ -24,6 +17,13 @@ export default function RaceHeader({
   onPanelChange,
   onRemove,
 }) {
+  const displayName = race.name?.trim() || "Cuộc đua mới";
+  const scheduleParts = [
+    race.date || "Chưa chọn ngày",
+    race.time || "--:--",
+    formatDistance(race.distance) || "Chưa nhập cự ly",
+  ];
+
   return (
     <Card className="p-6">
       <div className="mb-5 flex items-center justify-between">
@@ -32,10 +32,8 @@ export default function RaceHeader({
             R{race.no}
           </span>
           <div>
-            <h2 className="text-xl font-bold">{race.name}</h2>
-            <p className="text-sm text-white/50">
-              {race.date} · {race.time} · {formatDistance(race.distance)}
-            </p>
+            <h2 className="text-xl font-bold">{displayName}</h2>
+            <p className="text-sm text-white/50">{scheduleParts.join(" · ")}</p>
           </div>
         </div>
         <button
@@ -48,6 +46,7 @@ export default function RaceHeader({
           <Trash2 className="h-5 w-5" />
         </button>
       </div>
+
       <div className="flex flex-wrap gap-2">
         {PANELS.map(([key, label, Icon]) => (
           <button
