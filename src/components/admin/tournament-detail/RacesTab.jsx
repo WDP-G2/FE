@@ -146,7 +146,7 @@ export default function RacesTab({
                 <Badge tone={toneForStatus(race.status)}>{race.status}</Badge>
               </div>
               <div className="mb-3 flex justify-between text-xs text-white/55">
-                <span>{race.distance}</span>
+                <span>{race.distance} m</span>
                 <span>
                   {race.registered}/{race.maxHorses} đăng ký
                 </span>
@@ -174,7 +174,7 @@ export default function RacesTab({
               <div>
                 <h2 className="text-xl font-bold">{selected.name}</h2>
                 <p className="text-sm text-white/50">
-                  {selected.date} · {selected.time} · {selected.distance}
+                  {selected.date} · {selected.time} · {selected.distance} m
                 </p>
               </div>
             </div>
@@ -287,10 +287,20 @@ function RaceInfo({ race, updateRace, onSave, saving }) {
           />
         </Field>
         <Field label="Khoảng cách">
-          <Input
-            value={race.distance}
-            onChange={(event) => updateRace({ distance: event.target.value })}
-          />
+          <div className="relative">
+            <Input
+              type="number"
+              min="0"
+              value={race.distance}
+              onChange={(event) =>
+                updateRace({ distance: Number(event.target.value) })
+              }
+              className="pr-12"
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/45">
+              m
+            </span>
+          </div>
         </Field>
         <Field label="Đường đua">
           <Input

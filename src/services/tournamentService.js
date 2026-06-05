@@ -163,6 +163,26 @@ function mapTournamentPayload(payload) {
   };
 }
 
+function appendTournamentPayload(formData, payload = {}, options = {}) {
+  const mapped = mapTournamentPayload(payload);
+  Object.entries(mapped).forEach(([key, value]) => {
+    if (value === undefined) return;
+    if (options.skipBanner && key === "banner") return;
+    if (key === "config") {
+      formData.append(key, JSON.stringify(value || {}));
+      return;
+    }
+    formData.append(key, value ?? "");
+  });
+}
+
+function toTournamentFormData(payload, bannerFile) {
+  const formData = new FormData();
+  appendTournamentPayload(formData, payload, { skipBanner: Boolean(bannerFile) });
+  if (bannerFile) formData.append("banner", bannerFile);
+  return formData;
+}
+
 function mapRacePayload(race) {
   if (!race) return {};
   return {
@@ -203,16 +223,22 @@ export const tournamentService = {
     return mapped;
   },
 
-  async create(payload) {
+  async create(payload, bannerFile) {
+    const body = bannerFile
+      ? toTournamentFormData(payload, bannerFile)
+      : mapTournamentPayload(payload);
     const item = await axiosClient
-      .post(ENDPOINTS.tournaments.list, mapTournamentPayload(payload))
+      .post(ENDPOINTS.tournaments.list, body)
       .then(unwrapResponse);
     return mapTournamentFromApi(item);
   },
 
-  async update(id, payload) {
+  async update(id, payload, bannerFile) {
+    const body = bannerFile
+      ? toTournamentFormData(payload, bannerFile)
+      : mapTournamentPayload(payload);
     const item = await axiosClient
-      .patch(ENDPOINTS.tournaments.byId(id), mapTournamentPayload(payload))
+      .patch(ENDPOINTS.tournaments.byId(id), body)
       .then(unwrapResponse);
     return mapTournamentFromApi(item);
   },

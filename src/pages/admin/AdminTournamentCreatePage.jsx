@@ -16,7 +16,7 @@ import {
 import AdminLayout from "@/components/admin/AdminLayout";
 import { FormCard, FormCardHeader } from "@/components/admin/ui/Card";
 import Field from "@/components/admin/ui/Field";
-import { Input, TextArea } from "@/components/admin/ui/Input";
+import { Input, Select, TextArea } from "@/components/admin/ui/Input";
 import {
   controlClass,
   primaryButtonLg,
@@ -36,6 +36,7 @@ const defaultRules =
 export default function AdminTournamentCreatePage() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [bannerFile, setBannerFile] = useState(null);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -60,7 +61,9 @@ export default function AdminTournamentCreatePage() {
 
   const uploadBanner = (event) => {
     const file = event.target.files?.[0];
-    if (file) update("banner", URL.createObjectURL(file));
+    if (!file) return;
+    setBannerFile(file);
+    update("banner", URL.createObjectURL(file));
   };
 
   const createTournament = async () => {
@@ -68,10 +71,13 @@ export default function AdminTournamentCreatePage() {
 
     setSaving(true);
     try {
-      const tournament = await tournamentService.create({
-        ...form,
-        slug,
-      });
+      const tournament = await tournamentService.create(
+        {
+          ...form,
+          slug,
+        },
+        bannerFile,
+      );
 
       toast.success("Đã tạo giải đấu");
       navigate(`/admin/tournaments/${tournament.id}?tab=races&new=1`, {
@@ -175,24 +181,16 @@ export default function AdminTournamentCreatePage() {
               />
             </Field>
             <Field label="Trạng thái">
-              <select
+              <Select
+                variant="form"
                 value={form.status}
                 onChange={(event) => update("status", event.target.value)}
-                className={controlClass}
               >
                 <option>Nháp</option>
                 <option>Đang mở đăng ký</option>
                 <option>Đang diễn ra</option>
                 <option>Đã kết thúc</option>
-              </select>
-            </Field>
-            <Field label="Mã giải đấu">
-              <Input
-                variant="form"
-                disabled
-                value={slug}
-                placeholder="Tự sinh từ tên"
-              />
+              </Select>
             </Field>
             <Field label="Tóm tắt luật giải đấu" full icon={FileText}>
               <textarea
