@@ -6,14 +6,12 @@ import { primaryButton } from "@/components/ui/styles";
 import { tournamentService } from "@/services/tournamentService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import RaceHeader from "./RaceHeader";
+import RaceGates from "./RaceGates";
 import RaceInfo from "./RaceInfo";
 import RaceList from "./RaceList";
-import {
-  RaceGates,
-  RaceRegistrations,
-  RaceResults,
-} from "./RacePanels";
 import RacePrizes from "./RacePrizes";
+import RaceRegistrations from "./RaceRegistrations";
+import RaceResults from "./RaceResults";
 import { getRaceValidationError, mergeDraftRaces } from "./helpers";
 
 export default function RacesTab({ tournament, setTournament }) {

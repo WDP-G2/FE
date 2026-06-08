@@ -76,6 +76,14 @@ function buildRaceOptions(tournaments) {
   );
 }
 
+function isActiveInvitation(invitation) {
+  return ["PENDING", "ACCEPTED"].includes(invitation?.statusCode);
+}
+
+function comboKey(horseId, raceId) {
+  return `${horseId ?? ""}:${raceId ?? ""}`;
+}
+
 async function loadInvitableTournaments() {
   const listResponse = await tournamentService.getPublicTournaments();
   const list = listResponse.data ?? [];
@@ -111,6 +119,7 @@ export function HorseOwnerJockeys() {
   const [saving, setSaving] = useState(false);
   const [inviteTarget, setInviteTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
+  const [invitationDetailTarget, setInvitationDetailTarget] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [inviteForm, setInviteForm] = useState({ horseId: "", raceId: "", remunerationAmount: "", message: "" });
 
@@ -120,6 +129,34 @@ export function HorseOwnerJockeys() {
   );
 
   const raceOptions = useMemo(() => buildRaceOptions(tournaments), [tournaments]);
+
+  const blockedInvitationCombos = useMemo(() => {
+    const blocked = new Set();
+    invitations.filter(isActiveInvitation).forEach((invitation) => {
+      if (invitation.horseId && invitation.raceId) {
+        blocked.add(comboKey(invitation.horseId, invitation.raceId));
+      }
+    });
+    return blocked;
+  }, [invitations]);
+
+  const isHorseRaceBlocked = (horseId, raceId) =>
+    Boolean(horseId && raceId && blockedInvitationCombos.has(comboKey(horseId, raceId)));
+
+  const isHorseDisabledForSelectedRace = (horseId) => isHorseRaceBlocked(horseId, inviteForm.raceId);
+
+  const isRaceDisabledForSelectedHorse = (raceId) => isHorseRaceBlocked(inviteForm.horseId, raceId);
+
+  const findFirstAvailableInvitePair = () => {
+    for (const horse of approvedHorses) {
+      for (const race of raceOptions) {
+        if (!isHorseRaceBlocked(horse.id, race.id)) {
+          return { horseId: String(horse.id), raceId: String(race.id) };
+        }
+      }
+    }
+    return null;
+  };
 
   const loadData = async () => {
     try {
@@ -183,6 +220,24 @@ export function HorseOwnerJockeys() {
     return matchSearch && matchStatus;
   });
 
+  const handleInviteHorseChange = (horseId) => {
+    const currentRaceStillAvailable = inviteForm.raceId && !isHorseRaceBlocked(horseId, inviteForm.raceId);
+    const nextRaceId = currentRaceStillAvailable
+      ? inviteForm.raceId
+      : raceOptions.find((race) => !isHorseRaceBlocked(horseId, race.id))?.id ?? "";
+
+    setInviteForm((prev) => ({ ...prev, horseId, raceId: nextRaceId }));
+  };
+
+  const handleInviteRaceChange = (raceId) => {
+    const currentHorseStillAvailable = inviteForm.horseId && !isHorseRaceBlocked(inviteForm.horseId, raceId);
+    const nextHorseId = currentHorseStillAvailable
+      ? inviteForm.horseId
+      : approvedHorses.find((horse) => !isHorseRaceBlocked(horse.id, raceId))?.id ?? "";
+
+    setInviteForm((prev) => ({ ...prev, horseId: String(nextHorseId), raceId }));
+  };
+
   const openInvite = (jockey) => {
     if (!jockey.active) {
       toast.error("Tài khoản jockey này đang bị khóa");
@@ -200,10 +255,15 @@ export function HorseOwnerJockeys() {
       toast.error("Chưa có cuộc đua nào đang mở để gửi lời mời");
       return;
     }
+    const firstAvailablePair = findFirstAvailableInvitePair();
+    if (!firstAvailablePair) {
+      toast.error("Tất cả ngựa đã có lời mời hoặc đã nhận chạy trong các cuộc đua hiện có");
+      return;
+    }
     setInviteTarget(jockey);
     setInviteForm({
-      horseId: approvedHorses[0]?.id ?? "",
-      raceId: raceOptions[0]?.id ?? "",
+      horseId: firstAvailablePair.horseId,
+      raceId: firstAvailablePair.raceId,
       remunerationAmount: "",
       message: "",
     });
@@ -239,6 +299,19 @@ export function HorseOwnerJockeys() {
     setLoadingDetail(false);
   };
 
+  const openInvitationDetail = (jockey) => {
+    if (!jockey.invitation) return;
+    setInvitationDetailTarget({
+      jockeyName: jockey.name,
+      jockeyLicense: jockey.license,
+      ...jockey.invitation,
+    });
+  };
+
+  const closeInvitationDetail = () => {
+    setInvitationDetailTarget(null);
+  };
+
   const closeInvite = () => {
     setInviteTarget(null);
     setInviteForm({ horseId: "", raceId: "", remunerationAmount: "", message: "" });
@@ -251,6 +324,10 @@ export function HorseOwnerJockeys() {
     }
     if (!inviteForm.raceId) {
       toast.error("Vui lòng chọn cuộc đua để gửi lời mời");
+      return;
+    }
+    if (isHorseRaceBlocked(inviteForm.horseId, inviteForm.raceId)) {
+      toast.error("Ngựa này đã có lời mời hoặc đã nhận chạy trong cuộc đua đã chọn");
       return;
     }
     const remunerationAmount = Number(inviteForm.remunerationAmount);
@@ -450,8 +527,8 @@ export function HorseOwnerJockeys() {
                   </GhostButton>
                 )}
                 {jockey.invitation && (
-                  <PrimaryButton className="flex-1" disabled>
-                    {jockey.invitation.horseName || "Đã gửi"}
+                  <PrimaryButton className="flex-1" icon={Eye} onClick={() => openInvitationDetail(jockey)}>
+                    Chi tiết lời mời
                   </PrimaryButton>
                 )}
               </div>
@@ -627,6 +704,81 @@ export function HorseOwnerJockeys() {
         </div>
       )}
 
+      {invitationDetailTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+          <GlassCard className="w-full max-w-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/10 p-5">
+              <div>
+                <h2 className="font-bold text-white">Chi tiết lời mời</h2>
+                <p className="mt-1 text-sm text-white/45">
+                  {invitationDetailTarget.jockeyName} · {invitationDetailTarget.jockeyLicense}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeInvitationDetail}
+                className="rounded-lg p-1.5 transition-all hover:bg-white/10"
+              >
+                <X className="h-5 w-5 text-white/60" />
+              </button>
+            </div>
+
+            <div className="space-y-5 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-white/40">Trạng thái</div>
+                  <div className="mt-2">
+                    <Pill tone={invitationDetailTarget.statusTone}>
+                      {invitationDetailTarget.status}
+                    </Pill>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-white/40">Thù lao</div>
+                  <div className="mt-1 text-lg font-bold text-[#D4A017]">
+                    {invitationDetailTarget.remunerationText}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  ["Ngựa", invitationDetailTarget.horseName || "Chưa cập nhật"],
+                  ["Jockey", invitationDetailTarget.jockeyName || invitationDetailTarget.jockeyUsername],
+                  ["Giải đấu", invitationDetailTarget.tournamentName || "Chưa cập nhật"],
+                  ["Cuộc đua", invitationDetailTarget.raceName || "Chưa cập nhật"],
+                  ["Mã lời mời", `#${invitationDetailTarget.rawId ?? invitationDetailTarget.id}`],
+                  ["Gửi lúc", formatRaceDate(invitationDetailTarget.createdAt)],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-white/40">{label}</div>
+                    <div className="mt-1 font-semibold text-white">{value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {invitationDetailTarget.message && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-white/40">Lời nhắn</div>
+                  <p className="mt-2 text-sm leading-6 text-white/70">{invitationDetailTarget.message}</p>
+                </div>
+              )}
+
+              {invitationDetailTarget.responseNote && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-white/40">Phản hồi của jockey</div>
+                  <p className="mt-2 text-sm leading-6 text-white/70">{invitationDetailTarget.responseNote}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end border-t border-white/10 pt-4">
+                <GhostButton onClick={closeInvitationDetail}>Đóng</GhostButton>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
       {inviteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
           <GlassCard className="w-full max-w-md">
@@ -648,12 +800,17 @@ export function HorseOwnerJockeys() {
               <HorseOwnerFormField label="Chọn ngựa đã duyệt">
                 <select
                   value={inviteForm.horseId}
-                  onChange={(event) => setInviteForm({ ...inviteForm, horseId: event.target.value })}
+                  onChange={(event) => handleInviteHorseChange(event.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-[#17191d] px-4 py-2.5 text-sm text-white focus:border-[#D4A017] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/20"
                 >
                   {approvedHorses.map((horse) => (
-                    <option key={horse.id} value={horse.id} className="bg-[#17191d] text-white">
-                      {horse.name}
+                    <option
+                      key={horse.id}
+                      value={horse.id}
+                      disabled={isHorseDisabledForSelectedRace(horse.id)}
+                      className="bg-[#17191d] text-white"
+                    >
+                      {horse.name}{isHorseDisabledForSelectedRace(horse.id) ? " · đã có lời mời" : ""}
                     </option>
                   ))}
                 </select>
@@ -662,12 +819,17 @@ export function HorseOwnerJockeys() {
               <HorseOwnerFormField label="Cuộc đua">
                 <select
                   value={inviteForm.raceId}
-                  onChange={(event) => setInviteForm({ ...inviteForm, raceId: event.target.value })}
+                  onChange={(event) => handleInviteRaceChange(event.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-[#17191d] px-4 py-2.5 text-sm text-white focus:border-[#D4A017] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/20"
                 >
                   {raceOptions.map((race) => (
-                    <option key={race.id} value={race.id} className="bg-[#17191d] text-white">
-                      {race.label} · {race.meta}
+                    <option
+                      key={race.id}
+                      value={race.id}
+                      disabled={isRaceDisabledForSelectedHorse(race.id)}
+                      className="bg-[#17191d] text-white"
+                    >
+                      {race.label} · {race.meta}{isRaceDisabledForSelectedHorse(race.id) ? " · ngựa đã có lời mời" : ""}
                     </option>
                   ))}
                 </select>
