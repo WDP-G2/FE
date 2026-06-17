@@ -87,10 +87,12 @@ export const ENDPOINTS = {
     me: '/wallets/me',
     transactions: '/wallets/me/transactions',
     depositOrders: '/wallets/me/deposit-orders',
+    depositOrderById: (id) => `/wallets/me/deposit-orders/${id}`,
     withdrawals: '/wallets/me/withdrawals',
     admin: '/admin/wallet',
     adminTransactions: '/admin/wallet/transactions',
     adminDepositOrders: '/admin/wallet/deposit-orders',
+    adminDepositOrderById: (id) => `/admin/wallet/deposit-orders/${id}`,
     adminWithdrawals: '/admin/wallet/withdrawals',
   },
   roleApplications: {

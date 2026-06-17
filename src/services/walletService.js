@@ -52,6 +52,9 @@ export const walletService = {
     return data
   },
 
+  getMyDepositOrder: (id) =>
+    axiosClient.get(ENDPOINTS.wallet.depositOrderById(id)).then(unwrapResponse),
+
   getMyWithdrawals: () => axiosClient.get(ENDPOINTS.wallet.withdrawals).then(unwrapResponse),
 
   createWithdrawal: async (payload) => {
@@ -75,6 +78,9 @@ export const walletService = {
     invalidateWalletCache('admin')
     return data
   },
+
+  getAdminDepositOrder: (id) =>
+    axiosClient.get(ENDPOINTS.wallet.adminDepositOrderById(id)).then(unwrapResponse),
 
   getAdminWithdrawals: () =>
     axiosClient.get(ENDPOINTS.wallet.adminWithdrawals).then(unwrapResponse),

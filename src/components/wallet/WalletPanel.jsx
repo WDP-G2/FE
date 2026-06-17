@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -17,7 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { walletService } from '@/services/walletService'
+import { invalidateWalletCache, walletService } from '@/services/walletService'
 import { fmtVND } from '@/utils/formatCurrency'
 import { getApiErrorMessage } from '@/utils/apiError'
 
@@ -70,10 +70,15 @@ const DIRECTION_LABELS = {
 
 const STATUS_LABELS = {
   PENDING: 'Đang chờ',
+  PAID: 'Đã thanh toán',
   SUCCESS: 'Thành công',
   FAILED: 'Thất bại',
+  EXPIRED: 'Hết hạn',
+  CANCELLED: 'Đã hủy',
   REVERSED: 'Đã đảo',
 }
+
+const TERMINAL_DEPOSIT_STATUSES = new Set(['PAID', 'FAILED', 'CANCELLED', 'EXPIRED'])
 
 const WALLET_STATUS_LABELS = {
   ACTIVE: 'Hoạt động',
@@ -129,6 +134,7 @@ function statusTone(status) {
   if (status === 'SUCCESS' || status === 'ACTIVE' || status === 'PAID') return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
   if (status === 'PENDING') return 'bg-amber-50 text-amber-700 border border-amber-200'
   if (status === 'FAILED' || status === 'REVERSED' || status === 'SUSPENDED') return 'bg-red-50 text-red-700 border border-red-200'
+  if (status === 'EXPIRED' || status === 'CANCELLED') return 'bg-gray-100 text-gray-700 border border-gray-200'
   return 'bg-gray-100 text-gray-700 border border-gray-200'
 }
 
@@ -201,10 +207,150 @@ function numberToWords(number) {
   return result.replace(/\s+/g, ' ')
 }
 
-function Field({ label, required, children }) {
+function getWalletUi(isAdmin) {
+  if (isAdmin) {
+    return {
+      root: 'space-y-6 w-full',
+      card: 'rounded-3xl border border-white/10 bg-white/[0.045]',
+      cardPad: 'p-6 md:p-8',
+      cardPadSm: 'p-6',
+      segmentTrack: 'relative flex p-1 bg-white/[0.045] border border-white/10 rounded-2xl',
+      segmentThumb:
+        'absolute top-1 bottom-1 left-1 rounded-xl bg-[#dda50e] ring-1 ring-[#f0c14b]/35 shadow-lg shadow-[#dda50e]/20 transition-all duration-300 ease-out',
+      tabActive: 'text-white',
+      tabInactive: 'text-white/60 hover:bg-white/5 hover:text-white',
+      tabIconDepositActive: 'text-white scale-110',
+      tabIconDepositInactive: 'text-white/40 group-hover:text-white/70',
+      tabIconWithdrawActive: 'text-white scale-110',
+      tabIconWithdrawInactive: 'text-white/40 group-hover:text-white/70',
+      label: 'block text-sm font-bold text-white/80',
+      presetActive: 'bg-[#D4A017]/15 border-2 border-[#D4A017] text-[#D4A017]',
+      presetInactive: 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/20',
+      currencyPrefix: 'text-white/40 font-bold text-lg',
+      amountInput:
+        'w-full pl-9.5 pr-16 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:bg-white/[0.08] focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all font-bold text-lg text-white placeholder:text-white/30 placeholder:font-normal',
+      currencySuffix: 'text-white/40 text-xs font-bold',
+      wordsBox: 'rounded-xl bg-white/5 px-4 py-2.5 border border-white/10',
+      wordsText: 'text-xs text-white/55 leading-relaxed',
+      wordsHighlight: 'font-semibold text-[#D4A017]',
+      sectionTitle: 'text-sm font-bold text-white/80',
+      bankPanel: 'bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4',
+      bankTitle: 'text-sm font-bold text-white/80 flex items-center gap-2 border-b border-white/10 pb-3',
+      bankTitleIcon: 'w-4.5 h-4.5 text-white/45',
+      fieldLabel: 'text-sm font-semibold text-white/70 mb-1.5',
+      input:
+        'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-white placeholder:text-white/30 placeholder:font-normal text-sm font-semibold',
+      inputUpper:
+        'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-white uppercase placeholder:text-white/30 placeholder:font-normal text-sm font-bold',
+      btnDisabled: 'bg-white/5 text-white/30 cursor-not-allowed shadow-none border border-white/10',
+      ticket: 'mt-6 rounded-2xl border border-dashed border-[#D4A017]/50 bg-[#D4A017]/10 p-6 relative overflow-hidden',
+      ticketPunchL:
+        'absolute top-1/2 -left-3 w-6 h-6 rounded-full bg-[#0A1628] border-r border-[#D4A017]/30 transform -translate-y-1/2',
+      ticketPunchR:
+        'absolute top-1/2 -right-3 w-6 h-6 rounded-full bg-[#0A1628] border-l border-[#D4A017]/30 transform -translate-y-1/2',
+      ticketHeader:
+        'flex items-center gap-2 text-white font-extrabold text-sm mb-4 pb-4 border-b border-dashed border-white/15',
+      ticketLabel: 'text-white/50 text-xs font-semibold',
+      ticketValue: 'font-bold text-white',
+      ticketMono: 'font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded text-xs select-all w-fit',
+      historyHeading: 'text-base font-extrabold text-white flex items-center gap-2',
+      historyIcon: 'w-5 h-5 text-white/45',
+      historySub: 'text-xs text-white/55',
+      filterActive: 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30',
+      filterInactive: 'bg-white/5 text-white/55 border border-white/10 hover:bg-white/10 hover:text-white/80',
+      loadingWrap: 'flex flex-col items-center justify-center py-20 text-white/45 space-y-2',
+      emptyWrap: 'flex flex-col items-center justify-center py-20 text-white/45 text-center space-y-3',
+      emptyIconWrap: 'p-4 rounded-full bg-white/5 border border-white/10',
+      emptyIcon: 'w-8 h-8 opacity-40 text-white/50',
+      emptyTitle: 'text-xs font-bold text-white/70',
+      emptyDesc: 'text-[11px] text-white/45 max-w-[180px] mx-auto',
+      txRow:
+        'p-3.5 rounded-2xl hover:bg-white/[0.04] border border-white/10 hover:border-white/20 transition-all flex flex-col gap-2',
+      txIconBorder: 'border border-white/10',
+      txTitle: 'text-xs font-bold text-white truncate',
+      txMeta: 'text-[10px] text-white/50 font-semibold mt-0.5',
+      txFooter:
+        'pt-2 border-t border-white/10 flex items-center justify-between text-[9px] text-white/40 font-semibold',
+      txRef: 'text-[9px] text-white/45 bg-white/5 px-2 py-1 rounded-md w-fit flex items-center gap-1.5 font-mono leading-none',
+      txRefId: 'font-bold text-white/55',
+      methodName: 'font-bold text-white text-sm',
+      methodDesc: 'text-xs text-white/55',
+    }
+  }
+
+  return {
+    root: 'space-y-6 max-w-5xl mx-auto',
+    card: 'bg-white rounded-3xl border border-slate-100 shadow-sm',
+    cardPad: 'p-6 md:p-8',
+    cardPadSm: 'p-6',
+    segmentTrack: 'relative flex p-1 bg-slate-100 rounded-2xl',
+    segmentThumb:
+      'absolute top-1 bottom-1 left-1 rounded-xl bg-[#dda50e] ring-1 ring-[#f0c14b]/35 shadow-lg shadow-[#dda50e]/15 transition-all duration-300 ease-out',
+    tabActive: 'text-white',
+    tabInactive: 'text-slate-500 hover:bg-slate-200/60 hover:text-slate-800',
+    tabIconDepositActive: 'text-white scale-110 group-hover:text-white',
+    tabIconDepositInactive: 'text-slate-400 group-hover:text-slate-600',
+    tabIconWithdrawActive: 'text-white scale-110 group-hover:text-white',
+    tabIconWithdrawInactive: 'text-slate-400 group-hover:text-slate-600',
+    label: 'block text-sm font-bold text-slate-700',
+    presetActive: 'bg-amber-500/5 border-2 border-[#D4A017] text-[#1E3A5F]',
+    presetInactive: 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300',
+    currencyPrefix: 'text-slate-400 font-bold text-lg',
+    amountInput:
+      'w-full pl-9.5 pr-16 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:bg-white focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all font-bold text-lg text-slate-800 placeholder:text-slate-400 placeholder:font-normal',
+    currencySuffix: 'text-slate-400 text-xs font-bold',
+    wordsBox: 'rounded-xl bg-slate-50 px-4 py-2.5 border border-slate-100',
+    wordsText: 'text-xs text-slate-500 leading-relaxed',
+    wordsHighlight: 'font-semibold text-[#1E3A5F]',
+    sectionTitle: 'text-sm font-bold text-slate-700',
+    bankPanel: 'bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-4',
+    bankTitle: 'text-sm font-bold text-slate-700 flex items-center gap-2 border-b border-slate-200/60 pb-3',
+    bankTitleIcon: 'w-4.5 h-4.5 text-slate-500',
+    fieldLabel: 'text-sm font-semibold text-slate-700 mb-1.5',
+    input:
+      'w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-slate-800 placeholder:text-slate-400 placeholder:font-normal text-sm font-semibold',
+    inputUpper:
+      'w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-slate-800 uppercase placeholder:text-slate-400 placeholder:font-normal text-sm font-bold',
+    btnDisabled: 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none border border-slate-100',
+    ticket: 'mt-6 rounded-2xl border border-dashed border-[#D4A017]/50 bg-amber-500/5 p-6 relative overflow-hidden',
+    ticketPunchL:
+      'absolute top-1/2 -left-3 w-6 h-6 rounded-full bg-white border-r border-[#D4A017]/30 transform -translate-y-1/2',
+    ticketPunchR:
+      'absolute top-1/2 -right-3 w-6 h-6 rounded-full bg-white border-l border-[#D4A017]/30 transform -translate-y-1/2',
+    ticketHeader:
+      'flex items-center gap-2 text-[#1E3A5F] font-extrabold text-sm mb-4 pb-4 border-b border-dashed border-slate-200',
+    ticketLabel: 'text-slate-500 text-xs font-semibold',
+    ticketValue: 'font-bold text-slate-800',
+    ticketMono: 'font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs select-all w-fit',
+    historyHeading: 'text-base font-extrabold text-[#1E3A5F] flex items-center gap-2',
+    historyIcon: 'w-5 h-5 text-slate-500',
+    historySub: 'text-xs text-slate-500',
+    filterActive: 'bg-[#1E3A5F] text-white',
+    filterInactive: 'bg-slate-50 text-slate-500 border border-slate-200/60 hover:bg-slate-100 hover:text-slate-800',
+    loadingWrap: 'flex flex-col items-center justify-center py-20 text-slate-400 space-y-2',
+    emptyWrap: 'flex flex-col items-center justify-center py-20 text-slate-400 text-center space-y-3',
+    emptyIconWrap: 'p-4 rounded-full bg-slate-50 border border-slate-100',
+    emptyIcon: 'w-8 h-8 opacity-40 text-slate-500',
+    emptyTitle: 'text-xs font-bold text-slate-600',
+    emptyDesc: 'text-[11px] text-slate-400 max-w-[180px] mx-auto',
+    txRow:
+      'p-3.5 rounded-2xl hover:bg-slate-50 border border-slate-100 hover:border-slate-200/80 transition-all flex flex-col gap-2',
+    txIconBorder: 'border border-slate-100/50',
+    txTitle: 'text-xs font-bold text-slate-800 truncate',
+    txMeta: 'text-[10px] text-slate-500 font-semibold mt-0.5',
+    txFooter:
+      'pt-2 border-t border-slate-100/60 flex items-center justify-between text-[9px] text-slate-400 font-semibold',
+    txRef: 'text-[9px] text-slate-350 bg-slate-50 px-2 py-1 rounded-md w-fit flex items-center gap-1.5 font-mono leading-none',
+    txRefId: 'font-bold text-slate-500',
+    methodName: 'font-bold text-slate-800 text-sm',
+    methodDesc: 'text-xs text-slate-500',
+  }
+}
+
+function Field({ label, required, children, labelClassName = 'text-sm font-semibold text-slate-700 mb-1.5' }) {
   return (
     <label className="block">
-      <span className="block text-sm font-semibold text-slate-700 mb-1.5">
+      <span className={`block ${labelClassName}`}>
         {label}
         {required && <span className="text-rose-500"> *</span>}
       </span>
@@ -222,6 +368,8 @@ export default function WalletPanel({
   quickActions,
 }) {
   const isAdminWallet = walletMode === 'admin'
+  const ui = getWalletUi(isAdminWallet)
+  const depositPollRef = useRef(null)
   const [wallet, setWallet] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [loadingData, setLoadingData] = useState(true)
@@ -273,6 +421,68 @@ export default function WalletPanel({
       setLoadingData(false)
     }
   }, [isAdminWallet])
+
+  const stopDepositPolling = useCallback(() => {
+    if (depositPollRef.current) {
+      clearInterval(depositPollRef.current)
+      depositPollRef.current = null
+    }
+  }, [])
+
+  const startDepositPolling = useCallback((orderId) => {
+    stopDepositPolling()
+    const fetchOrder = isAdminWallet
+      ? walletService.getAdminDepositOrder
+      : walletService.getMyDepositOrder
+
+    depositPollRef.current = setInterval(async () => {
+      try {
+        const latest = await fetchOrder(orderId)
+        setDepositOrder(latest)
+        if (TERMINAL_DEPOSIT_STATUSES.has(latest?.status)) {
+          stopDepositPolling()
+          invalidateWalletCache(isAdminWallet ? 'admin' : 'user')
+          await loadWalletData({ showLoading: false })
+          if (latest.status === 'PAID') {
+            toast.success('Nạp tiền thành công!')
+            setDepositOrder(null)
+          } else if (latest.status === 'FAILED') {
+            toast.error('Thanh toán thất bại')
+          } else if (latest.status === 'EXPIRED') {
+            toast.error('Lệnh nạp đã hết hạn')
+          } else if (latest.status === 'CANCELLED') {
+            toast.info('Lệnh nạp đã bị hủy')
+          }
+        }
+      } catch {
+        // Bỏ qua lỗi tạm thời khi poll
+      }
+    }, 3000)
+  }, [isAdminWallet, loadWalletData, stopDepositPolling])
+
+  useEffect(() => () => stopDepositPolling(), [stopDepositPolling])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const depositStatus = params.get('depositStatus')
+    if (!depositStatus) return
+
+    if (depositStatus === 'success') {
+      toast.success('Nạp tiền thành công!')
+    } else if (depositStatus === 'failed') {
+      toast.error('Thanh toán chưa hoàn tất')
+    } else {
+      toast.info('Đang xác nhận thanh toán...')
+    }
+
+    const orderId = params.get('orderId')
+    loadWalletData({ showLoading: true })
+    window.history.replaceState({}, '', window.location.pathname)
+
+    if (orderId) {
+      startDepositPolling(Number(orderId))
+    }
+  }, [loadWalletData, startDepositPolling])
 
   useEffect(() => {
     let ignore = false
@@ -338,6 +548,9 @@ export default function WalletPanel({
           provider: PROVIDER,
         })
         setDepositOrder(order)
+        if (order?.id) {
+          startDepositPolling(order.id)
+        }
         toast.success(`Đã tạo lệnh nạp ${fmtVND(amount)}`)
       } else {
         if (!validateWithdrawal()) return
@@ -382,7 +595,7 @@ export default function WalletPanel({
   })
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className={ui.root}>
       {/* Wallet Card Section */}
       <div className={`rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden group hover:shadow-[#D4A017]/10 hover:shadow-2xl transition-all duration-300 ${bgPanelClass}`}>
         {/* Background Gradients & Effects */}
@@ -391,7 +604,7 @@ export default function WalletPanel({
 
         <div className="relative flex flex-col justify-between h-full min-h-[200px]">
           {/* Header */}
-          <div className="flex items-start justify-between">
+          <div>
             <div className="space-y-1">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
@@ -400,13 +613,6 @@ export default function WalletPanel({
                 <h2 className="text-lg font-bold tracking-wide opacity-95">{title}</h2>
               </div>
               <p className="text-xs opacity-75 max-w-md">{description}</p>
-            </div>
-
-            {/* Premium Smart Chip representation */}
-            <div className="w-10 h-8 rounded-md bg-gradient-to-br from-amber-100 via-amber-200 to-amber-400 opacity-90 flex items-center justify-center relative overflow-hidden border border-amber-300/40 shadow-inner shrink-0">
-              <div className="absolute inset-x-3 top-0 bottom-0 border-r border-amber-600/30"></div>
-              <div className="absolute inset-y-2.5 left-0 right-0 border-b border-amber-600/30"></div>
-              <div className="w-4 h-3 rounded bg-amber-500/25 border border-amber-500/10"></div>
             </div>
           </div>
 
@@ -490,12 +696,12 @@ export default function WalletPanel({
       {/* Main Forms & presets Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Form: Deposit/Withdraw - occupies 2 cols on lg screens */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 p-6 md:p-8 shadow-sm space-y-6">
+        <div className={`lg:col-span-2 ${ui.card} ${ui.cardPad} space-y-6`}>
 
           {/* Sliding Segmented Tab Controller */}
-          <div className="relative flex p-1 bg-slate-100 rounded-2xl">
+          <div className={ui.segmentTrack}>
             <div
-              className="absolute top-1 bottom-1 left-1 rounded-xl bg-white shadow-md transition-all duration-300 ease-out"
+              className={ui.segmentThumb}
               style={{
                 width: 'calc(50% - 4px)',
                 transform: mode === 'deposit' ? 'translateX(0)' : 'translateX(100%)',
@@ -507,10 +713,10 @@ export default function WalletPanel({
                 setMode('deposit')
                 setDepositOrder(null)
               }}
-              className={`relative z-10 flex-1 py-3 text-sm font-bold rounded-xl flex items-center justify-center gap-2.5 transition-colors duration-250 cursor-pointer ${mode === 'deposit' ? 'text-[#1E3A5F]' : 'text-slate-500 hover:text-slate-800'
+              className={`group relative z-10 flex-1 py-3 text-sm font-bold rounded-xl flex items-center justify-center gap-2.5 transition-colors duration-250 cursor-pointer ${mode === 'deposit' ? ui.tabActive : ui.tabInactive
                 }`}
             >
-              <ArrowDownLeft className={`w-4 h-4 transition-transform duration-300 ${mode === 'deposit' ? 'text-[#D4A017] scale-110' : 'text-slate-400'}`} />
+              <ArrowDownLeft className={`w-4 h-4 transition-colors duration-300 ${mode === 'deposit' ? ui.tabIconDepositActive : ui.tabIconDepositInactive}`} />
               Nạp tiền
             </button>
             <button
@@ -519,17 +725,17 @@ export default function WalletPanel({
                 setMode('withdraw')
                 setDepositOrder(null)
               }}
-              className={`relative z-10 flex-1 py-3 text-sm font-bold rounded-xl flex items-center justify-center gap-2.5 transition-colors duration-250 cursor-pointer ${mode === 'withdraw' ? 'text-[#1E3A5F]' : 'text-slate-500 hover:text-slate-800'
+              className={`group relative z-10 flex-1 py-3 text-sm font-bold rounded-xl flex items-center justify-center gap-2.5 transition-colors duration-250 cursor-pointer ${mode === 'withdraw' ? ui.tabActive : ui.tabInactive
                 }`}
             >
-              <ArrowUpRight className={`w-4 h-4 transition-transform duration-300 ${mode === 'withdraw' ? 'text-[#1E3A5F] scale-110' : 'text-slate-400'}`} />
+              <ArrowUpRight className={`w-4 h-4 transition-colors duration-300 ${mode === 'withdraw' ? ui.tabIconWithdrawActive : ui.tabIconWithdrawInactive}`} />
               Rút tiền
             </button>
           </div>
 
           {/* Amount Form Section */}
           <div className="space-y-4">
-            <label className="block text-sm font-bold text-slate-700">Chọn số tiền giao dịch</label>
+            <label className={ui.label}>Chọn số tiền giao dịch</label>
 
             {/* Presets Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
@@ -542,8 +748,8 @@ export default function WalletPanel({
                     setCustomAmount('')
                   }}
                   className={`py-3 px-1 rounded-xl text-xs font-bold border transition-all active:scale-95 cursor-pointer ${selectedAmount === p
-                      ? 'bg-amber-500/5 border-2 border-[#D4A017] text-[#1E3A5F]'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                      ? ui.presetActive
+                      : ui.presetInactive
                     }`}
                 >
                   {fmtVND(p).replace(/\s?₫/, '')}
@@ -554,7 +760,7 @@ export default function WalletPanel({
             {/* Custom Input */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-                <span className="text-slate-400 font-bold text-lg">₫</span>
+                <span className={ui.currencyPrefix}>₫</span>
               </div>
               <input
                 type="text"
@@ -566,18 +772,18 @@ export default function WalletPanel({
                   setCustomAmount(raw)
                   setSelectedAmount(0)
                 }}
-                className="w-full pl-9.5 pr-16 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:bg-white focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all font-bold text-lg text-slate-800 placeholder:text-slate-400 placeholder:font-normal"
+                className={ui.amountInput}
               />
               <div className="absolute inset-y-0 right-0 pr-4.5 flex items-center pointer-events-none">
-                <span className="text-slate-400 text-xs font-bold">VND</span>
+                <span className={ui.currencySuffix}>VND</span>
               </div>
             </div>
 
             {/* Vietnamese number to text spelling */}
             {amount > 0 && (
-              <div className="rounded-xl bg-slate-50 px-4 py-2.5 border border-slate-100">
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Bằng chữ: <span className="font-semibold text-[#1E3A5F]">{numberToWords(amount)}</span>
+              <div className={ui.wordsBox}>
+                <p className={ui.wordsText}>
+                  Bằng chữ: <span className={ui.wordsHighlight}>{numberToWords(amount)}</span>
                 </p>
               </div>
             )}
@@ -586,15 +792,15 @@ export default function WalletPanel({
           {/* Deposit Mode Form Detail */}
           {mode === 'deposit' && (
             <div className="space-y-3 pt-2">
-              <div className="text-sm font-bold text-slate-700">Phương thức nạp</div>
+              <div className={ui.sectionTitle}>Phương thức nạp</div>
               <div className="p-4.5 rounded-2xl border border-sky-500/20 bg-sky-500/5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 via-blue-500 to-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-sky-500/10 shrink-0">
                     Zalo
                   </div>
                   <div>
-                    <div className="font-bold text-slate-800 text-sm">Cổng Ví Điện Tử ZaloPay</div>
-                    <div className="text-xs text-slate-500">Thanh toán trực tiếp, giao dịch hoàn thành tức thì</div>
+                    <div className={ui.methodName}>Cổng Ví Điện Tử ZaloPay</div>
+                    <div className={ui.methodDesc}>Thanh toán trực tiếp, giao dịch hoàn thành tức thì</div>
                   </div>
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black tracking-wide uppercase shrink-0">
@@ -607,47 +813,47 @@ export default function WalletPanel({
           {/* Withdraw Mode Form Detail */}
           {mode === 'withdraw' && (
             <div className="space-y-4 pt-2">
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-4">
-                <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2 border-b border-slate-200/60 pb-3">
-                  <CreditCard className="w-4.5 h-4.5 text-slate-500" />
+              <div className={ui.bankPanel}>
+                <h4 className={ui.bankTitle}>
+                  <CreditCard className={ui.bankTitleIcon} />
                   Thông tin ngân hàng thụ hưởng
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Tên ngân hàng" required>
+                  <Field label="Tên ngân hàng" required labelClassName={ui.fieldLabel}>
                     <input
                       value={bankForm.bankName}
                       onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-slate-800 placeholder:text-slate-400 placeholder:font-normal text-sm font-semibold"
+                      className={ui.input}
                       placeholder="VD: Vietcombank, Techcombank..."
                     />
                   </Field>
 
-                  <Field label="Số tài khoản nhận" required>
+                  <Field label="Số tài khoản nhận" required labelClassName={ui.fieldLabel}>
                     <input
                       value={bankForm.bankAccountNumber}
                       onChange={(e) =>
                         setBankForm({ ...bankForm, bankAccountNumber: e.target.value })
                       }
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-slate-800 placeholder:text-slate-400 placeholder:font-normal text-sm font-semibold"
+                      className={ui.input}
                       placeholder="Nhập số tài khoản ngân hàng"
                     />
                   </Field>
 
-                  <Field label="Chủ tài khoản" required>
+                  <Field label="Chủ tài khoản" required labelClassName={ui.fieldLabel}>
                     <input
                       value={bankForm.bankAccountName}
                       onChange={(e) => setBankForm({ ...bankForm, bankAccountName: e.target.value.toUpperCase() })}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-slate-800 uppercase placeholder:text-slate-400 placeholder:font-normal text-sm font-bold"
+                      className={ui.inputUpper}
                       placeholder="VD: NGUYEN VAN A"
                     />
                   </Field>
 
-                  <Field label={isAdminWallet ? 'Lý do rút ví hệ thống' : 'Nội dung/Lý do'} required={isAdminWallet}>
+                  <Field label={isAdminWallet ? 'Lý do rút ví hệ thống' : 'Nội dung/Lý do'} required={isAdminWallet} labelClassName={ui.fieldLabel}>
                     <input
                       value={bankForm.reason}
                       onChange={(e) => setBankForm({ ...bankForm, reason: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#D4A017] focus:ring-4 focus:ring-[#D4A017]/10 transition-all text-slate-800 placeholder:text-slate-400 placeholder:font-normal text-sm font-semibold"
+                      className={ui.input}
                       placeholder={isAdminWallet ? 'Bắt buộc nhập lý do rút ví hệ thống' : 'Không bắt buộc'}
                     />
                   </Field>
@@ -662,7 +868,7 @@ export default function WalletPanel({
             onClick={handleAction}
             disabled={submitting || amount <= 0}
             className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2.5 cursor-pointer ${submitting || amount <= 0
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none border border-slate-100'
+                ? ui.btnDisabled
                 : mode === 'deposit'
                   ? 'bg-gradient-to-r from-[#D4A017] to-[#B8941F] hover:from-[#B8941F] hover:to-[#D4A017] shadow-[#D4A017]/10 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]'
                   : 'bg-gradient-to-r from-[#1E3A5F] to-[#0F1E3A] hover:from-[#0F1E3A] hover:to-[#1E3A5F] shadow-[#1E3A5F]/10 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]'
@@ -687,23 +893,23 @@ export default function WalletPanel({
 
           {/* ZaloPay invoice ticket rendering */}
           {depositOrder && mode === 'deposit' && (
-            <div className="mt-6 rounded-2xl border border-dashed border-[#D4A017]/50 bg-amber-500/5 p-6 relative overflow-hidden">
+            <div className={ui.ticket}>
               {/* Corner punch cuts to look like a ticket */}
-              <div className="absolute top-1/2 -left-3 w-6 h-6 rounded-full bg-white border-r border-[#D4A017]/30 transform -translate-y-1/2"></div>
-              <div className="absolute top-1/2 -right-3 w-6 h-6 rounded-full bg-white border-l border-[#D4A017]/30 transform -translate-y-1/2"></div>
+              <div className={ui.ticketPunchL}></div>
+              <div className={ui.ticketPunchR}></div>
 
-              <div className="flex items-center gap-2 text-[#1E3A5F] font-extrabold text-sm mb-4 pb-4 border-b border-dashed border-slate-200">
+              <div className={ui.ticketHeader}>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                 LỆNH NẠP TIỀN ĐANG CHỜ THANH TOÁN
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm mb-6">
                 <div className="flex justify-between sm:flex-col sm:justify-start gap-1">
-                  <span className="text-slate-500 text-xs font-semibold">Mã lệnh nạp:</span>
-                  <span className="font-bold text-slate-800">{depositOrder.referenceCode || '—'}</span>
+                  <span className={ui.ticketLabel}>Mã lệnh nạp:</span>
+                  <span className={ui.ticketValue}>{depositOrder.referenceCode || '—'}</span>
                 </div>
                 <div className="flex justify-between sm:flex-col sm:justify-start gap-1">
-                  <span className="text-slate-500 text-xs font-semibold">Trạng thái:</span>
+                  <span className={ui.ticketLabel}>Trạng thái:</span>
                   <span className="inline-flex items-center">
                     <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${statusTone(depositOrder.status)}`}>
                       {statusIcon(depositOrder.status)}
@@ -712,13 +918,13 @@ export default function WalletPanel({
                   </span>
                 </div>
                 <div className="flex justify-between sm:flex-col sm:justify-start gap-1">
-                  <span className="text-slate-500 text-xs font-semibold">Hết hạn vào:</span>
-                  <span className="font-bold text-slate-800">{formatTxTime(depositOrder.expiredAt)}</span>
+                  <span className={ui.ticketLabel}>Hết hạn vào:</span>
+                  <span className={ui.ticketValue}>{formatTxTime(depositOrder.expiredAt)}</span>
                 </div>
                 {depositOrder.transferContent && (
                   <div className="flex justify-between sm:flex-col sm:justify-start gap-1">
-                    <span className="text-slate-500 text-xs font-semibold">Nội dung:</span>
-                    <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs select-all w-fit">
+                    <span className={ui.ticketLabel}>Nội dung:</span>
+                    <span className={ui.ticketMono}>
                       {depositOrder.transferContent}
                     </span>
                   </div>
@@ -741,13 +947,15 @@ export default function WalletPanel({
         </div>
 
         {/* Right Panel: Transaction History - occupies 1 col on lg screens */}
-        <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm flex flex-col h-full min-h-[500px]">
+        <div className={`${ui.card} ${ui.cardPadSm} flex flex-col h-full min-h-[500px]`}>
           <div className="space-y-1 mb-4">
-            <h3 className="text-base font-extrabold text-[#1E3A5F] flex items-center gap-2">
-              <Clock className="w-5 h-5 text-slate-500" />
+            <h3 className={ui.historyHeading}>
+              <Clock className={ui.historyIcon} />
               Lịch sử giao dịch
             </h3>
-            <p className="text-xs text-slate-500">Danh sách các biến động ví của bạn</p>
+            <p className={ui.historySub}>
+              {isAdminWallet ? 'Danh sách các biến động ví quỹ hệ thống' : 'Danh sách các biến động ví của bạn'}
+            </p>
           </div>
 
           {/* Filter list */}
@@ -764,8 +972,8 @@ export default function WalletPanel({
                 type="button"
                 onClick={() => setTxFilter(tab.id)}
                 className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer ${txFilter === tab.id
-                    ? 'bg-[#1E3A5F] text-white'
-                    : 'bg-slate-50 text-slate-500 border border-slate-200/60 hover:bg-slate-100 hover:text-slate-800'
+                    ? ui.filterActive
+                    : ui.filterInactive
                   }`}
               >
                 {tab.label}
@@ -776,18 +984,18 @@ export default function WalletPanel({
           {/* History List */}
           <div className="flex-1 overflow-y-auto space-y-3 scrollbar-thin pr-1 max-h-[550px]">
             {loadingData ? (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-2">
+              <div className={ui.loadingWrap}>
                 <div className="w-8 h-8 border-3 border-[#1E3A5F] border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-xs font-medium">Đang tải lịch sử...</span>
               </div>
             ) : filteredTransactions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center space-y-3">
-                <div className="p-4 rounded-full bg-slate-50 border border-slate-100">
-                  <Wallet className="w-8 h-8 opacity-40 text-slate-500" />
+              <div className={ui.emptyWrap}>
+                <div className={ui.emptyIconWrap}>
+                  <Wallet className={ui.emptyIcon} />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-600">Chưa có giao dịch nào</p>
-                  <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">Các biến động số dư của bộ lọc này sẽ hiển thị ở đây</p>
+                  <p className={ui.emptyTitle}>Chưa có giao dịch nào</p>
+                  <p className={ui.emptyDesc}>Các biến động số dư của bộ lọc này sẽ hiển thị ở đây</p>
                 </div>
               </div>
             ) : (
@@ -805,19 +1013,19 @@ export default function WalletPanel({
                   return (
                     <div
                       key={tx.id}
-                      className="p-3.5 rounded-2xl hover:bg-slate-50 border border-slate-100 hover:border-slate-200/80 transition-all flex flex-col gap-2"
+                      className={ui.txRow}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           {/* Colored Icon Container */}
-                          <div className={`w-10 h-10 rounded-xl ${cfg.bg} ${cfg.color} flex items-center justify-center shrink-0 border border-slate-100/50`}>
+                          <div className={`w-10 h-10 rounded-xl ${cfg.bg} ${cfg.color} flex items-center justify-center shrink-0 ${ui.txIconBorder}`}>
                             <CustomIcon className="w-5 h-5" />
                           </div>
                           <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-slate-800 truncate" title={transactionDescription(tx)}>
+                            <h4 className={ui.txTitle} title={transactionDescription(tx)}>
                               {transactionDescription(tx)}
                             </h4>
-                            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                            <p className={ui.txMeta}>
                               {cfg.label} · {DIRECTION_LABELS[tx.direction] || tx.direction}
                             </p>
                           </div>
@@ -840,7 +1048,7 @@ export default function WalletPanel({
                       </div>
 
                       {/* Expandable Meta details (Timestamp & Balances after tx) */}
-                      <div className="pt-2 border-t border-slate-100/60 flex items-center justify-between text-[9px] text-slate-400 font-semibold">
+                      <div className={ui.txFooter}>
                         <span>{tx.time}</span>
                         <div className="flex gap-2">
                           {tx.availableAfter != null && (
@@ -854,9 +1062,9 @@ export default function WalletPanel({
 
                       {/* References details if any */}
                       {(tx.referenceType || tx.referenceId) && (
-                        <div className="text-[9px] text-slate-350 bg-slate-50 px-2 py-1 rounded-md w-fit flex items-center gap-1.5 font-mono leading-none">
+                        <div className={ui.txRef}>
                           <span className="opacity-75">{tx.referenceType}:</span>
-                          <span className="font-bold text-slate-500">#{tx.referenceId || '—'}</span>
+                          <span className={ui.txRefId}>#{tx.referenceId || '—'}</span>
                         </div>
                       )}
                     </div>
