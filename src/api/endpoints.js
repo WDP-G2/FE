@@ -90,6 +90,8 @@ export const ENDPOINTS = {
     withdrawals: '/wallets/me/withdrawals',
     admin: '/admin/wallet',
     adminTransactions: '/admin/wallet/transactions',
+    adminDepositOrders: '/admin/wallet/deposit-orders',
+    adminWithdrawals: '/admin/wallet/withdrawals',
   },
   roleApplications: {
     me: '/role-applications/me',
