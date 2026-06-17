@@ -44,14 +44,46 @@ export const walletService = {
 
   getMyTransactions: () => axiosClient.get(ENDPOINTS.wallet.transactions).then(unwrapResponse),
 
+  getMyDepositOrders: () => axiosClient.get(ENDPOINTS.wallet.depositOrders).then(unwrapResponse),
+
+  createDepositOrder: async (payload) => {
+    const data = await axiosClient.post(ENDPOINTS.wallet.depositOrders, payload).then(unwrapResponse)
+    invalidateWalletCache('user')
+    return data
+  },
+
+  getMyWithdrawals: () => axiosClient.get(ENDPOINTS.wallet.withdrawals).then(unwrapResponse),
+
+  createWithdrawal: async (payload) => {
+    const data = await axiosClient.post(ENDPOINTS.wallet.withdrawals, payload).then(unwrapResponse)
+    invalidateWalletCache('user')
+    return data
+  },
+
   getAdminWallet: () => fetchWallet(ENDPOINTS.wallet.admin, 'admin'),
 
   getAdminTransactions: () =>
     axiosClient.get(ENDPOINTS.wallet.adminTransactions).then(unwrapResponse),
 
-  createDepositOrder: (payload) =>
-    axiosClient.post(ENDPOINTS.wallet.depositOrders, payload).then(unwrapResponse),
+  getAdminDepositOrders: () =>
+    axiosClient.get(ENDPOINTS.wallet.adminDepositOrders).then(unwrapResponse),
 
-  createWithdrawal: (payload) =>
-    axiosClient.post(ENDPOINTS.wallet.withdrawals, payload).then(unwrapResponse),
+  createAdminDepositOrder: async (payload) => {
+    const data = await axiosClient
+      .post(ENDPOINTS.wallet.adminDepositOrders, payload)
+      .then(unwrapResponse)
+    invalidateWalletCache('admin')
+    return data
+  },
+
+  getAdminWithdrawals: () =>
+    axiosClient.get(ENDPOINTS.wallet.adminWithdrawals).then(unwrapResponse),
+
+  createAdminWithdrawal: async (payload) => {
+    const data = await axiosClient
+      .post(ENDPOINTS.wallet.adminWithdrawals, payload)
+      .then(unwrapResponse)
+    invalidateWalletCache('admin')
+    return data
+  },
 }
