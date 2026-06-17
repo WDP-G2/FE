@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Search, Filter, Camera, Gavel, ArrowRight } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
-import { GlassCard, Pill, TextInput, Select, StatCard } from '../admin/AdminLayout';
+import { GlassCard, Pill, TextInput, Select, StatCard } from '@/pages/admin/AdminLayout';
 import { violations, severityTone } from './data';
 
 export function RefereeViolations() {

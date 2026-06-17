@@ -4,26 +4,21 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  Trophy,
-  Users,
   ArrowRight,
-  Bell,
   Activity,
-  Zap,
   Gavel,
   ClipboardCheck,
   Calendar,
-  MapPin,
-  Sparkles,
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
-import { GlassCard, StatCard, Pill, PrimaryButton, GhostButton } from '../admin/AdminLayout';
-import { violations, notifications, raceStatusTone } from './data';
-import { useAssignedRaces } from './useAssignedRaces';
+import { GlassCard, StatCard, Pill } from '@/pages/admin/AdminLayout';
+import { assignedRaces, violations, raceStatusTone } from './data';
+import { useAuthStore } from '@/store/authStore';
 
 export function RefereeDashboard() {
-  const assignedRaces = useAssignedRaces();
-  const today = new Date().toISOString().slice(0, 10);
+  const user = useAuthStore((s) => s.user);
+  const displayName = user?.fullName || user?.username || 'Trọng tài';
+  const today = '2026-05-24';
   const todayRaces = assignedRaces.filter((r) => r.date === today);
   const upcoming = assignedRaces.filter((r) => r.status === 'Sắp diễn ra' || r.status === 'Đang check-in');
   const completed = assignedRaces.filter((r) => r.status === 'Đã kết thúc');
@@ -31,28 +26,11 @@ export function RefereeDashboard() {
   const pendingCheckins = assignedRaces
     .filter((r) => r.status === 'Đang check-in' || r.status === 'Sắp diễn ra')
     .reduce((s, r) => s + (r.totalHorses - r.checkedIn), 0);
-  const unreadNotifs = notifications.filter((n) => !n.read).length;
-  const activeRace =
-    assignedRaces.find((race) => race.status === 'Đang check-in' || race.status === 'Đang đua') ??
-    upcoming[0] ??
-    assignedRaces[0];
 
   return (
     <RefereeLayout
       title="Trọng tài · Tổng quan"
-      subtitle={`Bạn có ${assignedRaces.length} cuộc đua được phân công · ${todayRaces.length} cuộc hôm nay`}
-      actions={
-        <>
-          <Link to="/referee/races">
-            <GhostButton icon={Flag}>Xem tất cả race</GhostButton>
-          </Link>
-          {activeRace ? (
-            <Link to={`/referee/races/${activeRace.id}`}>
-              <PrimaryButton icon={Zap}>Vào race được giao</PrimaryButton>
-            </Link>
-          ) : null}
-        </>
-      }
+      subtitle={`Chào ${displayName} · Hôm nay bạn có ${todayRaces.length} race cần điều hành`}
     >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Race hôm nay" value={String(todayRaces.length)} icon={Flag} tone="gold" delta={`+${upcoming.length} sắp tới`} />
@@ -61,8 +39,7 @@ export function RefereeDashboard() {
         <StatCard label="Vi phạm tuần này" value={String(violations.length)} icon={AlertTriangle} tone="purple" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6">
           <GlassCard>
             <div className="p-5 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -164,113 +141,7 @@ export function RefereeDashboard() {
               </div>
             </div>
           </GlassCard>
-        </div>
-
-        <div className="space-y-6">
-          <GlassCard className="p-5 bg-gradient-to-br from-[#D4A017]/15 to-transparent border-[#D4A017]/30">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-[#D4A017]" />
-              <h3 className="text-sm font-bold text-white">Thao tác nhanh</h3>
-            </div>
-            <div className="space-y-2">
-              {activeRace ? (
-                <QuickAction
-                  to={`/referee/races/${activeRace.id}`}
-                  icon={ClipboardCheck}
-                  label="Check-in race được giao"
-                  sub={`${activeRace.tournamentName} · R${activeRace.no} · ${activeRace.time}`}
-                />
-              ) : null}
-              <QuickAction to="/referee/violations" icon={AlertTriangle} label="Ghi nhận vi phạm" sub="Mở form ghi nhận mới" />
-              <QuickAction to="/referee/history" icon={Trophy} label="Nhập kết quả race" sub="Sau khi race kết thúc" />
-              <QuickAction to="/referee/races" icon={Flag} label="Danh sách race" sub={`${assignedRaces.length} race được giao`} />
-            </div>
-          </GlassCard>
-
-          <GlassCard>
-            <div className="p-5 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-500/15 rounded-xl flex items-center justify-center relative">
-                  <Bell className="w-5 h-5 text-red-300" />
-                  {unreadNotifs > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {unreadNotifs}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">Thông báo</h3>
-                  <p className="text-[11px] text-white/50">{unreadNotifs} chưa đọc</p>
-                </div>
-              </div>
-              <Link to="/referee/notifications" className="text-xs text-[#D4A017] hover:underline font-semibold">
-                Tất cả
-              </Link>
-            </div>
-            <div className="p-3 space-y-1 max-h-80 overflow-y-auto">
-              {notifications.slice(0, 5).map((n) => (
-                <Link
-                  key={n.id}
-                  to={n.link ?? '/referee/notifications'}
-                  className={`block p-3 rounded-xl transition-all ${
-                    n.read ? 'hover:bg-white/5' : 'bg-[#D4A017]/5 hover:bg-[#D4A017]/10 border border-[#D4A017]/20'
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {!n.read && <span className="w-1.5 h-1.5 bg-[#D4A017] rounded-full mt-1.5 shrink-0" />}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-white truncate">{n.title}</div>
-                      <div className="text-[11px] text-white/50 line-clamp-2">{n.body}</div>
-                      <div className="text-[10px] text-white/40 mt-1">{n.time}</div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <MapPin className="w-4 h-4 text-[#D4A017]" />
-              <h3 className="text-sm font-bold text-white">Sân đua hôm nay</h3>
-            </div>
-            <div className="text-xs space-y-2">
-              <Row k="Sân" v="Phú Thọ Racecourse" />
-              <Row k="Thời tiết" v="Nắng · 28°C · Gió 8km/h" />
-              <Row k="Mặt sân" v="Cỏ tốt · Đất khô" />
-              <Row k="Camera" v="12/12 hoạt động" />
-              <Row k="Y tế" v="Sẵn sàng · 2 BS thú y" />
-            </div>
-          </GlassCard>
-        </div>
       </div>
     </RefereeLayout>
-  );
-}
-
-function QuickAction({ to, icon: Icon, label, sub }) {
-  return (
-    <Link
-      to={to}
-      className="flex items-center gap-3 p-3 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-xl transition-all group"
-    >
-      <div className="w-9 h-9 bg-[#D4A017]/15 rounded-lg flex items-center justify-center">
-        <Icon className="w-4 h-4 text-[#D4A017]" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-white truncate">{label}</div>
-        <div className="text-[11px] text-white/50 truncate">{sub}</div>
-      </div>
-      <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-[#D4A017] group-hover:translate-x-0.5 transition-all" />
-    </Link>
-  );
-}
-
-function Row({ k, v }) {
-  return (
-    <div className="flex justify-between gap-2">
-      <span className="text-white/50">{k}</span>
-      <span className="text-white font-semibold text-right">{v}</span>
-    </div>
   );
 }

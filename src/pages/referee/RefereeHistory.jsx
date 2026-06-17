@@ -11,12 +11,13 @@ import {
   Download,
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
-import { GlassCard, Pill, StatCard, GhostButton } from '../admin/AdminLayout';
-import { violations } from './data';
-import { useAssignedRaces } from './useAssignedRaces';
+import { GlassCard, Pill, StatCard, GhostButton } from '@/pages/admin/AdminLayout';
+import { assignedRaces, violations } from './data';
+import { useAuthStore } from '@/store/authStore';
 
 export function RefereeHistory() {
-  const assignedRaces = useAssignedRaces();
+  const user = useAuthStore((s) => s.user);
+  const displayName = user?.fullName || user?.username || 'Trọng tài';
   const completed = assignedRaces.filter((r) => r.status === 'Đã kết thúc');
 
   return (
@@ -79,7 +80,7 @@ export function RefereeHistory() {
 
                 <div className="flex items-center justify-between pt-3 border-t border-white/10">
                   <div className="text-[10px] text-white/40">
-                    Báo cáo nộp lúc {r.date} 18:00 · Ký số bởi Lê Trọng Tài
+                    Báo cáo nộp lúc {r.date} 18:00 · Ký số bởi {displayName}
                   </div>
                   <Link
                     to={`/referee/races/${r.id}`}

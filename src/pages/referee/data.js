@@ -5,6 +5,99 @@
 
 const store = globalThis;
 
+export const assignedRaces = store.__ref_races__ ?? (store.__ref_races__ = [
+  {
+    id: 'vgp-r1',
+    tournamentId: 'vietnam-grand-prix-2026',
+    tournamentName: 'Vietnam Grand Prix 2026',
+    no: 1,
+    name: 'Vòng loại 1 · Hạng A',
+    date: '2026-05-24',
+    time: '14:30',
+    track: 'Phú Thọ - Đường đua A',
+    distance: '1400m',
+    totalHorses: 12,
+    status: 'Đang check-in',
+    checkedIn: 7,
+    surface: 'Cỏ',
+  },
+  {
+    id: 'vgp-r2',
+    tournamentId: 'vietnam-grand-prix-2026',
+    tournamentName: 'Vietnam Grand Prix 2026',
+    no: 2,
+    name: 'Vòng loại 2 · Hạng B',
+    date: '2026-05-24',
+    time: '16:00',
+    track: 'Phú Thọ - Đường đua A',
+    distance: '1600m',
+    totalHorses: 10,
+    status: 'Sắp diễn ra',
+    checkedIn: 0,
+    surface: 'Đất',
+  },
+  {
+    id: 'vgp-r3',
+    tournamentId: 'vietnam-grand-prix-2026',
+    tournamentName: 'Vietnam Grand Prix 2026',
+    no: 3,
+    name: 'Bán kết · Open',
+    date: '2026-05-25',
+    time: '15:00',
+    track: 'Phú Thọ - Đường đua B',
+    distance: '1800m',
+    totalHorses: 8,
+    status: 'Sắp diễn ra',
+    checkedIn: 0,
+    surface: 'Cỏ',
+  },
+  {
+    id: 'sgd-r1',
+    tournamentId: 'saigon-derby-2026',
+    tournamentName: 'Saigon Derby 2026',
+    no: 1,
+    name: 'Vòng loại 1',
+    date: '2026-05-22',
+    time: '14:00',
+    track: 'Phú Thọ - Đường đua A',
+    distance: '1200m',
+    totalHorses: 10,
+    status: 'Đã kết thúc',
+    checkedIn: 10,
+    surface: 'Cỏ',
+  },
+  {
+    id: 'sgd-r2',
+    tournamentId: 'saigon-derby-2026',
+    tournamentName: 'Saigon Derby 2026',
+    no: 2,
+    name: 'Vòng loại 2',
+    date: '2026-05-23',
+    time: '15:30',
+    track: 'Phú Thọ - Đường đua A',
+    distance: '1400m',
+    totalHorses: 12,
+    status: 'Đã kết thúc',
+    checkedIn: 12,
+    surface: 'Đất',
+  },
+  {
+    id: 'hnc-r5',
+    tournamentId: 'hanoi-cup-2025',
+    tournamentName: 'Hanoi Cup 2025',
+    no: 5,
+    name: 'Chung kết',
+    date: '2025-12-15',
+    time: '16:00',
+    track: 'Sóc Sơn - Đường đua chính',
+    distance: '2000m',
+    totalHorses: 8,
+    status: 'Đã kết thúc',
+    checkedIn: 8,
+    surface: 'Cỏ',
+  },
+]);
+
 const HORSE_POOL = [
   { horse: 'Thunder Bolt', owner: 'Nguyễn Văn A', jockey: 'Trần Minh Tú' },
   { horse: 'Black Pearl', owner: 'Trần Thị B', jockey: 'Phạm Hoàng' },
@@ -25,7 +118,8 @@ const HORSE_POOL = [
 ];
 
 export function buildHorses(race) {
-  return Array.from({ length: race.totalHorses }).map((_, i) => {
+  if (!race || !Number.isFinite(Number(race.totalHorses))) return []
+  return Array.from({ length: Number(race.totalHorses) }).map((_, i) => {
     const h = HORSE_POOL[i % HORSE_POOL.length];
     const isDone = race.status === 'Đã kết thúc' || race.status === 'Đang đua';
     const checkedIn = isDone ? true : i < race.checkedIn;
@@ -63,7 +157,7 @@ export const violations = store.__ref_violations__ ?? (store.__ref_violations__ 
     penalty: 'Trừ 3 giây thành tích · Cảnh cáo lần cuối',
     evidence: [{ name: 'cam-turn2-replay.mp4', size: '12.4 MB' }],
     timestamp: '2026-05-23 15:48',
-    reporter: 'Lê Trọng Tài',
+    reporter: 'Trọng tài phụ trách',
   },
   {
     id: 'V-2026-017',
@@ -78,7 +172,7 @@ export const violations = store.__ref_violations__ ?? (store.__ref_violations__ 
     penalty: 'Cảnh cáo',
     evidence: [{ name: 'start-line-cam.jpg', size: '820 KB' }],
     timestamp: '2026-05-22 14:02',
-    reporter: 'Lê Trọng Tài',
+    reporter: 'Trọng tài phụ trách',
   },
   {
     id: 'V-2026-016',
@@ -96,7 +190,7 @@ export const violations = store.__ref_violations__ ?? (store.__ref_violations__ 
       { name: 'sample-chain-of-custody.pdf', size: '480 KB' },
     ],
     timestamp: '2025-12-15 18:30',
-    reporter: 'Lê Trọng Tài',
+    reporter: 'Trọng tài phụ trách',
   },
 ]);
 

@@ -13,8 +13,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
-import { GlassCard, TextInput, Select } from '../admin/AdminLayout';
-import { useAssignedRaces } from './useAssignedRaces';
+import { GlassCard, Pill, TextInput, Select } from '@/pages/admin/AdminLayout';
+import { assignedRaces, raceStatusTone } from './data';
 
 
 const TABS = [
@@ -24,12 +24,11 @@ const TABS = [
 ];
 
 export function RefereeRaces() {
-  const assignedRaces = useAssignedRaces();
   const [tab, setTab] = useState('Sắp diễn ra');
   const [q, setQ] = useState('');
   const [view, setView] = useState('grid');
 
-  const active = TABS.find((t) => t.key === tab) ?? TABS[0];
+  const active = TABS.find((t) => t.key === tab);
 
   const filtered = useMemo(
     () =>
@@ -38,13 +37,13 @@ export function RefereeRaces() {
           active.match.includes(r.status) &&
           (!q || `${r.name} ${r.tournamentName} ${r.track}`.toLowerCase().includes(q.toLowerCase()))
       ),
-    [tab, q, active, assignedRaces]
+    [tab, q, active]
   );
 
   return (
     <RefereeLayout
       title="Trọng tài · Cuộc đua được giao"
-      subtitle={`Chỉ hiển thị race được phân công cho bạn · Tổng cộng ${assignedRaces.length} race`}
+      subtitle="Chỉ hiển thị race được phân công cho bạn · Tổng cộng 6 race"
     >
       <GlassCard className="mb-6">
         <div className="p-5 border-b border-white/10 flex flex-wrap gap-2">
@@ -110,10 +109,11 @@ export function RefereeRaces() {
             return (
               <GlassCard key={r.id} className="overflow-hidden hover:border-[#D4A017]/40 transition-all">
                 <div className="p-5 border-b border-white/10 bg-gradient-to-br from-[#D4A017]/10 to-transparent">
-                  <div className="mb-3">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-[10px] font-bold text-[#D4A017] bg-[#D4A017]/15 px-2 py-1 rounded-md border border-[#D4A017]/30">
                       R{r.no}
                     </span>
+                    <Pill tone={raceStatusTone(r.status)}>{r.status}</Pill>
                   </div>
                   <h3 className="font-bold text-white text-base leading-tight">{r.name}</h3>
                   <p className="text-[11px] text-[#D4A017]/80 mt-1">{r.tournamentName}</p>
@@ -160,6 +160,7 @@ export function RefereeRaces() {
                   <th className="px-6 py-3">Sân</th>
                   <th className="px-6 py-3 text-center">Ngựa</th>
                   <th className="px-6 py-3 text-center">Check-in</th>
+                  <th className="px-6 py-3 text-center">Trạng thái</th>
                   <th className="px-6 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
@@ -185,6 +186,9 @@ export function RefereeRaces() {
                         {r.checkedIn}/{r.totalHorses}
                       </span>
                     </td>
+                    <td className="px-6 py-3 text-center">
+                      <Pill tone={raceStatusTone(r.status)}>{r.status}</Pill>
+                    </td>
                     <td className="px-6 py-3 text-right">
                       <Link
                         to={`/referee/races/${r.id}`}
@@ -204,9 +208,7 @@ export function RefereeRaces() {
       {filtered.length === 0 && (
         <div className="text-center py-20 text-white/40">
           <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          {assignedRaces.length === 0
-            ? 'Chưa có cuộc đua nào được phân công cho bạn.'
-            : 'Không có race nào trong mục này.'}
+          Không có race nào trong mục này.
         </div>
       )}
     </RefereeLayout>

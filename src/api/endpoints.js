@@ -37,6 +37,7 @@ export const ENDPOINTS = {
   },
   systemSettings: {
     admin: '/admin/system-settings',
+    fees: '/admin/system-settings/fees',
     raceDistances: '/admin/system-settings/race-distances',
   },
   tournaments: {

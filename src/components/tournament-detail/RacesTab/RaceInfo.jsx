@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Info } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Field from "@/components/ui/Field";
@@ -11,6 +12,10 @@ import {
   shiftTime,
 } from "./helpers";
 import { formatDisplayDate } from "@/utils/dateFormat";
+import {
+  findRegistrationFeeOptionId,
+  getRegistrationFeeByOptionId,
+} from "@/services/systemSettingsService";
 
 export default function RaceInfo({
   race,
@@ -19,7 +24,7 @@ export default function RaceInfo({
   venues,
   distanceOptions,
   loadingOptions,
-  defaultRegistrationFee = 0,
+  registrationFeeOptions = [],
   onGoToSettings,
   onSave,
 }) {
@@ -51,12 +56,18 @@ export default function RaceInfo({
   const distanceLoading = loadingOptions && distanceOptions.length === 0;
   const venueLoading = loadingOptions && venues.length === 0;
 
-  const displayEntryFee = Number(draft.entryFee || defaultRegistrationFee || 0);
+  const feeLoading = loadingOptions && registrationFeeOptions.length === 0;
+  const selectedFeeOptionId = findRegistrationFeeOptionId(draft.entryFee, registrationFeeOptions);
+  const selectedFeeOption = registrationFeeOptions.find(
+    (option) => option.id === selectedFeeOptionId,
+  );
+  const hasCustomEntryFee =
+    Number(draft.entryFee) > 0 && !selectedFeeOptionId && registrationFeeOptions.length > 0;
 
   const handleSave = () => {
     onSave({
       ...draft,
-      entryFee: displayEntryFee,
+      entryFee: Number(draft.entryFee || 0),
     });
   };
 
@@ -244,19 +255,42 @@ export default function RaceInfo({
           />
         </Field>
         <Field label="Lệ phí đăng ký">
-          <div className="relative">
-            <Input
-              value={displayEntryFee.toLocaleString("vi-VN")}
-              disabled
-              className="pr-20"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-white/45">
-              VND
-            </span>
-          </div>
-          {Number(defaultRegistrationFee) > 0 && (
+          <Select
+            value={selectedFeeOptionId || (hasCustomEntryFee ? "custom" : "")}
+            disabled={feeLoading || saving || registrationFeeOptions.length === 0}
+            onChange={(event) => {
+              const nextId = event.target.value;
+              if (nextId === "custom") return;
+              updateDraft({
+                entryFee: getRegistrationFeeByOptionId(nextId, registrationFeeOptions),
+              });
+            }}
+          >
+            <option value="">
+              {feeLoading ? "Đang tải..." : "Chọn lệ phí đăng ký"}
+            </option>
+            {hasCustomEntryFee && (
+              <option value="custom">
+                {Number(draft.entryFee).toLocaleString("vi-VN")} VND (hiện tại)
+              </option>
+            )}
+            {registrationFeeOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          {selectedFeeOption && (
             <p className="mt-2 text-xs text-white/45">
-              Mặc định hệ thống: {Number(defaultRegistrationFee).toLocaleString("vi-VN")} VND
+              Phí trễ hạn: {Number(selectedFeeOption.lateFee || 0).toLocaleString("vi-VN")} VND
+            </p>
+          )}
+          {!feeLoading && registrationFeeOptions.length === 0 && (
+            <p className="mt-2 text-xs font-medium text-amber-300">
+              Chưa có lệ phí trong cài đặt hệ thống.{" "}
+              <Link to="/admin/settings" className="underline">
+                Mở Cài đặt hệ thống
+              </Link>
             </p>
           )}
         </Field>

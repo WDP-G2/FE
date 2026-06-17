@@ -11,7 +11,7 @@ import {
   CheckCheck,
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
-import { GlassCard, Pill, GhostButton } from '../admin/AdminLayout';
+import { GlassCard, Pill, GhostButton } from '@/pages/admin/AdminLayout';
 import { notifications as initial } from './data';
 
 const TYPE_META = {

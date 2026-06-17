@@ -32,6 +32,7 @@ export default function RacesTab({ tournament, setTournament, onChangeTab }) {
   const [saving, setSaving] = useState(false);
   const [venues, setVenues] = useState([]);
   const [distanceOptions, setDistanceOptions] = useState([]);
+  const [registrationFeeOptions, setRegistrationFeeOptions] = useState([]);
   const [defaultRegistrationFee, setDefaultRegistrationFee] = useState(0);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const selected =
@@ -109,9 +110,11 @@ export default function RacesTab({ tournament, setTournament, onChangeTab }) {
 
         const nextDistances = settingsResponse.data.raceDistances;
         const nextDefaultFee = Number(settingsResponse.data.defaultRegistrationFee ?? 0);
+        const nextFeeOptions = settingsResponse.data.registrationFeeOptions ?? [];
 
         setDistanceOptions(nextDistances);
         setDefaultRegistrationFee(nextDefaultFee);
+        setRegistrationFeeOptions(nextFeeOptions);
         setVenues(nextVenues);
 
         setTournament((current) => {
@@ -394,7 +397,7 @@ export default function RacesTab({ tournament, setTournament, onChangeTab }) {
             venues={venues}
             distanceOptions={distanceOptions}
             loadingOptions={loadingOptions}
-            defaultRegistrationFee={defaultRegistrationFee}
+            registrationFeeOptions={registrationFeeOptions}
             onGoToSettings={() => onChangeTab?.("settings")}
             onSave={(draft) => saveRace({ ...selected, ...draft })}
           />

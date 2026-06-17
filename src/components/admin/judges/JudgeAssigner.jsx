@@ -91,9 +91,7 @@ export default function JudgeAssigner({ tournament, race, onChangeJudges }) {
         refereesById,
       })
 
-      if (!String(chief.refereeId).startsWith('mock-')) {
-        await refereeService.assignRaceReferee(race.id, chief.refereeId)
-      }
+      await refereeService.assignRaceReferee(race.id, chief.refereeId)
 
       toast.success('Đã gửi phân công trọng tài. Trọng tài có thể xem cuộc đua được giao.')
     } catch (error) {

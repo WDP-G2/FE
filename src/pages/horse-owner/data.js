@@ -1,20 +1,3 @@
-export const horseOwnerAccount = {
-  email: "owner@gmail.com",
-  password: "Owner@123",
-  user: {
-    id: "owner-001",
-    userId: "owner-001",
-    username: "owner_demo",
-    email: "owner.demo@horseracing.vn",
-    role: "OWNER",
-    fullName: "Nguyễn Hoàng Minh",
-    phone: "0909123456",
-  },
-  // JWT giả lập (alg=none) để state auth local hoạt động khi reload
-  token:
-    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJvd25lci0wMDEiLCJyb2xlIjoiT1dORVIiLCJleHAiOjQxMDA5MDg4MDAsImVtYWlsIjoib3duZXIuZGVtb0Bob3JzZXJhY2luZy52biJ9.",
-};
-
 export const horses = [
   {
     id: "h1",

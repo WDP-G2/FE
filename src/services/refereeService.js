@@ -1,7 +1,6 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
-import { MOCK_REFEREES } from '@/data/adminJudgeMock'
 import { mapUser } from '@/services/adminUserService'
 
 function mapReferee(user, profile) {
@@ -17,24 +16,6 @@ function mapReferee(user, profile) {
     phone: user.phone,
     active: user.active,
   }
-}
-
-function mergeReferees(apiReferees) {
-  const byId = new Map()
-
-  for (const referee of apiReferees) {
-    byId.set(String(referee.id), referee)
-  }
-
-  for (const referee of MOCK_REFEREES) {
-    if (!byId.has(referee.id)) {
-      byId.set(referee.id, referee)
-    }
-  }
-
-  return [...byId.values()].sort((first, second) =>
-    first.name.localeCompare(second.name, 'vi'),
-  )
 }
 
 export const refereeService = {
@@ -57,22 +38,17 @@ export const refereeService = {
         }
       }
 
-      const apiReferees = (Array.isArray(usersResponse) ? usersResponse : [])
+      return (Array.isArray(usersResponse) ? usersResponse : [])
         .map(mapUser)
         .filter((user) => user.roleCode === 'REFEREE' && user.active)
         .map((user) => mapReferee(user, profileByUserId.get(String(user.rawId ?? user.id))))
-
-      return mergeReferees(apiReferees)
+        .sort((first, second) => first.name.localeCompare(second.name, 'vi'))
     } catch {
-      return mergeReferees([])
+      return []
     }
   },
 
   async assignRaceReferee(raceId, refereeId) {
-    if (String(refereeId).startsWith('mock-')) {
-      return { mock: true, raceId, refereeId }
-    }
-
     return axiosClient
       .put(ENDPOINTS.races.assignReferee(raceId), {
         refereeId: Number(refereeId),

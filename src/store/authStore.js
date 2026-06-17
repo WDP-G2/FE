@@ -4,24 +4,12 @@ import { getStoredToken, setStoredToken, removeStoredToken } from '@/utils/token
 import { isTokenExpired, getRoleFromToken } from '@/utils/jwtDecode'
 import { applyAuthToState, mapAuthResponseToUser } from '@/utils/mapAuthResponse'
 import { normalizeRole } from '@/utils/roleRedirect'
-import { findTestAccount, findTestAccountByToken } from '@/data/testAccounts'
 
 function persistLogin(auth) {
   const { token, user, role, isAuthenticated } = applyAuthToState(auth)
   if (!token) throw new Error('Không nhận được token từ server')
   setStoredToken(token)
   return { token, user, role, isAuthenticated }
-}
-
-function applyMockSession(account) {
-  const mockSession = {
-    token: account.token,
-    user: account.user,
-    role: normalizeRole(account.user.role),
-    isAuthenticated: true,
-  }
-  setStoredToken(mockSession.token)
-  return mockSession
 }
 
 export const useAuthStore = create((set, get) => ({
@@ -71,13 +59,6 @@ export const useAuthStore = create((set, get) => ({
   },
 
   login: async ({ email, password }) => {
-    const mockAccount = findTestAccount(email, password)
-    if (mockAccount) {
-      const mockSession = applyMockSession(mockAccount)
-      set({ ...mockSession, isLoading: false })
-      return { auth: mockSession, user: mockSession.user }
-    }
-
     const auth = await authService.login({
       email: email?.trim(),
       password,
@@ -139,13 +120,6 @@ export const useAuthStore = create((set, get) => ({
       isAuthenticated: true,
       isLoading: true,
     })
-
-    const mockAccount = findTestAccountByToken(stored)
-    if (mockAccount) {
-      const mockSession = applyMockSession(mockAccount)
-      set({ ...mockSession, isLoading: false })
-      return
-    }
 
     try {
       await get().fetchProfile()

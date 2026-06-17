@@ -1,11 +1,10 @@
-import { useState } from 'react'
-import { DollarSign, FileText, MapPin, Ruler, Settings } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
+import { DollarSign, FileText, MapPin, Plus, Ruler, Settings } from 'lucide-react'
 import AdminLayout from '@/components/AdminLayout'
 import LocationSettingsPanel from '@/components/admin/LocationSettingsPanel'
 import RaceDistanceSettingsPanel from '@/components/admin/RaceDistanceSettingsPanel'
 import DefaultRulesSettingsPanel from '@/components/admin/DefaultRulesSettingsPanel'
-import Field from '@/components/ui/Field'
-import { inputClass } from '@/components/ui/styles'
+import DefaultFeesSettingsPanel from '@/components/admin/DefaultFeesSettingsPanel'
 
 const tabs = [
   { key: 'fees', label: 'Lệ phí mặc định', icon: DollarSign },
@@ -16,6 +15,11 @@ const tabs = [
 
 export default function AdminSettingsPage() {
   const [tab, setTab] = useState('fees')
+  const addFeeRef = useRef(null)
+
+  const registerAddFee = useCallback((handler) => {
+    addFeeRef.current = handler
+  }, [])
 
   return (
     <AdminLayout
@@ -47,14 +51,27 @@ export default function AdminSettingsPage() {
       </section>
 
       <section className="rounded-3xl border border-white/10 bg-white/[0.045]">
-        <div className="flex items-center gap-4 border-b border-white/10 px-6 py-5">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dda50e]/15 text-[#dda50e]">
-            <Settings className="h-6 w-6" />
-          </span>
-          <div>
-            <h2 className="text-xl font-bold">{tabs.find((item) => item.key === tab)?.label}</h2>
-            <p className="text-sm text-white/50">Thiết lập nhanh theo module</p>
+        <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dda50e]/15 text-[#dda50e]">
+              <Settings className="h-6 w-6" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold">{tabs.find((item) => item.key === tab)?.label}</h2>
+              <p className="text-sm text-white/50">Thiết lập nhanh theo module</p>
+            </div>
           </div>
+
+          {tab === 'fees' && (
+            <button
+              type="button"
+              onClick={() => addFeeRef.current?.()}
+              className="flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#dda50e] px-4 text-sm font-semibold text-white shadow-lg shadow-[#dda50e]/15 transition hover:bg-[#c8940f] sm:self-auto"
+            >
+              <Plus className="h-4 w-4" />
+              Thêm lệ phí
+            </button>
+          )}
         </div>
 
         {tab === 'locations' ? (
@@ -64,35 +81,7 @@ export default function AdminSettingsPage() {
         ) : tab === 'rules' ? (
           <DefaultRulesSettingsPanel />
         ) : (
-        <div className="grid gap-5 p-6 md:grid-cols-2">
-          {tab === 'fees' && (
-            <>
-              <Field label="Lệ phí đăng ký mặc định (VNĐ)">
-                <input type="number" defaultValue={5000000} className={inputClass} />
-              </Field>
-              <Field label="Phí trễ hạn (VNĐ)">
-                <input type="number" defaultValue={500000} className={inputClass} />
-              </Field>
-            </>
-          )}
-        </div>
-        )}
-
-        {!['locations', 'race-distances', 'rules'].includes(tab) && (
-          <div className="flex justify-end gap-3 border-t border-white/10 px-6 py-5">
-          <button
-            type="button"
-            className="flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 font-semibold text-white/70 transition hover:bg-white/[0.08]"
-          >
-            Hủy
-          </button>
-          <button
-            type="button"
-            className="flex h-11 items-center gap-2 rounded-xl bg-[#dda50e] px-5 font-semibold text-white transition hover:bg-[#c8940f]"
-          >
-            Lưu cài đặt
-          </button>
-        </div>
+          <DefaultFeesSettingsPanel onRegisterAddFee={registerAddFee} />
         )}
       </section>
     </AdminLayout>
