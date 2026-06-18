@@ -20,6 +20,15 @@ const emptyForm = {
   documentFile: null,
 };
 
+const GENDER_LABELS = {
+  MALE: "Đực",
+  FEMALE: "Cái",
+};
+
+function getGenderLabel(gender) {
+  return GENDER_LABELS[gender] || gender || "Chưa cập nhật";
+}
+
 function canDeleteHorse(horse) {
   return horse.statusCode === "PENDING" || horse.statusCode === "REJECTED";
 }
@@ -215,7 +224,7 @@ export function HorseOwnerHorses() {
                 <div className="mb-4 grid grid-cols-2 gap-2">
                   <HorseOwnerInfoItem label="Tuổi" value={`${horse.age || 0} tuổi`} />
                   <HorseOwnerInfoItem label="Cân nặng" value={`${horse.weight || 0} kg`} />
-                  <HorseOwnerInfoItem label="Giới tính" value={horse.gender || "Chưa cập nhật"} />
+                  <HorseOwnerInfoItem label="Giới tính" value={getGenderLabel(horse.gender)} />
                   <HorseOwnerInfoItem label="Chiều cao" value={horse.height ? `${horse.height} cm` : "Chưa cập nhật"} />
                 </div>
 
@@ -341,10 +350,10 @@ export function HorseOwnerHorses() {
                     <option value="" className="bg-[#17191d] text-white/70">
                       Chọn giới tính
                     </option>
-                    <option value="Đực" className="bg-[#17191d] text-white">
+                    <option value="MALE" className="bg-[#17191d] text-white">
                       Đực
                     </option>
-                    <option value="Cái" className="bg-[#17191d] text-white">
+                    <option value="FEMALE" className="bg-[#17191d] text-white">
                       Cái
                     </option>
                   </select>
