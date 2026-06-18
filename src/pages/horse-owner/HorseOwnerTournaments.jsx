@@ -9,7 +9,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 import {
   setTournamentBannerFallback,
   tournamentService,
@@ -18,7 +17,6 @@ import { HorseOwnerLayout } from "./HorseOwnerLayout";
 import {
   GlassCard,
   Pill,
-  PrimaryButton,
 } from "../admin/AdminLayout";
 import { HorseOwnerInfoRow } from "./components/HorseOwnerInfoRow";
 import { formatDisplayDate } from "@/utils/dateFormat";
@@ -69,7 +67,7 @@ export function HorseOwnerTournaments() {
     },
     { cacheKey: "public:tournaments" },
   );
-  const tournaments = data ?? [];
+  const tournaments = useMemo(() => data ?? [], [data]);
   const error =
     fetchError?.response?.data?.message ||
     fetchError?.message ||
@@ -85,10 +83,6 @@ export function HorseOwnerTournaments() {
         .includes(normalizedSearch),
     );
   }, [search, tournaments]);
-
-  const handleRegister = (tournament) => {
-    toast.success(`Đã chọn giải đấu: ${tournament.name}`);
-  };
 
   return (
     <HorseOwnerLayout
@@ -178,12 +172,12 @@ export function HorseOwnerTournaments() {
                     Chi tiết
                   </Link>
                   {isOpenRegistration(tournament) && (
-                    <PrimaryButton
-                      className="flex-1"
-                      onClick={() => handleRegister(tournament)}
+                    <Link
+                      to={`/horse-owner/registrations?tournamentId=${tournament.id}&open=1`}
+                      className="flex flex-1 items-center justify-center rounded-xl bg-[#D4A017] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#D4A017]/30 transition-all hover:bg-[#B8941F]"
                     >
                       Đăng ký ngay
-                    </PrimaryButton>
+                    </Link>
                   )}
                 </div>
               </div>

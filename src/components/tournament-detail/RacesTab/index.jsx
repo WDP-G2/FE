@@ -214,8 +214,10 @@ export default function RacesTab({ tournament, setTournament, onChangeTab }) {
       ...current,
       races: [...current.races, race],
     }));
-    setSelectedId(race.id);
-    setPanel("info");
+    queueMicrotask(() => {
+      setSelectedId(race.id);
+      setPanel("info");
+    });
   }, [
     defaultRegistrationFee,
     distanceOptions,
@@ -410,7 +412,9 @@ export default function RacesTab({ tournament, setTournament, onChangeTab }) {
             onSave={(prizes) => saveRace({ ...selected, prizes })}
           />
         )}
-        {panel === "registrations" && <RaceRegistrations race={selected} />}
+        {panel === "registrations" && (
+          <RaceRegistrations race={selected} tournament={tournament} />
+        )}
         {panel === "gates" && <RaceGates race={selected} />}
         {panel === "race-results" && <RaceResults race={selected} />}
       </div>

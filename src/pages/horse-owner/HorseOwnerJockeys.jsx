@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Award, CheckCircle, Eye, FileText, Send, Search, Trophy, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { horseService } from "@/services/horseService";
@@ -54,24 +55,22 @@ function mergeJockeyAccountsWithProfiles(accounts, approvedProfiles) {
 
 function formatRaceDate(value) {
   return formatDisplayDateTime(value, "Chưa cập nhật");
-  if (!value) return "Chưa cập nhật";
-  return String(value).replace("T", " · ").slice(0, 18);
 }
 
-function buildRaceOptions(tournaments) {
-  const invitableTournamentStatuses = ["PUBLISHED", "OPEN_REGISTRATION"];
-  const invitableRaceStatuses = ["PUBLISHED", "OPEN_REGISTRATION"];
+const INVITABLE_STATUSES = ["PUBLISHED", "OPEN_REGISTRATION"];
 
+function buildRaceOptions(tournaments) {
   return tournaments.flatMap((tournament) =>
     (tournament.races ?? [])
       .filter(
         (race) =>
           race.id &&
-          invitableTournamentStatuses.includes(tournament.statusCode) &&
-          invitableRaceStatuses.includes(race.raw?.status),
+          INVITABLE_STATUSES.includes(tournament.statusCode) &&
+          INVITABLE_STATUSES.includes(race.statusCode ?? race.raw?.status),
       )
       .map((race) => ({
         id: String(race.id),
+        tournamentId: String(tournament.id),
         label: `${tournament.name} · ${race.name}`,
         meta: `${formatDisplayDate(race.date, "Chưa cập nhật")} ${race.time || ""}`.trim(),
       })),
@@ -88,12 +87,27 @@ function comboKey(horseId, raceId) {
 
 async function loadInvitableTournaments() {
   const listResponse = await tournamentService.getPublicTournaments();
-  return (listResponse.data ?? []).filter((tournament) =>
-    ["PUBLISHED", "OPEN_REGISTRATION"].includes(tournament.statusCode),
+  const invitableSummaries = (listResponse.data ?? []).filter((tournament) =>
+    INVITABLE_STATUSES.includes(tournament.statusCode),
   );
+
+  const detailResponses = await Promise.all(
+    invitableSummaries.map((tournament) =>
+      tournamentService.getPublicTournament(tournament.id).catch((error) => {
+        console.warn("Không thể tải chi tiết giải đấu", tournament.id, error?.response?.data || error);
+        return { data: tournament };
+      }),
+    ),
+  );
+
+  return detailResponses
+    .map((response) => response.data)
+    .filter((tournament) => INVITABLE_STATUSES.includes(tournament?.statusCode));
 }
 
 export function HorseOwnerJockeys() {
+  const [searchParams] = useSearchParams();
+  const selectedTournamentId = searchParams.get("tournamentId") || "";
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("Tất cả");
   const [jockeys, setJockeys] = useState([]);
@@ -114,6 +128,20 @@ export function HorseOwnerJockeys() {
   );
 
   const raceOptions = useMemo(() => buildRaceOptions(tournaments), [tournaments]);
+  const scopedRaceOptions = useMemo(
+    () =>
+      selectedTournamentId
+        ? raceOptions.filter((race) => String(race.tournamentId) === String(selectedTournamentId))
+        : raceOptions,
+    [raceOptions, selectedTournamentId],
+  );
+  const selectedTournament = useMemo(
+    () =>
+      selectedTournamentId
+        ? tournaments.find((tournament) => String(tournament.id) === String(selectedTournamentId))
+        : null,
+    [selectedTournamentId, tournaments],
+  );
 
   const blockedInvitationCombos = useMemo(() => {
     const blocked = new Set();
@@ -134,7 +162,7 @@ export function HorseOwnerJockeys() {
 
   const findFirstAvailableInvitePair = () => {
     for (const horse of approvedHorses) {
-      for (const race of raceOptions) {
+      for (const race of scopedRaceOptions) {
         if (!isHorseRaceBlocked(horse.id, race.id)) {
           return { horseId: String(horse.id), raceId: String(race.id) };
         }
@@ -143,36 +171,41 @@ export function HorseOwnerJockeys() {
     return null;
   };
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [jockeyAccounts, availableJockeys, ownerInvitations, ownerHorses, publicTournaments] = await Promise.all([
-        jockeyService.getJockeyAccounts().catch((error) => {
-          console.warn("Không thể tải tài khoản jockey", error?.response?.data || error);
-          return [];
-        }),
-        jockeyService.getAvailableJockeys(),
-        jockeyService.getOwnerInvitations(),
-        horseService.getOwnerHorses(),
-        loadInvitableTournaments().catch((error) => {
-          console.warn("Không thể tải danh sách cuộc đua", error?.response?.data || error);
-          return [];
-        }),
-      ]);
-      setJockeys(mergeJockeyAccountsWithProfiles(jockeyAccounts, availableJockeys));
-      setInvitations(ownerInvitations);
-      setHorses(ownerHorses);
-      setTournaments(publicTournaments);
-    } catch (error) {
-      console.error("Không thể tải dữ liệu jockey", error?.response?.data || error);
-      toast.error(getApiErrorMessage(error) || "Không thể tải dữ liệu jockey");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadData();
+    let ignore = false;
+
+    Promise.all([
+      jockeyService.getJockeyAccounts().catch((error) => {
+        console.warn("Không thể tải tài khoản jockey", error?.response?.data || error);
+        return [];
+      }),
+      jockeyService.getAvailableJockeys(),
+      jockeyService.getOwnerInvitations(),
+      horseService.getOwnerHorses(),
+      loadInvitableTournaments().catch((error) => {
+        console.warn("Không thể tải danh sách cuộc đua", error?.response?.data || error);
+        return [];
+      }),
+    ])
+      .then(([jockeyAccounts, availableJockeys, ownerInvitations, ownerHorses, publicTournaments]) => {
+        if (ignore) return;
+        setJockeys(mergeJockeyAccountsWithProfiles(jockeyAccounts, availableJockeys));
+        setInvitations(ownerInvitations);
+        setHorses(ownerHorses);
+        setTournaments(publicTournaments);
+      })
+      .catch((error) => {
+        if (ignore) return;
+        console.error("Không thể tải dữ liệu jockey", error?.response?.data || error);
+        toast.error(getApiErrorMessage(error) || "Không thể tải dữ liệu jockey");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const enrichedJockeys = useMemo(
@@ -209,7 +242,7 @@ export function HorseOwnerJockeys() {
     const currentRaceStillAvailable = inviteForm.raceId && !isHorseRaceBlocked(horseId, inviteForm.raceId);
     const nextRaceId = currentRaceStillAvailable
       ? inviteForm.raceId
-      : raceOptions.find((race) => !isHorseRaceBlocked(horseId, race.id))?.id ?? "";
+      : scopedRaceOptions.find((race) => !isHorseRaceBlocked(horseId, race.id))?.id ?? "";
 
     setInviteForm((prev) => ({ ...prev, horseId, raceId: nextRaceId }));
   };
@@ -236,7 +269,7 @@ export function HorseOwnerJockeys() {
       toast.error("Bạn cần có ít nhất một ngựa đã duyệt để mời jockey");
       return;
     }
-    if (raceOptions.length === 0) {
+    if (scopedRaceOptions.length === 0) {
       toast.error("Chưa có cuộc đua nào đang mở để gửi lời mời");
       return;
     }
@@ -331,7 +364,11 @@ export function HorseOwnerJockeys() {
         message: inviteForm.message,
       });
       setInvitations((prev) => [invitation, ...prev]);
-      toast.success(`Đã gửi lời mời đến jockey ${inviteTarget.name}`);
+      toast.success(
+        selectedTournamentId
+          ? `Đã gửi lời mời đến jockey ${inviteTarget.name}. Chờ jockey chấp nhận rồi quay lại Đăng ký thi đấu.`
+          : `Đã gửi lời mời đến jockey ${inviteTarget.name}`,
+      );
       closeInvite();
     } catch (error) {
       console.error("Không thể gửi lời mời jockey", error?.response?.data || error);
@@ -397,6 +434,17 @@ export function HorseOwnerJockeys() {
           ))}
         </div>
       </div>
+
+      {selectedTournamentId && (
+        <GlassCard className="mb-6 border-[#D4A017]/25 bg-[#D4A017]/10 p-4">
+          <div className="text-sm font-semibold text-white">
+            Đang mời jockey cho {selectedTournament?.name || "giải đấu đã chọn"}
+          </div>
+          <p className="mt-1 text-xs text-white/55">
+            Danh sách cuộc đua trong form mời sẽ chỉ hiển thị các race thuộc giải này.
+          </p>
+        </GlassCard>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <GlassCard className="flex items-center gap-3 p-4">
@@ -807,7 +855,7 @@ export function HorseOwnerJockeys() {
                   onChange={(event) => handleInviteRaceChange(event.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-[#17191d] px-4 py-2.5 text-sm text-white focus:border-[#D4A017] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/20"
                 >
-                  {raceOptions.map((race) => (
+                  {scopedRaceOptions.map((race) => (
                     <option
                       key={race.id}
                       value={race.id}

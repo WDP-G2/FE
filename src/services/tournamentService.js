@@ -113,6 +113,7 @@ function mapRace(race, index) {
     scheduledStartAt,
     scheduledEndAt,
     status: STATUS_LABELS[race?.status] ?? race?.status ?? 'Nháp',
+    statusCode: race?.status,
     prizes: mapRacePrizes(Array.isArray(race?.prizes) ? race.prizes : []),
     raw: race,
   }
