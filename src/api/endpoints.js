@@ -54,6 +54,13 @@ export const ENDPOINTS = {
   },
   races: {
     assignReferee: (id) => `/admin/races/${id}/referee`,
+    registrations: (id) => `/races/${id}/registrations`,
+  },
+  raceRegistrations: {
+    ownerList: '/owner/race-registrations',
+    ownerWithdraw: (id) => `/owner/race-registrations/${id}/withdraw`,
+    adminApprove: (id) => `/admin/race-registrations/${id}/approve`,
+    adminReject: (id) => `/admin/race-registrations/${id}/reject`,
   },
   news: {
     list: '/news',
