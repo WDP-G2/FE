@@ -1,4 +1,4 @@
-﻿name: Deploy Frontend to Oracle
+name: Deploy Frontend to Oracle
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
+          npm install
 
       - name: Build frontend
         run: |
@@ -59,3 +59,4 @@ jobs:
           echo 'BRANCH=${{ github.ref_name }}' | sudo tee -a /var/www/horse-fe/deploy-info.txt && \
           echo 'COMMIT=${{ github.sha }}' | sudo tee -a /var/www/horse-fe/deploy-info.txt && \
           echo 'RUN_ID=${{ github.run_id }}' | sudo tee -a /var/www/horse-fe/deploy-info.txt"
+
