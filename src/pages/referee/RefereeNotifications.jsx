@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
 import { GlassCard, Pill, GhostButton } from '@/pages/admin/AdminLayout';
-import { notifications as initial } from './data';
+import { notifications as initial } from './refereeNotificationsMock';
 
 const TYPE_META = {
   reminder: { icon: Clock, tone: 'gold', label: 'Nhắc race' },

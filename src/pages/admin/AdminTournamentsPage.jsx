@@ -12,7 +12,6 @@ import {
   Search,
   Settings,
   Trophy,
-  Users,
 } from "lucide-react";
 import { PrimaryLink } from "@/components/ui/AdminButton";
 import AdminLayout from "@/components/AdminLayout";
@@ -267,11 +266,6 @@ function TournamentCard({ tournament }) {
       <div className="p-6">
         <div className="grid grid-cols-2 gap-x-5 gap-y-4 border-b border-white/10 pb-6 text-base text-white/60">
           <CardMeta
-            icon={MapPin}
-            text={tournament.location || "Chưa có địa điểm"}
-            className="col-span-2"
-          />
-          <CardMeta
             icon={CalendarDays}
             text={formatTournamentDate(tournament.registrationOpenDate, "Mở đăng ký")}
           />
@@ -288,7 +282,10 @@ function TournamentCard({ tournament }) {
             text={formatTournamentDate(tournament.endDate, "Kết thúc")}
           />
           <CardMeta icon={Flag} text={`${tournament.raceCount} cuộc đua`} />
-          <CardMeta icon={Users} text={`${tournament.registrations} người đăng ký`} />
+          <CardMeta
+            icon={MapPin}
+            text={tournament.location || "Chưa có địa điểm"}
+          />
         </div>
 
         <div className="mt-5 flex items-center gap-4">

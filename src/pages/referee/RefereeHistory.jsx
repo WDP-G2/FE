@@ -12,25 +12,35 @@ import {
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
 import { GlassCard, Pill, StatCard, GhostButton } from '@/pages/admin/AdminLayout';
-import { assignedRaces, violations } from './data';
+import { useRefereeViolations } from './refereeViolationsMock';
 import { useAuthStore } from '@/store/authStore';
+import { useRefereeRaces } from './useRefereeRaces';
+import { missingBe } from '@/utils/refereeRaceUtils';
 
 export function RefereeHistory() {
   const user = useAuthStore((s) => s.user);
   const displayName = user?.fullName || user?.username || 'Trọng tài';
-  const completed = assignedRaces.filter((r) => r.status === 'Đã kết thúc');
+  const violations = useRefereeViolations();
+  const { races, loading, error } = useRefereeRaces();
+  const completed = races.filter((r) => r.tabBucket === 'completed');
 
   return (
     <RefereeLayout
       title="Trọng tài · Lịch sử điều hành"
-      subtitle="Tất cả race đã hoàn thành và báo cáo đã nộp"
+      subtitle="Tất cả race đã hoàn thúc và báo cáo đã nộp"
       actions={<GhostButton icon={Download}>Xuất báo cáo PDF</GhostButton>}
     >
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="Race đã điều hành" value={String(completed.length)} icon={Flag} tone="gold" />
         <StatCard label="Vi phạm đã ghi" value={String(violations.length)} icon={AlertTriangle} tone="purple" />
-        <StatCard label="Kết quả xác nhận" value={String(completed.length)} icon={CheckCircle2} tone="green" delta="100%" />
-        <StatCard label="Khiếu nại" value="0" icon={Trophy} tone="blue" />
+        <StatCard label="Kết quả xác nhận" value={String(completed.length)} icon={CheckCircle2} tone="green" delta="từ API" />
+        <StatCard label="Khiếu nại" value={missingBe('Khiếu nại')} icon={Trophy} tone="blue" />
       </div>
 
       <GlassCard>
@@ -45,14 +55,20 @@ export function RefereeHistory() {
         </div>
 
         <div className="p-5 space-y-3">
+          {loading && (
+            <div className="text-center py-12 text-white/40 text-sm">Đang tải lịch sử...</div>
+          )}
+          {!loading && completed.length === 0 && (
+            <div className="text-center py-12 text-white/40 text-sm">Chưa có race đã kết thúc.</div>
+          )}
           {completed.map((r) => {
-            const vlist = violations.filter((v) => v.raceId === r.id);
+            const vlist = violations.filter((v) => String(v.raceId) === String(r.id));
             return (
               <div key={r.id} className="p-4 bg-white/[0.04] border border-white/10 rounded-2xl hover:border-[#D4A017]/40 transition-all">
                 <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#D4A017] to-[#B8941F] rounded-xl flex items-center justify-center font-bold shadow-md shadow-[#D4A017]/30">
-                      R{r.no}
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#D4A017] to-[#B8941F] rounded-xl flex items-center justify-center font-bold shadow-md shadow-[#D4A017]/30 text-white text-sm px-1">
+                      {typeof r.no === 'number' ? `R${r.no}` : 'R'}
                     </div>
                     <div>
                       <div className="font-bold text-white text-sm">{r.name}</div>
@@ -61,26 +77,29 @@ export function RefereeHistory() {
                         <Calendar className="w-3 h-3" />
                         <span>{r.date} · {r.time}</span>
                         <span>·</span>
-                        <span>{r.distance} · {r.surface}</span>
+                        <span>{r.distance}</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Pill tone="purple">Đã kết thúc</Pill>
-                    <Pill tone="green">Kết quả xác nhận</Pill>
+                    <Pill tone="purple">{r.statusLabel}</Pill>
+                    {r.resultFinalizedAt && <Pill tone="green">Kết quả xác nhận</Pill>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                  <Tile icon={Crown} label="Vô địch" value="Thunder Bolt" tone="gold" />
-                  <Tile icon={CheckCircle2} label="Hoàn thành" value={`${r.totalHorses}/${r.totalHorses}`} tone="green" />
+                  <Tile icon={Crown} label="Vô địch" value={r.winnerDisplay} tone="gold" />
+                  <Tile icon={CheckCircle2} label="Hoàn thành" value={`${r.checkedInDisplay} / ${r.participantCount}`} tone="green" />
                   <Tile icon={AlertTriangle} label="Vi phạm" value={String(vlist.length)} tone={vlist.length > 0 ? 'red' : 'gray'} />
-                  <Tile icon={Trophy} label="Tiền thưởng" value="500M VNĐ" tone="gold" />
+                  <Tile icon={Trophy} label="Tiền thưởng" value={r.prizeDisplay} tone="gold" />
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-white/10">
                   <div className="text-[10px] text-white/40">
-                    Báo cáo nộp lúc {r.date} 18:00 · Ký số bởi {displayName}
+                    {r.resultFinalizedAt
+                      ? `Kết quả xác nhận lúc ${new Date(r.resultFinalizedAt).toLocaleString('vi-VN')}`
+                      : missingBe('Thời gian nộp báo cáo')}
+                    {' · '}Ký số bởi {displayName}
                   </div>
                   <Link
                     to={`/referee/races/${r.id}`}
@@ -111,7 +130,7 @@ function Tile({ icon: Icon, label, value, tone }) {
         <Icon className="w-3 h-3" />
         <span className="text-[10px] uppercase tracking-wider font-bold">{label}</span>
       </div>
-      <div className="text-sm font-bold text-white">{value}</div>
+      <div className="text-sm font-bold text-white break-words">{value}</div>
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   Gavel,
   Wallet,
 } from 'lucide-react';
+import { useRefereeViolations } from './refereeViolationsMock';
 
 export const REFEREE_NAV = [
   { label: 'Tổng quan', to: '/referee', icon: LayoutDashboard },
@@ -33,6 +34,7 @@ export function RefereeLayout({ children, title, subtitle, actions }) {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const [open, setOpen] = useState(false);
+  const violations = useRefereeViolations();
 
   const displayName = user?.fullName || user?.username || 'Trọng tài';
   const avatarLetter = displayName.charAt(0).toUpperCase();
@@ -80,6 +82,13 @@ export function RefereeLayout({ children, title, subtitle, actions }) {
               >
                 <Icon className={`w-4 h-4 ${active ? 'text-[#D4A017]' : ''}`} />
                 <span className="font-semibold">{item.label}</span>
+                {item.to === '/referee/violations' && violations.length > 0 && (
+                  <span className={`ml-auto min-w-[1.5rem] px-1.5 py-0.5 rounded-full text-[10px] font-bold text-center ${
+                    active ? 'bg-[#D4A017] text-[#0A1628]' : 'bg-red-500/20 text-red-200 border border-red-500/30'
+                  }`}>
+                    {violations.length}
+                  </span>
+                )}
               </Link>
             );
           })}

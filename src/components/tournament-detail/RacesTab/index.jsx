@@ -415,7 +415,7 @@ export default function RacesTab({ tournament, setTournament, onChangeTab }) {
         {panel === "registrations" && (
           <RaceRegistrations race={selected} tournament={tournament} />
         )}
-        {panel === "gates" && <RaceGates race={selected} />}
+        {panel === "gates" && <RaceGates race={selected} active={panel === "gates"} />}
         {panel === "race-results" && <RaceResults race={selected} />}
       </div>
     </div>

@@ -40,11 +40,15 @@ export const ENDPOINTS = {
     fees: '/admin/system-settings/fees',
     raceDistances: '/admin/system-settings/race-distances',
   },
+  dashboard: {
+    tournamentRegistrations: '/admin/dashboard/tournament-registrations',
+  },
   tournaments: {
     adminList: '/admin/tournaments',
     adminById: (id) => `/admin/tournaments/${id}`,
     adminBanners: '/admin/tournament-banners',
     adminStatus: (id) => `/admin/tournaments/${id}/status`,
+    adminSchedule: (id) => `/admin/tournaments/${id}/schedule`,
     adminRaces: (id) => `/admin/tournaments/${id}/races`,
     adminRaceById: (id) => `/admin/races/${id}`,
     adminRaceRegistrations: (id) => `/admin/tournaments/${id}/race-registrations`,
@@ -54,7 +58,19 @@ export const ENDPOINTS = {
   },
   races: {
     assignReferee: (id) => `/admin/races/${id}/referee`,
+    adminParticipants: (id) => `/admin/races/${id}/participants`,
     registrations: (id) => `/races/${id}/registrations`,
+    results: (id) => `/races/${id}/results`,
+  },
+  referee: {
+    races: '/referee/races',
+    participants: (raceId) => `/referee/races/${raceId}/participants`,
+    updateGate: (raceId, participantId) =>
+      `/referee/races/${raceId}/participants/${participantId}/gate`,
+    checkIn: (raceId, participantId) =>
+      `/referee/races/${raceId}/participants/${participantId}/check-in`,
+    startRace: (raceId) => `/referee/races/${raceId}/start`,
+    finalizeResults: (raceId) => `/referee/races/${raceId}/results/finalize`,
   },
   raceRegistrations: {
     ownerList: '/owner/race-registrations',

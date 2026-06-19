@@ -21,6 +21,24 @@ const API_MESSAGE_VI = {
     'Giờ bắt đầu và giờ kết thúc cuộc đua phải cách nhau ít nhất 45 phút',
   'Race venue is already booked for an overlapping race':
     'Địa điểm đua đã có cuộc đua trùng khung giờ',
+  'Only scheduled races can be checked in':
+    'Chưa thể check-in. Admin cần đóng đăng ký và lên lịch giải để cuộc đua chuyển sang "Sắp diễn ra".',
+  'Invalid check-in status': 'Trạng thái check-in không hợp lệ',
+  'Check-in status is required': 'Thiếu trạng thái check-in',
+  'Gate number is required': 'Thiếu số cổng xuất phát',
+  'Gate number must be greater than zero': 'Số cổng xuất phát phải lớn hơn 0',
+  'Gate number already exists in this race': 'Số cổng này đã được ngựa khác sử dụng trong cuộc đua',
+  'Gate number must be assigned before race starts': 'Phải phân cổng xuất phát trước khi bắt đầu đua',
+  'Cannot update gate after race has started, finished, or been cancelled':
+    'Không thể đổi cổng sau khi cuộc đua đã bắt đầu, kết thúc hoặc bị hủy',
+  'Only scheduled races can be started': 'Chỉ có thể bắt đầu cuộc đua ở trạng thái Đã lên lịch',
+  'Race does not have enough checked-in participants': 'Chưa đủ ngựa check-in để bắt đầu cuộc đua',
+  'Only ongoing races can be finalized': 'Chỉ có thể chốt kết quả khi cuộc đua đang diễn ra',
+  'Race results are required': 'Vui lòng nhập kết quả cuộc đua',
+  'Participant does not belong to this race': 'Ngựa không thuộc cuộc đua này',
+  'Jockey already accepted an invitation for this race or an overlapping race':
+    'Jockey đã nhận lời mời cho cuộc đua này hoặc cuộc đua trùng giờ',
+  'Jockey already accepted another invitation': 'Jockey đã chấp nhận lời mời khác',
 }
 
 function isLoginRequest(error) {

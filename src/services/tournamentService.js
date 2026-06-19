@@ -205,7 +205,7 @@ export function mapTournament(tournament) {
     registrationCloseDate: toDate(tournament.registrationCloseAt),
     checkInDeadlineDate: toDate(tournament.checkInDeadlineAt),
     deadline: toDate(tournament.registrationCloseAt || tournament.checkInDeadlineAt),
-    raceCount: races.length,
+    raceCount: Number(tournament.raceCount ?? races.length),
     registrations,
     registeredHorses: registrations,
     minTeams: Number(tournament.minTeams ?? 0),
@@ -228,6 +228,23 @@ export function mapTournament(tournament) {
 export function invalidateTournamentListCache() {
   invalidateCachedRequest('admin:tournaments')
   invalidateCachedRequest('public:tournaments')
+}
+
+async function fetchAdminTournamentRaceCountMap() {
+  try {
+    const list = await axiosClient
+      .get(ENDPOINTS.dashboard.tournamentRegistrations)
+      .then(unwrapResponse)
+
+    return (Array.isArray(list) ? list : []).reduce((result, item) => {
+      if (item?.tournamentId != null) {
+        result[String(item.tournamentId)] = Number(item.raceCount ?? 0)
+      }
+      return result
+    }, {})
+  } catch {
+    return {}
+  }
 }
 
 export const tournamentService = {
@@ -274,6 +291,15 @@ export const tournamentService = {
     return { data: mapTournament(tournament), raw: tournament }
   },
 
+  async scheduleTournament(id) {
+    const tournament = await axiosClient
+      .put(ENDPOINTS.tournaments.adminSchedule(id))
+      .then(unwrapResponse)
+
+    invalidateTournamentListCache()
+    return { data: mapTournament(tournament), raw: tournament }
+  },
+
   async addTournamentRace(id, race) {
     const tournament = await axiosClient
       .post(ENDPOINTS.tournaments.adminRaces(id), raceRequest(race))
@@ -307,13 +333,22 @@ export const tournamentService = {
   },
 
   async getAdminTournaments(params = {}) {
-    const list = await cachedRequest('admin:tournaments', () =>
-      axiosClient.get(ENDPOINTS.tournaments.adminList, { params }).then(unwrapResponse),
-    )
+    const [list, raceCountById] = await Promise.all([
+      cachedRequest('admin:tournaments', () =>
+        axiosClient.get(ENDPOINTS.tournaments.adminList, { params }).then(unwrapResponse),
+      ),
+      fetchAdminTournamentRaceCountMap(),
+    ])
 
     return {
       data: (Array.isArray(list) ? list : [])
-        .map((summary) => mapTournament({ ...summary, races: [] }))
+        .map((summary) =>
+          mapTournament({
+            ...summary,
+            races: [],
+            raceCount: raceCountById[String(summary.id)] ?? 0,
+          }),
+        )
         .filter(Boolean),
     }
   },

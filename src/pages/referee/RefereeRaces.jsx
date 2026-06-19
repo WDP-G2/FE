@@ -14,41 +14,46 @@ import {
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
 import { GlassCard, Pill, TextInput, Select } from '@/pages/admin/AdminLayout';
-import { assignedRaces, raceStatusTone } from './data';
-
+import { useRefereeRaces } from './useRefereeRaces';
+import { raceStatusTone } from '@/utils/refereeRaceUtils';
 
 const TABS = [
-  { key: 'Sắp diễn ra', label: 'Sắp diễn ra', match: ['Sắp diễn ra', 'Đang check-in'] },
-  { key: 'Đang đua', label: 'Đang diễn ra', match: ['Đang đua'] },
-  { key: 'Đã kết thúc', label: 'Đã kết thúc', match: ['Đã kết thúc'] },
+  { key: 'upcoming', label: 'Sắp diễn ra' },
+  { key: 'ongoing', label: 'Đang diễn ra' },
+  { key: 'completed', label: 'Đã kết thúc' },
 ];
 
 export function RefereeRaces() {
-  const [tab, setTab] = useState('Sắp diễn ra');
+  const { races, loading, error } = useRefereeRaces();
+  const [tab, setTab] = useState('upcoming');
   const [q, setQ] = useState('');
   const [view, setView] = useState('grid');
 
-  const active = TABS.find((t) => t.key === tab);
-
   const filtered = useMemo(
     () =>
-      assignedRaces.filter(
+      races.filter(
         (r) =>
-          active.match.includes(r.status) &&
+          r.tabBucket === tab &&
           (!q || `${r.name} ${r.tournamentName} ${r.track}`.toLowerCase().includes(q.toLowerCase()))
       ),
-    [tab, q, active]
+    [tab, q, races]
   );
 
   return (
     <RefereeLayout
       title="Trọng tài · Cuộc đua được giao"
-      subtitle="Chỉ hiển thị race được phân công cho bạn · Tổng cộng 6 race"
+      subtitle={loading ? 'Đang tải...' : `Chỉ hiển thị race được phân công cho bạn · Tổng cộng ${races.length} race`}
     >
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      )}
+
       <GlassCard className="mb-6">
         <div className="p-5 border-b border-white/10 flex flex-wrap gap-2">
           {TABS.map((t) => {
-            const count = assignedRaces.filter((r) => t.match.includes(r.status)).length;
+            const count = races.filter((r) => r.tabBucket === t.key).length;
             return (
               <button
                 key={t.key}
@@ -102,18 +107,18 @@ export function RefereeRaces() {
         </div>
       </GlassCard>
 
-      {view === 'grid' ? (
+      {loading ? (
+        <div className="text-center py-20 text-white/40 text-sm">Đang tải danh sách cuộc đua...</div>
+      ) : view === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map((r) => {
-            const pct = Math.round((r.checkedIn / r.totalHorses) * 100);
-            return (
+          {filtered.map((r) => (
               <GlassCard key={r.id} className="overflow-hidden hover:border-[#D4A017]/40 transition-all">
                 <div className="p-5 border-b border-white/10 bg-gradient-to-br from-[#D4A017]/10 to-transparent">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[10px] font-bold text-[#D4A017] bg-[#D4A017]/15 px-2 py-1 rounded-md border border-[#D4A017]/30">
-                      R{r.no}
+                      {typeof r.no === 'number' ? `R${r.no}` : r.no}
                     </span>
-                    <Pill tone={raceStatusTone(r.status)}>{r.status}</Pill>
+                    <Pill tone={raceStatusTone(r.status)}>{r.statusLabel}</Pill>
                   </div>
                   <h3 className="font-bold text-white text-base leading-tight">{r.name}</h3>
                   <p className="text-[11px] text-[#D4A017]/80 mt-1">{r.tournamentName}</p>
@@ -121,20 +126,17 @@ export function RefereeRaces() {
                 <div className="p-5 space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <Meta icon={Calendar} text={`${r.date} · ${r.time}`} />
-                    <Meta icon={Flag} text={`${r.distance} · ${r.surface}`} />
+                    <Meta icon={Flag} text={r.distance} />
                     <Meta icon={MapPin} text={r.track} />
                     <Meta icon={Users} text={`${r.totalHorses} ngựa`} />
                   </div>
                   <div>
                     <div className="flex justify-between text-[11px] mb-1.5">
                       <span className="text-white/50">Check-in</span>
-                      <span className="text-white font-mono">{r.checkedIn}/{r.totalHorses} ({pct}%)</span>
+                      <span className="text-white font-mono">{r.checkedInDisplay} / {r.participantCount}</span>
                     </div>
                     <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#D4A017] to-[#E5B82F]"
-                        style={{ width: `${pct}%` }}
-                      />
+                      <div className="h-full w-0 bg-gradient-to-r from-[#D4A017] to-[#E5B82F]" />
                     </div>
                   </div>
                   <Link
@@ -145,8 +147,7 @@ export function RefereeRaces() {
                   </Link>
                 </div>
               </GlassCard>
-            );
-          })}
+            ))}
         </div>
       ) : (
         <GlassCard className="overflow-hidden">
@@ -170,7 +171,7 @@ export function RefereeRaces() {
                     <td className="px-6 py-3">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-[#D4A017] bg-[#D4A017]/15 px-2 py-0.5 rounded-md border border-[#D4A017]/30">
-                          R{r.no}
+                          {typeof r.no === 'number' ? `R${r.no}` : r.no}
                         </span>
                         <span className="font-semibold text-white text-sm">{r.name}</span>
                       </div>
@@ -183,11 +184,11 @@ export function RefereeRaces() {
                     <td className="px-6 py-3 text-center text-white font-semibold">{r.totalHorses}</td>
                     <td className="px-6 py-3 text-center">
                       <span className="font-mono text-xs text-white">
-                        {r.checkedIn}/{r.totalHorses}
+                        {r.checkedInDisplay} / {r.participantCount}
                       </span>
                     </td>
                     <td className="px-6 py-3 text-center">
-                      <Pill tone={raceStatusTone(r.status)}>{r.status}</Pill>
+                      <Pill tone={raceStatusTone(r.status)}>{r.statusLabel}</Pill>
                     </td>
                     <td className="px-6 py-3 text-right">
                       <Link
@@ -205,7 +206,7 @@ export function RefereeRaces() {
         </GlassCard>
       )}
 
-      {filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className="text-center py-20 text-white/40">
           <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
           Không có race nào trong mục này.

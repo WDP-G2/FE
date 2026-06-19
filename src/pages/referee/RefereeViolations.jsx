@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertTriangle, Search, Filter, Camera, Gavel, ArrowRight } from 'lucide-react';
+import { AlertTriangle, Search, Filter, Camera, Gavel } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
 import { GlassCard, Pill, TextInput, Select, StatCard } from '@/pages/admin/AdminLayout';
-import { violations, severityTone } from './data';
+import { useRefereeViolations } from './refereeViolationsMock';
+import { ViolationEvidencePreviewModal } from './ViolationEvidencePreview';
+import { severityTone } from '@/utils/refereeRaceUtils';
 
 export function RefereeViolations() {
   const [q, setQ] = useState('');
   const [sev, setSev] = useState('all');
+  const [previewFile, setPreviewFile] = useState(null);
+  const violations = useRefereeViolations();
 
   const filtered = violations.filter((v) => {
     if (q && !`${v.horse} ${v.jockey} ${v.raceName} ${v.id}`.toLowerCase().includes(q.toLowerCase())) return false;
@@ -24,7 +27,7 @@ export function RefereeViolations() {
         <StatCard label="Tổng vi phạm" value={String(violations.length)} icon={AlertTriangle} tone="gold" />
         <StatCard label="Phạt nặng" value={String(violations.filter((v) => v.severity === 'Phạt nặng').length)} icon={Gavel} tone="purple" />
         <StatCard label="Loại" value={String(violations.filter((v) => v.severity === 'Loại').length)} icon={AlertTriangle} tone="purple" />
-        <StatCard label="Bằng chứng" value={String(violations.reduce((s, v) => s + v.evidence.length, 0))} icon={Camera} tone="blue" />
+        <StatCard label="Bằng chứng" value={String(violations.reduce((s, v) => s + (v.evidence?.length ?? 0), 0))} icon={Camera} tone="blue" />
       </div>
 
       <GlassCard>
@@ -58,7 +61,6 @@ export function RefereeViolations() {
                 <th className="px-6 py-3">Hình phạt</th>
                 <th className="px-6 py-3 text-center">Bằng chứng</th>
                 <th className="px-6 py-3">Thời điểm</th>
-                <th className="px-6 py-3 text-right">Race</th>
               </tr>
             </thead>
             <tbody>
@@ -81,16 +83,17 @@ export function RefereeViolations() {
                   <td className="px-6 py-3 text-center"><Pill tone={severityTone(v.severity)}>{v.severity}</Pill></td>
                   <td className="px-6 py-3 text-sm text-white/70 max-w-xs truncate">{v.penalty}</td>
                   <td className="px-6 py-3 text-center">
-                    <span className="inline-flex items-center gap-1 text-xs text-[#D4A017]">
-                      <Camera className="w-3.5 h-3.5" /> {v.evidence.length}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewFile(v.evidence?.[0] ?? null)}
+                      disabled={!v.evidence?.length}
+                      className="inline-flex items-center gap-1 text-xs text-[#D4A017] hover:text-[#E5B82F] disabled:text-white/30 disabled:cursor-not-allowed transition-colors"
+                      title="Xem bằng chứng"
+                    >
+                      <Camera className="w-3.5 h-3.5" /> {v.evidence?.length ?? 0}
+                    </button>
                   </td>
                   <td className="px-6 py-3 text-xs text-white/60">{v.timestamp}</td>
-                  <td className="px-6 py-3 text-right">
-                    <Link to={`/referee/races/${v.raceId}`} className="text-xs text-[#D4A017] hover:underline font-semibold inline-flex items-center gap-1">
-                      Mở <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -103,6 +106,8 @@ export function RefereeViolations() {
           </div>
         )}
       </GlassCard>
+
+      <ViolationEvidencePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </RefereeLayout>
   );
 }

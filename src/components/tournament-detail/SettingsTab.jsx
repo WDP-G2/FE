@@ -108,11 +108,43 @@ function buildUpdatePayload(tournament, draft) {
   }
 }
 
-function getValidationError(draft) {
+function hasBaseFieldChanges(tournament, draft) {
+  return (
+    draft.name !== tournament.name ||
+    draft.description !== tournament.description ||
+    draft.location !== tournament.location ||
+    String(draft.provinceId) !== String(tournament.provinceId) ||
+    draft.registrationOpenDate !== tournament.registrationOpenDate ||
+    draft.registrationCloseDate !== tournament.registrationCloseDate ||
+    draft.startDate !== tournament.startDate ||
+    draft.endDate !== tournament.endDate ||
+    Number(draft.minTeams) !== Number(tournament.minTeams) ||
+    Number(draft.maxTeams) !== Number(tournament.maxTeams) ||
+    Number(draft.minHorsesPerOwner) !== Number(tournament.minHorsesPerOwner) ||
+    Number(draft.maxHorsesPerOwner) !== Number(tournament.maxHorsesPerOwner) ||
+    draft.rules.trim() !== (tournament.rules || '').trim()
+  )
+}
+
+function getStatusTransitionError(currentStatus, nextStatus) {
+  const allowed = STATUS_TRANSITIONS[currentStatus] || [currentStatus]
+  if (!allowed.includes(nextStatus)) {
+    return 'Không thể chuyển sang trạng thái này từ trạng thái hiện tại'
+  }
+  return ''
+}
+
+function getValidationError(draft, original = null) {
   const today = getTodayDate()
   const registrationOpenMin = addDays(today, 1)
   const startDateMin = addDays(today, 7)
   const registrationCloseMax = draft.startDate ? addDays(draft.startDate, -2) : ''
+  const registrationOpenChanged =
+    !original || draft.registrationOpenDate !== original.registrationOpenDate
+  const registrationCloseChanged =
+    !original || draft.registrationCloseDate !== original.registrationCloseDate
+  const startDateChanged = !original || draft.startDate !== original.startDate
+  const endDateChanged = !original || draft.endDate !== original.endDate
 
   if (!draft.name.trim()) return 'Tên giải đấu không được để trống'
   if (!draft.provinceId) return 'Vui lòng chọn tỉnh/thành phố'
@@ -121,12 +153,22 @@ function getValidationError(draft) {
   if (Number(draft.minHorsesPerOwner) <= 0 || Number(draft.maxHorsesPerOwner) <= 0) return 'Số ngựa mỗi tài khoản phải lớn hơn 0'
   if (Number(draft.minHorsesPerOwner) > Number(draft.maxHorsesPerOwner)) return 'Số ngựa tối thiểu mỗi tài khoản không được lớn hơn tối đa'
   if (!draft.registrationOpenDate || !draft.registrationCloseDate) return 'Ngày mở và kết thúc đăng ký không được để trống'
-  if (draft.registrationOpenDate < registrationOpenMin) return 'Ngày mở đăng ký phải sau ngày tạo ít nhất 1 ngày'
+  if (registrationOpenChanged && draft.registrationOpenDate < registrationOpenMin) {
+    return 'Ngày mở đăng ký phải sau ngày tạo ít nhất 1 ngày'
+  }
   if (draft.registrationOpenDate > draft.registrationCloseDate) return 'Ngày mở đăng ký không được sau ngày kết thúc đăng ký'
-  if (registrationCloseMax && draft.registrationCloseDate > registrationCloseMax) return 'Ngày kết thúc đăng ký phải trước ngày bắt đầu giải ít nhất 2 ngày'
+  if (
+    registrationCloseChanged &&
+    registrationCloseMax &&
+    draft.registrationCloseDate > registrationCloseMax
+  ) {
+    return 'Ngày kết thúc đăng ký phải trước ngày bắt đầu giải ít nhất 2 ngày'
+  }
   if (!draft.startDate || !draft.endDate) return 'Ngày bắt đầu và kết thúc không được để trống'
-  if (draft.startDate < startDateMin) return 'Ngày bắt đầu giải phải sau thời gian thực tế ít nhất 1 tuần'
-  if (draft.endDate <= draft.startDate) return 'Ngày kết thúc phải sau ngày bắt đầu'
+  if (startDateChanged && draft.startDate < startDateMin) {
+    return 'Ngày bắt đầu giải phải sau thời gian thực tế ít nhất 1 tuần'
+  }
+  if (endDateChanged && draft.endDate <= draft.startDate) return 'Ngày kết thúc phải sau ngày bắt đầu'
   return ''
 }
 
@@ -135,6 +177,7 @@ export default function SettingsTab({ tournament, setTournament }) {
   const [draft, setDraft] = useState(() => makeDraft(tournament))
   const [systemDefaultRules, setSystemDefaultRules] = useState(tournament.rules ?? '')
   const [saving, setSaving] = useState(false)
+  const [scheduling, setScheduling] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [provinces, setProvinces] = useState([])
   const [loadingProvinces, setLoadingProvinces] = useState(false)
@@ -234,31 +277,32 @@ export default function SettingsTab({ tournament, setTournament }) {
   }
 
   const saveSettings = async () => {
-    const validationError = getValidationError(draft)
-    if (validationError) {
-      toast.error(validationError)
+    const draftForSave = { ...draft, rules: systemDefaultRules }
+    const baseChanged = hasBaseFieldChanges(tournament, draftForSave)
+    const statusChanged = draft.statusCode !== tournament.statusCode
+
+    if (!baseChanged && !statusChanged) {
+      toast.info('Không có thay đổi để lưu')
       return
+    }
+
+    if (baseChanged) {
+      const validationError = getValidationError(draftForSave, tournament)
+      if (validationError) {
+        toast.error(validationError)
+        return
+      }
+    } else if (statusChanged) {
+      const statusError = getStatusTransitionError(tournament.statusCode, draft.statusCode)
+      if (statusError) {
+        toast.error(statusError)
+        return
+      }
     }
 
     try {
       setSaving(true)
       let nextTournament = tournament
-      const draftForSave = { ...draft, rules: systemDefaultRules }
-
-      const baseChanged =
-        draft.name !== tournament.name ||
-        draft.description !== tournament.description ||
-        draft.location !== tournament.location ||
-        String(draft.provinceId) !== String(tournament.provinceId) ||
-        draft.registrationOpenDate !== tournament.registrationOpenDate ||
-        draft.registrationCloseDate !== tournament.registrationCloseDate ||
-        draft.startDate !== tournament.startDate ||
-        draft.endDate !== tournament.endDate ||
-        Number(draft.minTeams) !== Number(tournament.minTeams) ||
-        Number(draft.maxTeams) !== Number(tournament.maxTeams) ||
-        Number(draft.minHorsesPerOwner) !== Number(tournament.minHorsesPerOwner) ||
-        Number(draft.maxHorsesPerOwner) !== Number(tournament.maxHorsesPerOwner) ||
-        systemDefaultRules.trim() !== (tournament.rules || '').trim()
 
       if (baseChanged) {
         const response = await tournamentService.updateTournament(
@@ -274,16 +318,43 @@ export default function SettingsTab({ tournament, setTournament }) {
           draft.statusCode,
         )
         nextTournament = statusResponse.data
+        invalidateTournamentListCache()
       }
 
       setTournament({ ...nextTournament, rules: systemDefaultRules })
       setDraft({ ...makeDraft(nextTournament), rules: systemDefaultRules })
-      toast.success('Đã lưu cài đặt giải đấu')
+      toast.success(
+        statusChanged && !baseChanged ? 'Đã cập nhật trạng thái giải đấu' : 'Đã lưu cài đặt giải đấu',
+      )
     } catch (error) {
       console.error('Không thể lưu cài đặt giải đấu', error?.response?.data || error)
       toast.error(getApiErrorMessage(error) || 'Không thể lưu cài đặt giải đấu')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const scheduleTournament = async () => {
+    if (
+      !window.confirm(
+        `Lên lịch giải "${tournament.name}"? Các cuộc đua sẽ chuyển sang trạng thái "Sắp diễn ra" để trọng tài check-in.`,
+      )
+    ) {
+      return
+    }
+
+    try {
+      setScheduling(true)
+      const response = await tournamentService.scheduleTournament(tournament.id)
+      setTournament({ ...response.data, rules: systemDefaultRules })
+      setDraft({ ...makeDraft(response.data), rules: systemDefaultRules })
+      useApiCacheStore.getState().setCache(`admin:tournament:${tournament.id}`, response.data)
+      toast.success('Đã lên lịch giải đấu — trọng tài có thể check-in ngựa')
+    } catch (error) {
+      console.error('Không thể lên lịch giải đấu', error?.response?.data || error)
+      toast.error(getApiErrorMessage(error) || 'Không thể lên lịch giải đấu')
+    } finally {
+      setScheduling(false)
     }
   }
 
@@ -439,6 +510,26 @@ export default function SettingsTab({ tournament, setTournament }) {
                 </option>
               ))}
             </Select>
+            {tournament.statusCode === 'PUBLISHED' && statusOptions.includes('OPEN_REGISTRATION') && (
+              <p className="mt-2 text-xs text-white/45">
+                Để mở đăng ký, giải cần có ít nhất một cuộc đua và cấu hình giải thưởng đầy đủ.
+              </p>
+            )}
+            {tournament.statusCode === 'REGISTRATION_CLOSED' && (
+              <div className="mt-3 rounded-xl border border-[#D4A017]/30 bg-[#D4A017]/10 p-4">
+                <p className="text-sm text-white/75">
+                  Giải đã đóng đăng ký. Bấm lên lịch để các cuộc đua chuyển sang "Sắp diễn ra" — trọng tài mới check-in được.
+                </p>
+                <button
+                  type="button"
+                  onClick={scheduleTournament}
+                  disabled={saving || scheduling || deleting}
+                  className="mt-3 inline-flex h-11 items-center rounded-xl bg-[#dda50e] px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {scheduling ? 'Đang lên lịch...' : 'Lên lịch giải đấu'}
+                </button>
+              </div>
+            )}
           </Field>
           <Field label="Luật giải đấu" full>
             <TextArea value={draft.rules} disabled rows={8} />
