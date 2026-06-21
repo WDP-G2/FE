@@ -59,6 +59,8 @@ import {
   isCompleteRaceTime,
   sanitizeRaceTimeInput,
   recompactFinishedRanks,
+  assignRanksByFinishTime,
+  sortResultRowsForDisplay,
   normalizeRaceStatusCode,
   normalizeTournamentStatusCode,
   raceStatusTone,
@@ -83,7 +85,7 @@ const TABS = [
 
 const MGMT_TABS = [
   { k: 'positions', label: 'Vị trí xuất phát', icon: Hash, desc: 'Phân chia cổng xuất phát' },
-  { k: 'checkin', label: 'Check-in ngựa', icon: ClipboardCheck, desc: 'Xác nhận có mặt & điều kiện' },
+  { k: 'checkin', label: 'Xác nhận có mặt', icon: ClipboardCheck, desc: 'Xác nhận có mặt & điều kiện' },
   { k: 'violations', label: 'Vi phạm', icon: AlertTriangle, desc: 'Ghi nhận & theo dõi vi phạm' },
   { k: 'results', label: 'Ghi kết quả', icon: Award, desc: 'Nhập thứ hạng & thời gian' },
 ];
@@ -306,7 +308,7 @@ function OverviewTab({ race, participants, goManagement }) {
             />
             <StepCard
               n={2}
-              title="Check-in ngựa"
+              title="Xác nhận có mặt"
               status={
                 participants.length > 0 && checkedInCount === participants.length
                   ? 'done'
@@ -770,7 +772,7 @@ function CheckInTab({ race, raceId, horses: horsesProp, loading, onReload }) {
       <GlassCard className="p-4 flex items-start gap-3 bg-white/[0.03] border-white/10">
         <Info className="w-5 h-5 text-[#D4A017] mt-0.5 shrink-0" />
         <p className="text-xs text-white/70 leading-relaxed">
-          Check-in chỉ ghi nhận <strong className="text-white">có mặt</strong> hoặc <strong className="text-white">vắng mặt</strong> trước giờ đua.
+          Chỉ ghi nhận <strong className="text-white">có mặt</strong> hoặc <strong className="text-white">vắng mặt</strong> trước giờ đua.
           Kết quả thi đấu nhập ở tab <strong className="text-[#D4A017]">Ghi kết quả</strong>.
         </p>
       </GlassCard>
@@ -810,7 +812,7 @@ function CheckInTab({ race, raceId, horses: horsesProp, loading, onReload }) {
                 <th className="px-4 py-3">Ngựa</th>
                 <th className="px-4 py-3">Chủ ngựa</th>
                 <th className="px-4 py-3">Jockey</th>
-                <th className="px-4 py-3 text-center">Check-in</th>
+                <th className="px-4 py-3 text-center">Trạng thái</th>
                 <th className="px-4 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
@@ -1448,6 +1450,7 @@ function ResultsTab({
   };
 
   const winner = rows.find((x) => x.position === 1 && !x.dq);
+  const displayRows = useMemo(() => sortResultRowsForDisplay(rows), [rows]);
 
   const handleFinalize = async () => {
     if (!rows.length) {
@@ -1471,9 +1474,12 @@ function ResultsTab({
 
     setSubmitting(true);
     try {
+      const rankedRows = assignRanksByFinishTime(rows);
+      setRows(rankedRows);
+
       if (hasSavedResults) {
-        saveResultsDraft(raceId, rows);
-        toast.success('Đã lưu thay đổi trên trình duyệt (giải vẫn đang diễn ra)');
+        saveResultsDraft(raceId, rankedRows);
+        toast.success('Đã lưu thay đổi — hạng được sắp theo thời gian về đích');
         return;
       }
 
@@ -1494,7 +1500,7 @@ function ResultsTab({
         return;
       }
 
-      const payload = buildRaceFinalizePayload(rows);
+      const payload = buildRaceFinalizePayload(rankedRows);
       await refereeService.finalizeRaceResults(raceId, payload);
       clearResultsDraft(raceId);
       await refreshLiveRaceStatus();
@@ -1529,7 +1535,7 @@ function ResultsTab({
           {loadingResults ? (
             <div className="text-center py-8 text-white/40 text-sm">Đang tải kết quả...</div>
           ) : (
-            <ResultsTable rows={rows} readOnly />
+            <ResultsTable rows={displayRows} readOnly />
           )}
         </div>
       </GlassCard>
@@ -1565,7 +1571,7 @@ function ResultsTab({
               </span>
             )}
             <span className="block mt-1">
-              Nhập thời gian <span className="font-mono text-white/80">MM:SS:CC</span>. Ngựa bị loại cần ghi lý do.
+              Nhập thời gian <span className="font-mono text-white/80">MM:SS:CC</span>. Hạng tự xếp theo thời gian (nhanh hơn = hạng cao hơn) khi bấm Lưu. Ngựa bị loại cần ghi lý do.
             </span>
           </div>
         </GlassCard>
@@ -1588,7 +1594,7 @@ function ResultsTab({
         </div>
         <div className="p-5">
           <ResultsTable
-            rows={rows}
+            rows={displayRows}
             readOnly={!canEdit}
             onUpdate={canEdit ? updateRow : undefined}
             onToggleDq={canEdit ? toggleDq : undefined}
@@ -1646,28 +1652,16 @@ function ResultsTable({
             return (
               <tr key={r.id} className={`border-b border-white/5 ${r.dq ? 'opacity-70' : ''}`}>
                 <td className="px-3 py-3 text-center">
-                  {readOnly ? (
-                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg font-bold ${
-                      r.dq ? 'bg-red-500/15 text-red-300' :
-                      r.position === 1 ? 'bg-[#D4A017] text-white' :
-                      r.position === 2 ? 'bg-white/20 text-white' :
-                      r.position === 3 ? 'bg-orange-500/30 text-orange-200' :
-                      'bg-white/10 text-white/70'
-                    }`}>
-                      {podium && <PodiumIcon className="w-3.5 h-3.5" />}
-                      {r.dq ? 'Loại' : r.position}
-                    </div>
-                  ) : (
-                    <input
-                      type="number"
-                      min={1}
-                      max={rows.filter((x) => !x.dq).length || 1}
-                      value={r.dq ? '' : r.position}
-                      disabled={r.dq}
-                      onChange={(e) => onUpdate?.(r.id, { position: Number(e.target.value) })}
-                      className="w-14 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm font-bold text-center focus:outline-none focus:border-[#D4A017] disabled:opacity-40"
-                    />
-                  )}
+                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg font-bold ${
+                    r.dq ? 'bg-red-500/15 text-red-300' :
+                    r.position === 1 ? 'bg-[#D4A017] text-white' :
+                    r.position === 2 ? 'bg-white/20 text-white' :
+                    r.position === 3 ? 'bg-orange-500/30 text-orange-200' :
+                    'bg-white/10 text-white/70'
+                  }`}>
+                    {podium && <PodiumIcon className="w-3.5 h-3.5" />}
+                    {r.dq ? 'Loại' : (r.position || '—')}
+                  </div>
                 </td>
                 <td className="px-3 py-3">
                   <div className="text-sm font-semibold text-white">{r.horse}</div>

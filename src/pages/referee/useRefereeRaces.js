@@ -3,6 +3,7 @@ import { refereeService } from '@/services/refereeService'
 import {
   buildTournamentNameMap,
   buildTournamentStatusMap,
+  countCheckedInParticipants,
   mapRaceFromApi,
 } from '@/utils/refereeRaceUtils'
 import { getApiErrorMessage } from '@/utils/apiError'
@@ -13,6 +14,34 @@ function mapAssignedRaces(data, { nameById = new Map(), statusById = new Map() }
     tournamentName: raw.tournamentName || nameById.get(String(raw.tournamentId)),
     tournamentStatus: statusById.get(String(raw.tournamentId)) ?? '',
   }, index))
+}
+
+async function enrichRacesWithCheckInProgress(races) {
+  if (!Array.isArray(races) || !races.length) return races
+
+  const enriched = await Promise.all(
+    races.map(async (race) => {
+      if (!race?.id) return race
+
+      try {
+        const participants = await refereeService.getRaceParticipants(race.id)
+        const participantCount = participants.length || Number(race.participantCount ?? 0)
+        const checkedInCount = countCheckedInParticipants(participants)
+
+        return {
+          ...race,
+          participantCount,
+          totalHorses: participantCount,
+          checkedInCount,
+          checkedInDisplay: checkedInCount,
+        }
+      } catch {
+        return race
+      }
+    }),
+  )
+
+  return enriched
 }
 
 export function useRefereeRaces() {
@@ -34,22 +63,28 @@ export function useRefereeRaces() {
     try {
       const data = await refereeService.getAssignedRaces()
       const tournamentIds = data.map((race) => race.tournamentId)
-      setRaces(mapAssignedRaces(data))
+      const initialMapped = mapAssignedRaces(data)
+      setRaces(initialMapped)
       hasLoadedRef.current = true
 
       if (isInitialLoad) {
         setLoading(false)
       }
 
+      enrichRacesWithCheckInProgress(initialMapped).then(setRaces).catch(() => {})
+
       Promise.all([
         buildTournamentNameMap(tournamentIds),
         buildTournamentStatusMap(tournamentIds),
       ])
-        .then(([nameById, statusById]) => {
-          setRaces(mapAssignedRaces(data, { nameById, statusById }))
+        .then(async ([nameById, statusById]) => {
+          const mapped = mapAssignedRaces(data, { nameById, statusById })
+          const withCheckIn = await enrichRacesWithCheckInProgress(mapped)
+          setRaces(withCheckIn)
         })
-        .catch(() => {
-          // Giữ danh sách race đã load
+        .catch(async () => {
+          const withCheckIn = await enrichRacesWithCheckInProgress(mapAssignedRaces(data))
+          setRaces(withCheckIn)
         })
     } catch (err) {
       setError(getApiErrorMessage(err) || 'Không tải được danh sách cuộc đua')

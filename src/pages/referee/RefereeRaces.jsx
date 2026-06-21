@@ -140,11 +140,18 @@ export function RefereeRaces() {
                   </div>
                   <div>
                     <div className="flex justify-between text-[11px] mb-1.5">
-                      <span className="text-white/50">Check-in</span>
+                      <span className="text-white/50">Xác nhận có mặt</span>
                       <span className="text-white font-mono">{r.checkedInDisplay} / {r.participantCount}</span>
                     </div>
                     <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full w-0 bg-gradient-to-r from-[#D4A017] to-[#E5B82F]" />
+                      <div
+                        className="h-full bg-gradient-to-r from-[#D4A017] to-[#E5B82F] transition-all duration-300"
+                        style={{
+                          width: r.participantCount
+                            ? `${Math.min(100, Math.round((r.checkedInCount / r.participantCount) * 100))}%`
+                            : '0%',
+                        }}
+                      />
                     </div>
                   </div>
                   <Link
@@ -168,7 +175,7 @@ export function RefereeRaces() {
                   <th className="px-6 py-3">Thời gian</th>
                   <th className="px-6 py-3">Sân</th>
                   <th className="px-6 py-3 text-center">Ngựa</th>
-                  <th className="px-6 py-3 text-center">Check-in</th>
+                  <th className="px-6 py-3 text-center">Xác nhận có mặt</th>
                   <th className="px-6 py-3 text-center">Trạng thái</th>
                   <th className="px-6 py-3 text-right">Thao tác</th>
                 </tr>

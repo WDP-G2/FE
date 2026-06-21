@@ -425,12 +425,58 @@ export function isValidRaceTime(value) {
 }
 
 export function recompactFinishedRanks(rows) {
-  const list = Array.isArray(rows) ? rows : []
-  const finished = [...list.filter((row) => !row.dq)].sort((a, b) => a.position - b.position)
-  const rankById = new Map(finished.map((row, index) => [String(row.id), index + 1]))
-  return list.map((row) =>
-    row.dq ? row : { ...row, position: rankById.get(String(row.id)) ?? row.position },
+  return assignRanksByFinishTime(rows)
+}
+
+/** Xếp hạng theo thời gian về đích (nhỏ hơn = hạng cao hơn) */
+export function assignRanksByFinishTime(rows) {
+  const list = Array.isArray(rows) ? [...rows] : []
+  const finished = list.filter((row) => !row.dq)
+  const withValidTime = finished.filter(
+    (row) => isCompleteRaceTime(row.time) && isValidRaceTime(row.time),
   )
+  const withoutValidTime = finished.filter(
+    (row) => !isCompleteRaceTime(row.time) || !isValidRaceTime(row.time),
+  )
+  const disqualified = list.filter((row) => row.dq)
+
+  withValidTime.sort(
+    (first, second) => parseFinishTimeToMillis(first.time) - parseFinishTimeToMillis(second.time),
+  )
+
+  let rank = 1
+  const rankedValid = withValidTime.map((row) => {
+    const next = { ...row, position: rank }
+    rank += 1
+    return next
+  })
+  const rankedPending = withoutValidTime.map((row) => ({ ...row, position: rank++ }))
+  const rankedDq = disqualified.map((row) => ({ ...row, position: 0 }))
+
+  return sortResultRowsForDisplay([...rankedValid, ...rankedPending, ...rankedDq])
+}
+
+/** Hiển thị: hạng 1 → 2 → 3…, ngựa loại (DQ) ở cuối */
+export function sortResultRowsForDisplay(rows) {
+  const list = Array.isArray(rows) ? [...rows] : []
+  const active = list
+    .filter((row) => !row.dq)
+    .sort((first, second) => {
+      const rankDiff = (Number(first.position) || 999) - (Number(second.position) || 999)
+      if (rankDiff !== 0) return rankDiff
+      return parseFinishTimeToMillis(first.time) - parseFinishTimeToMillis(second.time)
+    })
+  const disqualified = list.filter((row) => row.dq)
+  return [...active, ...disqualified]
+}
+
+export function isParticipantCheckedIn(status) {
+  return ['CHECKED_IN', 'FINISHED', 'DNF', 'DISQUALIFIED'].includes(String(status ?? '').toUpperCase())
+}
+
+export function countCheckedInParticipants(participants = []) {
+  const list = Array.isArray(participants) ? participants : []
+  return list.filter((item) => isParticipantCheckedIn(item?.status)).length
 }
 
 /** Payload gửi BE — ngựa loại chỉ gửi lý do, không có rank */
@@ -484,43 +530,47 @@ export function buildResultRowsFromHorses(
     const resultByParticipant = new Map(
       results.map((item) => [String(item.participantId), item]),
     )
-    return horseList.map((horse, index) => {
-      const result = resultByParticipant.get(String(horse.participantId ?? horse.id))
-      const startPos = getAssignedGate(horse, safeStartPositions)
-      if (!result) return defaultResultRow(horse, index, safeStartPositions)
+    return sortResultRowsForDisplay(
+      horseList.map((horse, index) => {
+        const result = resultByParticipant.get(String(horse.participantId ?? horse.id))
+        const startPos = getAssignedGate(horse, safeStartPositions)
+        if (!result) return defaultResultRow(horse, index, safeStartPositions)
 
-      const dq = result.status === 'DISQUALIFIED'
-      return {
-        id: horse.id,
-        participantId: horse.participantId ?? result.participantId,
-        horse: horse.horse ?? result.horseName,
-        owner: horse.owner ?? result.ownerUsername,
-        jockey: horse.jockey ?? result.jockeyUsername,
-        startPos,
-        position: dq ? 0 : (result.rank ?? index + 1),
-        time: dq ? '' : formatMillisAsRaceTime(result.finishTimeMillis),
-        dqReason: dq ? (result.note ?? '') : '',
-        dq,
-      }
-    })
+        const dq = result.status === 'DISQUALIFIED'
+        return {
+          id: horse.id,
+          participantId: horse.participantId ?? result.participantId,
+          horse: horse.horse ?? result.horseName,
+          owner: horse.owner ?? result.ownerUsername,
+          jockey: horse.jockey ?? result.jockeyUsername,
+          startPos,
+          position: dq ? 0 : (result.rank ?? index + 1),
+          time: dq ? '' : formatMillisAsRaceTime(result.finishTimeMillis),
+          dqReason: dq ? (result.note ?? '') : '',
+          dq,
+        }
+      }),
+    )
   }
 
   if (Array.isArray(draftRows) && draftRows.length) {
     const draftById = new Map(draftRows.map((row) => [String(row.id), row]))
-    return horseList.map((horse, index) => {
-      const draft = draftById.get(String(horse.id))
-      const startPos = getAssignedGate(horse, safeStartPositions)
-      if (!draft) return defaultResultRow(horse, index, safeStartPositions)
-      return {
-        ...draft,
-        participantId: horse.participantId,
-        horse: horse.horse,
-        owner: horse.owner,
-        jockey: horse.jockey,
-        startPos,
-        dqReason: draft.dqReason ?? draft.penalty ?? '',
-      }
-    })
+    return sortResultRowsForDisplay(
+      horseList.map((horse, index) => {
+        const draft = draftById.get(String(horse.id))
+        const startPos = getAssignedGate(horse, safeStartPositions)
+        if (!draft) return defaultResultRow(horse, index, safeStartPositions)
+        return {
+          ...draft,
+          participantId: horse.participantId,
+          horse: horse.horse,
+          owner: horse.owner,
+          jockey: horse.jockey,
+          startPos,
+          dqReason: draft.dqReason ?? draft.penalty ?? '',
+        }
+      }),
+    )
   }
 
   return horseList.map((horse, index) => defaultResultRow(horse, index, safeStartPositions))
