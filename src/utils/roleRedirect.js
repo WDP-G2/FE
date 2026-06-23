@@ -3,7 +3,7 @@ const ROLE_HOME = {
   OWNER: '/horse-owner',
   JOCKEY: '/jockey',
   REFEREE: '/referee',
-  SPECTATOR: '/dashboard',
+  SPECTATOR: '/spectator/dashboard',
   USER: '/',
 }
 
@@ -25,8 +25,17 @@ export function hasApprovedRole(user) {
 }
 
 export function getPostLoginPath(user, fromPath) {
-  if (fromPath && fromPath !== '/login' && fromPath !== '/register') {
+  const role = normalizeRole(user?.role)
+  const homePath = getRoleHomePath(role)
+
+  if (!fromPath || fromPath === '/login' || fromPath === '/register') {
+    return homePath
+  }
+
+  if (role === 'USER') {
     return fromPath
   }
-  return getRoleHomePath(normalizeRole(user?.role))
+
+  const portalPrefix = homePath === '/spectator/dashboard' ? '/spectator' : homePath
+  return fromPath.startsWith(portalPrefix) ? fromPath : homePath
 }

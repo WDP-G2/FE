@@ -4,7 +4,7 @@ export const WALLET_PATHS = {
   OWNER: '/horse-owner/wallet',
   JOCKEY: '/jockey/wallet',
   REFEREE: '/referee/wallet',
-  SPECTATOR: '/dashboard/wallet',
+  SPECTATOR: '/spectator/wallet',
   USER: '/dashboard/wallet',
 }
 

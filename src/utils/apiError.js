@@ -41,6 +41,7 @@ const API_MESSAGE_VI = {
   'Jockey already accepted an invitation for this race or an overlapping race':
     'Jockey đã nhận lời mời cho cuộc đua này hoặc cuộc đua trùng giờ',
   'Jockey already accepted another invitation': 'Jockey đã chấp nhận lời mời khác',
+  'Betting feature is disabled': 'Tính năng đặt cược hiện đang bị tắt trên backend',
 }
 
 function isLoginRequest(error) {

@@ -43,6 +43,9 @@ export const ENDPOINTS = {
   dashboard: {
     tournamentRegistrations: '/admin/dashboard/tournament-registrations',
   },
+  spectator: {
+    dashboard: '/spectator/dashboard',
+  },
   tournaments: {
     adminList: '/admin/tournaments',
     adminById: (id) => `/admin/tournaments/${id}`,
@@ -55,12 +58,27 @@ export const ENDPOINTS = {
     adminVenues: (id) => `/admin/tournaments/${id}/venues`,
     publicList: '/tournaments',
     publicById: (id) => `/tournaments/${id}`,
+    publicRaces: (id) => `/tournaments/${id}/races`,
+    publicLeaderboard: (id) => `/tournaments/${id}/leaderboard`,
   },
   races: {
     assignReferee: (id) => `/admin/races/${id}/referee`,
     adminParticipants: (id) => `/admin/races/${id}/participants`,
     registrations: (id) => `/races/${id}/registrations`,
     results: (id) => `/races/${id}/results`,
+  },
+  betting: {
+    publicMarket: (raceId) => `/races/${raceId}/bet-market`,
+    bettableRaces: '/users/me/bettable-races',
+    placeBet: (raceId) => `/races/${raceId}/bets`,
+    myBets: '/users/me/bets',
+    myBet: (id) => `/bets/${id}`,
+  },
+  notifications: {
+    list: '/notifications',
+    unreadCount: '/notifications/unread-count',
+    markRead: (id) => `/notifications/${id}/read`,
+    markAllRead: '/notifications/read-all',
   },
   refereeSalaryConfigs: {
     list: '/admin/referee-salary-configs',

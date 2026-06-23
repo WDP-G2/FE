@@ -7,7 +7,7 @@ export default function SpectatorWalletPage() {
     <div className="min-h-screen bg-[#0A1628] text-white">
       <div className="max-w-6xl mx-auto px-4 py-8 md:px-8">
         <Link
-          to="/dashboard"
+          to="/spectator/dashboard"
           className="inline-flex items-center gap-2 text-white/60 hover:text-[#D4A017] mb-6 font-medium transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
