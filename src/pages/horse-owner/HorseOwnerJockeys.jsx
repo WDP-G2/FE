@@ -8,13 +8,13 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { formatDisplayDate, formatDisplayDateTime } from "@/utils/dateFormat";
 import { GlassCard } from "../admin/AdminLayout";
 import { HorseOwnerLayout } from "./HorseOwnerLayout";
-import { HorseOwnerInvitationDetailModal } from "./components/HorseOwnerInvitationDetailModal";
-import { HorseOwnerJockeyDetailModal } from "./components/HorseOwnerJockeyDetailModal";
-import { HorseOwnerJockeyInviteModal } from "./components/HorseOwnerJockeyInviteModal";
-import { HorseOwnerJockeyList } from "./components/HorseOwnerJockeyList";
-import { HorseOwnerJockeyStats } from "./components/HorseOwnerJockeyStats";
-import { HorseOwnerJockeyToolbar } from "./components/HorseOwnerJockeyToolbar";
-import { HorseOwnerJockeyTournamentNotice } from "./components/HorseOwnerJockeyTournamentNotice";
+import { HorseOwnerInvitationDetailModal } from "./components/jockeys/HorseOwnerInvitationDetailModal";
+import { HorseOwnerJockeyDetailModal } from "./components/jockeys/HorseOwnerJockeyDetailModal";
+import { HorseOwnerJockeyInviteModal } from "./components/jockeys/HorseOwnerJockeyInviteModal";
+import { HorseOwnerJockeyList } from "./components/jockeys/HorseOwnerJockeyList";
+import { HorseOwnerJockeyStats } from "./components/jockeys/HorseOwnerJockeyStats";
+import { HorseOwnerJockeyToolbar } from "./components/jockeys/HorseOwnerJockeyToolbar";
+import { HorseOwnerJockeyTournamentNotice } from "./components/jockeys/HorseOwnerJockeyTournamentNotice";
 
 function findInvitationsForJockey(invitations, jockey) {
   return invitations.filter((invitation) => String(invitation.jockeyId) === String(jockey.userId));
@@ -309,6 +309,14 @@ export function HorseOwnerJockeys() {
     [invitations, jockeys],
   );
 
+  const statusFilters = useMemo(
+    () => [
+      "Tất cả",
+      ...new Set(enrichedJockeys.map((jockey) => jockey.status).filter(Boolean)),
+    ],
+    [enrichedJockeys],
+  );
+
   const filtered = enrichedJockeys.filter((jockey) => {
     const normalized = search.trim().toLowerCase();
     const matchSearch =
@@ -501,6 +509,7 @@ export function HorseOwnerJockeys() {
         onChangeFilterStatus={setFilterStatus}
         onChangeSearch={setSearch}
         search={search}
+        statusFilters={statusFilters}
       />
 
       {selectedTournamentId && (

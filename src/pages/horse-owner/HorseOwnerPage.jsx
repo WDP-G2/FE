@@ -8,7 +8,6 @@ import { HorseOwnerRegistrations } from "./HorseOwnerRegistrations";
 import { HorseOwnerJockeys } from "./HorseOwnerJockeys";
 import { HorseOwnerPayments } from "./HorseOwnerPayments";
 import { HorseOwnerResults } from "./HorseOwnerResults";
-import { HorseOwnerNotifications } from "./HorseOwnerNotifications";
 import { HorseOwnerSettings } from "./HorseOwnerSettings";
 import { HorseOwnerWallet } from "./HorseOwnerWallet";
 
@@ -28,8 +27,6 @@ export default function HorseOwnerPage() {
   if (pathname.startsWith("/horse-owner/payments"))
     return <HorseOwnerPayments />;
   if (pathname.startsWith("/horse-owner/results")) return <HorseOwnerResults />;
-  if (pathname.startsWith("/horse-owner/notifications"))
-    return <HorseOwnerNotifications />;
   if (pathname.startsWith("/horse-owner/settings"))
     return <HorseOwnerSettings />;
 

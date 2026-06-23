@@ -1,5 +1,5 @@
 import { CheckCircle, Trophy, Users } from "lucide-react";
-import { GlassCard } from "../../admin/AdminLayout";
+import { GlassCard } from "../../../admin/AdminLayout";
 
 export function HorseOwnerJockeyStats({ invitations, jockeyCount }) {
   return (

@@ -1,5 +1,5 @@
 import { Eye, Send, X } from "lucide-react";
-import { GlassCard, GhostButton, Pill, PrimaryButton } from "../../admin/AdminLayout";
+import { GlassCard, GhostButton, Pill, PrimaryButton } from "../../../admin/AdminLayout";
 
 export function HorseOwnerJockeyCard({
   jockey,

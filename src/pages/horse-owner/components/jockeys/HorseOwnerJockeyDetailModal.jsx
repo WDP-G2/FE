@@ -1,5 +1,5 @@
 import { Award, FileText, X } from "lucide-react";
-import { GlassCard, Pill } from "../../admin/AdminLayout";
+import { GlassCard, Pill } from "../../../admin/AdminLayout";
 
 export function HorseOwnerJockeyDetailModal({
   formatRaceDate,

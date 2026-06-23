@@ -1,6 +1,6 @@
 import { ChevronDown, Edit2, FileText, PawPrint, Trash2 } from "lucide-react";
-import { GlassCard, Pill } from "../../admin/AdminLayout";
-import { HorseOwnerInfoItem } from "./HorseOwnerInfoItem";
+import { GlassCard, Pill } from "../../../admin/AdminLayout";
+import { HorseOwnerInfoItem } from "../HorseOwnerInfoItem";
 
 export function HorseOwnerHorseCard({
   horse,

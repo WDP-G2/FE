@@ -1,6 +1,6 @@
 import { Send, X } from "lucide-react";
-import { GlassCard, GhostButton, PrimaryButton, TextInput } from "../../admin/AdminLayout";
-import { HorseOwnerFormField } from "./HorseOwnerFormField";
+import { GlassCard, GhostButton, PrimaryButton, TextInput } from "../../../admin/AdminLayout";
+import { HorseOwnerFormField } from "../HorseOwnerFormField";
 
 export function HorseOwnerJockeyInviteModal({
   approvedHorses,

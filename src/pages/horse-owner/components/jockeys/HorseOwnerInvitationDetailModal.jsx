@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { GlassCard, GhostButton, Pill } from "../../admin/AdminLayout";
+import { GlassCard, GhostButton, Pill } from "../../../admin/AdminLayout";
 
 export function HorseOwnerInvitationDetailModal({
   formatRaceDate,

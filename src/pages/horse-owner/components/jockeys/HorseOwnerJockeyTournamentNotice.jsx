@@ -1,4 +1,4 @@
-import { GlassCard } from "../../admin/AdminLayout";
+import { GlassCard } from "../../../admin/AdminLayout";
 
 export function HorseOwnerJockeyTournamentNotice({ tournamentName }) {
   return (

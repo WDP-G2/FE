@@ -267,49 +267,6 @@ export const raceResults = [
   },
 ];
 
-export const ownerNotifications = [
-  {
-    id: "n1",
-    title: "Đăng ký đã được duyệt",
-    body: "Golden Thunder đã được duyệt tham gia Vietnam Grand Prix 2026 · Race R3",
-    time: "2 giờ trước",
-    read: false,
-    type: "success",
-  },
-  {
-    id: "n2",
-    title: "Nhắc nhở check-in",
-    body: "Race R3 sẽ diễn ra vào ngày 16/06/2026 lúc 14:30. Vui lòng check-in trước 1 giờ.",
-    time: "5 giờ trước",
-    read: false,
-    type: "warning",
-  },
-  {
-    id: "n3",
-    title: "Lời mời jockey",
-    body: "Jockey Lê Minh C đã nhận lời mời cưỡi Dark Knight tại Saigon Derby Spring Cup",
-    time: "1 ngày trước",
-    read: true,
-    type: "info",
-  },
-  {
-    id: "n4",
-    title: "Thanh toán thành công",
-    body: "Đã thanh toán 5.000.000đ phí đăng ký Vietnam Grand Prix 2026",
-    time: "2 ngày trước",
-    read: true,
-    type: "success",
-  },
-  {
-    id: "n5",
-    title: "Kết quả race",
-    body: "Golden Thunder về nhất Race R3! Nhận thưởng 50.000.000đ",
-    time: "3 ngày trước",
-    read: true,
-    type: "trophy",
-  },
-];
-
 export const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
     n,

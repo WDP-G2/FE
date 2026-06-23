@@ -6,7 +6,6 @@ import {
   DollarSign,
   CheckCircle2,
   ArrowRight,
-  Bell,
   Sparkles,
   Medal,
 } from "lucide-react";
@@ -21,7 +20,6 @@ import {
 import {
   horses,
   registrations,
-  ownerNotifications,
   raceResults,
   fmt,
 } from "./data";
@@ -30,7 +28,6 @@ import { HorseOwnerClipboardListIcon } from "./components/HorseOwnerClipboardLis
 import { formatDisplayDate } from "@/utils/dateFormat";
 
 export function HorseOwnerDashboard() {
-  const unread = ownerNotifications.filter((n) => !n.read).length;
   const upcoming = registrations.filter(
     (r) => r.status === "Approved" || r.status === "Pending",
   );
@@ -285,60 +282,6 @@ export function HorseOwnerDashboard() {
                     </div>
                   </div>
                   <Pill tone={h.healthTone}>{h.health}</Pill>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-
-          <GlassCard>
-            <div className="p-5 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-500/15 rounded-xl flex items-center justify-center relative">
-                  <Bell className="w-5 h-5 text-red-300" />
-                  {unread > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {unread}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">Thông báo</h3>
-                  <p className="text-[11px] text-white/50">{unread} chưa đọc</p>
-                </div>
-              </div>
-              <Link
-                to="/horse-owner/notifications"
-                className="text-xs text-[#D4A017] hover:underline font-semibold"
-              >
-                Tất cả
-              </Link>
-            </div>
-            <div className="p-3 space-y-1 max-h-72 overflow-y-auto">
-              {ownerNotifications.slice(0, 4).map((n) => (
-                <div
-                  key={n.id}
-                  className={`p-3 rounded-xl transition-all ${
-                    n.read
-                      ? "hover:bg-white/5"
-                      : "bg-[#D4A017]/5 border border-[#D4A017]/20"
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {!n.read && (
-                      <span className="w-1.5 h-1.5 bg-[#D4A017] rounded-full mt-1.5 shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-white truncate">
-                        {n.title}
-                      </div>
-                      <div className="text-[11px] text-white/50 line-clamp-2">
-                        {n.body}
-                      </div>
-                      <div className="text-[10px] text-white/40 mt-1">
-                        {n.time}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>

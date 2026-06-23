@@ -5,9 +5,9 @@ import { horseService } from "@/services/horseService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { GlassCard, PrimaryButton } from "../admin/AdminLayout";
 import { HorseOwnerLayout } from "./HorseOwnerLayout";
-import { HorseOwnerHorseList } from "./components/HorseOwnerHorseList";
-import { HorseOwnerHorseModal } from "./components/HorseOwnerHorseModal";
-import { HorseOwnerHorseSearch } from "./components/HorseOwnerHorseSearch";
+import { HorseOwnerHorseList } from "./components/horses/HorseOwnerHorseList";
+import { HorseOwnerHorseModal } from "./components/horses/HorseOwnerHorseModal";
+import { HorseOwnerHorseSearch } from "./components/horses/HorseOwnerHorseSearch";
 
 const emptyForm = {
   name: "",

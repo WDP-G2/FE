@@ -1,21 +1,11 @@
 import { Search } from "lucide-react";
 
-const JOCKEY_STATUS_FILTERS = [
-  "Tất cả",
-  "Sẵn sàng",
-  "Chưa có hồ sơ duyệt",
-  "Tài khoản bị khóa",
-  "Chờ phản hồi",
-  "Đã nhận",
-  "Từ chối",
-  "Đã hủy",
-];
-
 export function HorseOwnerJockeyToolbar({
   filterStatus,
   onChangeFilterStatus,
   onChangeSearch,
   search,
+  statusFilters,
 }) {
   return (
     <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
@@ -29,7 +19,7 @@ export function HorseOwnerJockeyToolbar({
         />
       </div>
       <div className="flex flex-wrap gap-2">
-        {JOCKEY_STATUS_FILTERS.map((status) => (
+        {statusFilters.map((status) => (
           <button
             key={status}
             onClick={() => onChangeFilterStatus(status)}
