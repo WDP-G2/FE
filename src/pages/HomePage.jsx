@@ -15,6 +15,7 @@ import HomeFeaturedNews from '@/components/news/HomeFeaturedNews'
 import { setTournamentBannerFallback, tournamentService } from '@/services/tournamentService'
 import { fmtVND } from '@/utils/formatCurrency'
 import { formatDisplayDate } from '@/utils/dateFormat'
+import { enrichPublicTournamentCards } from '@/utils/publicTournamentCards'
 
 export default function HomePage() {
   const [tournaments, setTournaments] = useState([])
@@ -24,8 +25,12 @@ export default function HomePage() {
     let ignore = false
     tournamentService
       .getPublicTournaments()
-      .then((response) => {
-        if (!ignore) setTournaments(response.data || [])
+      .then(async (response) => {
+        const enriched = await enrichPublicTournamentCards(
+          response.data || [],
+          tournamentService.getPublicTournament,
+        )
+        if (!ignore) setTournaments(enriched)
       })
       .catch(() => {
         if (!ignore) setTournaments([])

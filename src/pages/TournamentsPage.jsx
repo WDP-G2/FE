@@ -8,6 +8,7 @@ import {
 } from "@/services/tournamentService";
 import { fmtVND } from "@/utils/formatCurrency";
 import { formatDisplayDate } from "@/utils/dateFormat";
+import { enrichPublicTournamentCards } from "@/utils/publicTournamentCards";
 
 export default function TournamentsPage() {
   const [tournaments, setTournaments] = useState([]);
@@ -20,7 +21,12 @@ export default function TournamentsPage() {
     setError("");
     try {
       const response = await tournamentService.getPublicTournaments();
-      setTournaments(response.data || []);
+      setTournaments(
+        await enrichPublicTournamentCards(
+          response.data || [],
+          tournamentService.getPublicTournament,
+        ),
+      );
     } catch (err) {
       const message = err?.message || "Khong tai duoc danh sach giai dau";
       setError(message);

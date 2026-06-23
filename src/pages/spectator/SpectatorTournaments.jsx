@@ -5,6 +5,7 @@ import { spectatorService } from '@/services/spectatorService'
 import { fmtVND } from '@/utils/formatCurrency'
 import { formatDisplayDate } from '@/utils/dateFormat'
 import { setTournamentBannerFallback } from '@/services/tournamentService'
+import { enrichPublicTournamentCards } from '@/utils/publicTournamentCards'
 import { EmptyState, ErrorState, LoadingState } from './spectatorUi'
 
 export default function SpectatorTournaments() {
@@ -18,7 +19,9 @@ export default function SpectatorTournaments() {
     setError('')
     try {
       const response = await spectatorService.getTournaments()
-      setTournaments(response.data || [])
+      setTournaments(
+        await enrichPublicTournamentCards(response.data || [], spectatorService.getTournament),
+      )
     } catch (err) {
       setError(err?.message || 'Khong tai duoc danh sach giai dau')
     } finally {
