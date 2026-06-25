@@ -1,159 +1,51 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  User,
-  Mail,
-  Calendar,
-  Flag,
-  PawPrint,
-  BarChart3,
-  Trophy,
-  Search,
-  LogOut,
-  Menu,
-  X,
-  Zap,
-  Wallet,
-} from "lucide-react";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Menu, Search, X } from "lucide-react";
 import RoleWalletBadge from "@/components/wallet/RoleWalletBadge";
 import { WALLET_PATHS } from "@/constants/walletPaths";
 import { useAuthStore } from "@/store/authStore";
-import { jockeyService } from "@/services/jockeyService";
-import { rankingService } from "@/services/rankingService";
-import { mapRankingEntry } from "@/utils/jockeyViewUtils";
+import { useJockeySidebarMeta } from "./hooks/useJockeySidebarMeta";
+import { JockeySidebar } from "./components/JockeySidebar";
 
-const JOCKEY_NAV = [
-  { label: "Dashboard", to: "/jockey", icon: LayoutDashboard },
-  { label: "Hồ sơ cá nhân", to: "/jockey/profile", icon: User },
-  { label: "Lời mời thi đấu", to: "/jockey/invitations", icon: Mail },
-  { label: "Giải đấu", to: "/jockey/tournaments", icon: Flag },
-  { label: "Lịch thi đấu", to: "/jockey/schedules", icon: Calendar },
-  { label: "Ngựa được giao", to: "/jockey/horses", icon: PawPrint },
-  { label: "Kết quả thi đấu", to: "/jockey/results", icon: BarChart3 },
-  { label: "Bảng xếp hạng", to: "/jockey/rankings", icon: Trophy },
-  { label: "Ví của tôi", to: "/jockey/wallet", icon: Wallet },
-];
+function splitTitle(title) {
+  if (!title.includes("·")) return [title, ""];
+  return title.split("·").map((part) => part.trim());
+}
 
 export function JockeyLayout({ children, title, subtitle, actions }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const logout = useAuthStore((s) => s.logout);
-  const user = useAuthStore((s) => s.user);
-  const userId = user?.id ?? user?.userId;
-  const displayName = user?.fullName || user?.username || "Jockey";
+  const { displayName, sidebarMeta } = useJockeySidebarMeta();
   const avatarLetter = displayName.charAt(0).toUpperCase();
-  const [sidebarMeta, setSidebarMeta] = useState({ status: "Đang tải...", rank: null });
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadSidebarMeta() {
-      try {
-        const [profile, rankingData] = await Promise.all([
-          jockeyService.getMyProfile().catch(() => null),
-          rankingService.getRankings(50).catch(() => ({ jockeys: [] })),
-        ]);
-        if (!active) return;
-
-        const myRank = rankingData.jockeys
-          .map((entry) => mapRankingEntry(entry, userId))
-          .find((item) => item.isMe);
-
-        setSidebarMeta({
-          status: profile?.status || "Sẵn sàng",
-          rank: myRank?.rank ?? null,
-        });
-      } catch {
-        if (!active) return;
-        setSidebarMeta({ status: "Sẵn sàng", rank: null });
-      }
-    }
-
-    loadSidebarMeta();
-    return () => {
-      active = false;
-    };
-  }, [userId]);
+  const isActive = (to) =>
+    to === "/jockey" ? location.pathname === "/jockey" : location.pathname.startsWith(to);
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
   };
-  const isActive = (to) =>
-    to === "/jockey"
-      ? location.pathname === "/jockey"
-      : location.pathname.startsWith(to);
-  const [head, tail] = title.includes("·")
-    ? title.split("·").map((s) => s.trim())
-    : [title, ""];
+
+  const [head, tail] = splitTitle(title);
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white">
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#0F1E3A]/95 backdrop-blur-xl border-r border-white/10 transition-transform ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
-      >
-        <div className="h-16 flex items-center gap-3 px-5 border-b border-white/10">
-          <div className="w-9 h-9 bg-gradient-to-br from-[#D4A017] to-[#B8941F] rounded-xl flex items-center justify-center shadow-lg shadow-[#D4A017]/30">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="text-sm font-bold leading-tight">Horse Racing</div>
-            <div className="text-[10px] text-[#D4A017] uppercase tracking-wider font-semibold">
-              Jockey Portal
-            </div>
-          </div>
-        </div>
-        <nav
-          className="p-3 space-y-0.5 overflow-y-auto"
-          style={{ maxHeight: "calc(100vh - 160px)" }}
-        >
-          {JOCKEY_NAV.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${active ? "bg-[#D4A017]/15 text-white border border-[#D4A017]/30 shadow-md shadow-[#D4A017]/10" : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"}`}
-              >
-                <Icon
-                  className={`w-4 h-4 flex-shrink-0 ${active ? "text-[#D4A017]" : ""}`}
-                />
-                <span className="font-semibold truncate">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-white/10">
-          <div className="mb-2 p-3 bg-white/[0.04] rounded-xl border border-white/10">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-[10px] text-emerald-300 uppercase tracking-wider font-bold">
-                Sẵn sàng
-              </span>
-            </div>
-            <div className="text-[11px] text-white/60">
-              {displayName}
-              {sidebarMeta.rank != null ? ` · Hạng #${sidebarMeta.rank}` : ""}
-            </div>
-            <div className="text-[10px] text-white/40 mt-0.5">{sidebarMeta.status}</div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/60 hover:text-red-300 hover:bg-red-500/10 transition-all"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="font-semibold">Đăng xuất</span>
-          </button>
-        </div>
-      </aside>
+      <JockeySidebar
+        open={open}
+        onClose={() => setOpen(false)}
+        isActive={isActive}
+        displayName={displayName}
+        sidebarMeta={sidebarMeta}
+        onLogout={handleLogout}
+      />
+
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 h-16 bg-[#0A1628]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => setOpen(true)}
               className="lg:hidden p-2 hover:bg-white/5 rounded-lg"
             >
@@ -179,6 +71,7 @@ export function JockeyLayout({ children, title, subtitle, actions }) {
             </div>
           </div>
         </header>
+
         <div className="px-4 md:px-8 pt-6 pb-2 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -192,22 +85,20 @@ export function JockeyLayout({ children, title, subtitle, actions }) {
                 </>
               )}
             </h1>
-            {subtitle && (
-              <p className="text-sm text-white/50 mt-1">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-sm text-white/50 mt-1">{subtitle}</p>}
           </div>
-          {actions && (
-            <div className="flex items-center gap-2 flex-wrap">{actions}</div>
-          )}
+          {actions && <div className="flex items-center gap-2 flex-wrap">{actions}</div>}
         </div>
+
         <main className="px-4 md:px-8 py-6">{children}</main>
       </div>
+
       {open && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => setOpen(false)}
         >
-          <button className="absolute top-4 right-4 p-2 text-white">
+          <button type="button" className="absolute top-4 right-4 p-2 text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
