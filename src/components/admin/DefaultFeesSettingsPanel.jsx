@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Save, Settings, Trash2, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Field from '@/components/ui/Field'
-import { Input } from '@/components/ui/Input'
+import { MoneyInput } from '@/components/ui/Input'
 import { systemSettingsService, readExtraFeeGroups, writeExtraFeeGroups } from '@/services/systemSettingsService'
 import { getApiErrorMessage } from '@/utils/apiError'
 
@@ -42,19 +42,15 @@ function FeeGroupCard({ title, registrationFee, lateFee, onRegistrationChange, o
 
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Lệ phí đăng ký mặc định (VNĐ)">
-          <Input
-            type="text"
-            inputMode="numeric"
+          <MoneyInput
             value={registrationFee}
-            onChange={(event) => onRegistrationChange(event.target.value.replace(/\D/g, ''))}
+            onValueChange={onRegistrationChange}
           />
         </Field>
         <Field label="Phí trễ hạn (VNĐ)">
-          <Input
-            type="text"
-            inputMode="numeric"
+          <MoneyInput
             value={lateFee}
-            onChange={(event) => onLateChange(event.target.value.replace(/\D/g, ''))}
+            onValueChange={onLateChange}
           />
         </Field>
       </div>

@@ -6,3 +6,17 @@ export function fmtVND(amount) {
     maximumFractionDigits: 0,
   }).format(value)
 }
+
+export function parseMoneyInput(value) {
+  return String(value ?? '').replace(/\D/g, '')
+}
+
+export function formatMoneyInput(value) {
+  const digits = parseMoneyInput(value)
+  return digits ? Number(digits).toLocaleString('vi-VN') : ''
+}
+
+export function moneyInputNumber(value) {
+  const digits = parseMoneyInput(value)
+  return digits ? Number(digits) : 0
+}

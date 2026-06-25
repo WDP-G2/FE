@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { CircleDollarSign, Coins, Trophy } from "lucide-react";
 import { bettingService } from "@/services/bettingService";
 import { spectatorService } from "@/services/spectatorService";
-import { fmtVND } from "@/utils/formatCurrency";
+import { fmtVND, formatMoneyInput, parseMoneyInput } from "@/utils/formatCurrency";
 import { formatDisplayDateTime } from "@/utils/dateFormat";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { EmptyState, ErrorState, LoadingState, Panel } from "./spectatorUi";
@@ -253,11 +253,10 @@ export default function SpectatorBetting() {
                   <div className="relative">
                     <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
                     <input
-                      value={stakeAmount}
-                      onChange={(event) => setStakeAmount(event.target.value)}
-                      type="number"
-                      min={selectedMarket.minStake || 0}
-                      max={selectedMarket.maxStake || undefined}
+                      value={formatMoneyInput(stakeAmount)}
+                      onChange={(event) => setStakeAmount(parseMoneyInput(event.target.value))}
+                      type="text"
+                      inputMode="numeric"
                       className="w-full rounded-xl border border-white/10 bg-white/[0.05] py-3 pl-10 pr-4 text-sm font-bold text-white outline-none transition placeholder:text-white/30 focus:border-[#D4A017]/50"
                     />
                   </div>

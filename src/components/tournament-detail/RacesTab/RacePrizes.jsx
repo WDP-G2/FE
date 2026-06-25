@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Crown, Gift, Medal, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Card from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
+import { Input, MoneyInput } from "@/components/ui/Input";
 import { PanelActions, PanelHeader } from "@/components/ui/Panel";
 import { primaryButton } from "@/components/ui/styles";
 import { formatVnd, normalizePrizeList } from "../utils";
@@ -155,13 +155,11 @@ export default function RacePrizes({ race, saving, onSave }) {
                   className="font-bold tabular-nums md:text-center"
                   placeholder="Hạng"
                 />
-                <Input
-                  type="number"
-                  min="0"
+                <MoneyInput
                   value={prize.amount}
-                  onChange={(event) =>
+                  onValueChange={(value) =>
                     updatePrize(prize.id, {
-                      amount: Number(event.target.value),
+                      amount: Number(value || 0),
                     })
                   }
                   aria-label="Số tiền thưởng"

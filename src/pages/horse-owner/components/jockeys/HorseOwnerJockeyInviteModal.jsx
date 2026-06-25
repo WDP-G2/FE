@@ -1,6 +1,7 @@
 import { Send, X } from "lucide-react";
 import { GlassCard, GhostButton, PrimaryButton, TextInput } from "../../../admin/AdminLayout";
 import { HorseOwnerFormField } from "../HorseOwnerFormField";
+import { formatMoneyInput, parseMoneyInput } from "@/utils/formatCurrency";
 
 export function HorseOwnerJockeyInviteModal({
   approvedHorses,
@@ -87,12 +88,11 @@ export function HorseOwnerJockeyInviteModal({
             )}
 
             <TextInput
-              type="number"
-              min="0"
-              step="1000"
-              value={form.remunerationAmount}
+              type="text"
+              inputMode="numeric"
+              value={formatMoneyInput(form.remunerationAmount)}
               onChange={(event) =>
-                onChangeForm({ ...form, remunerationAmount: event.target.value })
+                onChangeForm({ ...form, remunerationAmount: parseMoneyInput(event.target.value) })
               }
               placeholder="VD: 5000000"
             />

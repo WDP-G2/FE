@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Banknote, Save, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Field from '@/components/ui/Field'
-import { Input } from '@/components/ui/Input'
+import { MoneyInput } from '@/components/ui/Input'
 import {
   DEFAULT_REFEREE_PER_RACE_FEE,
   readRefereeFeeSettings,
@@ -53,12 +53,12 @@ export default function RefereeFeeSettingsPanel() {
         </p>
         <div className="mt-5">
           <Field label="Lương / phụ cấp theo cuộc đua (VNĐ)">
-            <Input
+            <MoneyInput
               type="text"
               inputMode="numeric"
               value={perRaceFee}
               placeholder="Ví dụ: 500000"
-              onChange={(event) => setPerRaceFee(event.target.value.replace(/\D/g, ''))}
+              onValueChange={setPerRaceFee}
             />
           </Field>
         </div>

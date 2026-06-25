@@ -3,7 +3,7 @@ import { BadgePercent, CalendarClock, ChevronDown, CircleDollarSign, Flag, Refre
 import { toast } from 'sonner'
 import AdminLayout from '@/components/AdminLayout'
 import Field from '@/components/ui/Field'
-import { Input, Select, TextArea } from '@/components/ui/Input'
+import { MoneyInput, Select, TextArea } from '@/components/ui/Input'
 import { adminBettingService } from '@/services/adminBettingService'
 import { tournamentService } from '@/services/tournamentService'
 import { fmtVND } from '@/utils/formatCurrency'
@@ -362,20 +362,16 @@ export default function AdminBetMarketsPage() {
               <div className="grid gap-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Min stake">
-                    <Input
-                      type="number"
-                      min="1"
+                    <MoneyInput
                       value={form.minStake}
-                      onChange={(event) => setForm((current) => ({ ...current, minStake: event.target.value }))}
+                      onValueChange={(value) => setForm((current) => ({ ...current, minStake: value }))}
                       placeholder="100000"
                     />
                   </Field>
                   <Field label="Max stake">
-                    <Input
-                      type="number"
-                      min="1"
+                    <MoneyInput
                       value={form.maxStake}
-                      onChange={(event) => setForm((current) => ({ ...current, maxStake: event.target.value }))}
+                      onValueChange={(value) => setForm((current) => ({ ...current, maxStake: value }))}
                       placeholder="5000000"
                     />
                   </Field>

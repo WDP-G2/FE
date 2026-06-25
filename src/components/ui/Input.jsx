@@ -1,4 +1,5 @@
 import { controlClass } from './styles'
+import { formatMoneyInput, parseMoneyInput } from '@/utils/formatCurrency'
 
 const compactClass =
   'h-12 w-full rounded-xl border border-white/10 bg-white/[0.05] px-4 text-white outline-none focus:border-[#dda50e]/65'
@@ -6,6 +7,32 @@ const compactClass =
 export function Input({ className = '', variant = 'compact', ...props }) {
   const base = variant === 'form' ? controlClass : compactClass
   return <input {...props} className={`${base} ${className}`} />
+}
+
+export function MoneyInput({ className = '', onChange, onValueChange, value, variant = 'compact', ...props }) {
+  const handleChange = (event) => {
+    const digits = parseMoneyInput(event.target.value)
+    onValueChange?.(digits)
+    onChange?.({
+      ...event,
+      target: {
+        ...event.target,
+        value: digits,
+      },
+    })
+  }
+
+  return (
+    <Input
+      {...props}
+      type="text"
+      inputMode="numeric"
+      value={formatMoneyInput(value)}
+      onChange={handleChange}
+      variant={variant}
+      className={`tabular-nums ${className}`}
+    />
+  )
 }
 
 export function Select({ children, ...props }) {
