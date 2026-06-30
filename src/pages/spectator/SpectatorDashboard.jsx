@@ -5,12 +5,6 @@ import {
   CalendarClock,
   CircleDollarSign,
   Wallet,
-  Trophy,
-  Award,
-  Medal,
-  Sparkles,
-  ShoppingBag,
-  Briefcase,
   ChevronRight,
   ArrowDownLeft,
   ArrowUpRight,
@@ -21,27 +15,6 @@ import { spectatorService } from '@/services/spectatorService'
 import { fmtVND } from '@/utils/formatCurrency'
 import { formatDisplayDateTime } from '@/utils/dateFormat'
 import { EmptyState, ErrorState, LoadingState, Panel } from './spectatorUi'
-
-const QUICK_LINK_ROUTES = {
-  Tournaments: '/spectator/tournaments',
-  Races: '/spectator/tournaments',
-  Betting: '/spectator/betting',
-  Leaderboard: '/spectator/tournaments',
-  Wallet: '/spectator/wallet',
-  Notifications: '/spectator/notifications',
-}
-
-const QUICK_LINK_ICONS = {
-  Tournaments: Trophy,
-  Races: Award,
-  Betting: CircleDollarSign,
-  Leaderboard: Medal,
-  Wallet: Wallet,
-  Notifications: Bell,
-  Predictions: Sparkles,
-  Shop: ShoppingBag,
-  Inventory: Briefcase,
-}
 
 const TX_LABELS = {
   DEPOSIT: { label: 'Nạp tiền', isCredit: true },
@@ -110,6 +83,7 @@ export default function SpectatorDashboard() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDashboard()
   }, [])
 
@@ -123,7 +97,7 @@ export default function SpectatorDashboard() {
     <div className="space-y-6">
       <section className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-wider text-[#D4A017]">Dashboard</p>
+          <p className="text-xs font-black uppercase tracking-wider text-[#D4A017]">Tổng quan</p>
           <h2 className="text-3xl font-black tracking-tight text-white mt-1">Tổng quan khán giả</h2>
         </div>
         <Link
@@ -139,7 +113,7 @@ export default function SpectatorDashboard() {
         <StatCard label="Giải đang mở" value={summary.openTournamentCount} icon={CalendarClock} tone="gold" />
         <StatCard label="Kèo đang mở" value={summary.openBetMarketCount} icon={CircleDollarSign} tone="blue" />
         <StatCard label="Tổng tiền cược" value={fmtVND(summary.totalBetStake)} icon={Wallet} tone="green" />
-        <StatCard label="Tổng payout" value={fmtVND(summary.totalBetPayout)} icon={CircleDollarSign} tone="purple" />
+        <StatCard label="Tổng tiền thắng cược" value={fmtVND(summary.totalBetPayout)} icon={CircleDollarSign} tone="purple" />
       </section>
 
       <Panel title="Số dư ví" icon={Wallet} actions={
@@ -169,7 +143,7 @@ export default function SpectatorDashboard() {
                     <span>{formatDisplayDateTime(item.at)}</span>
                   </div>
                   <span className="rounded-md border border-[#D4A017]/30 bg-[#D4A017]/10 px-2 py-0.5 text-[9px] font-black tracking-wide text-[#D4A017] uppercase">
-                    {item.status || 'MỞ'}
+                    {item.status || 'ĐANG MỞ'}
                   </span>
                 </div>
               </div>

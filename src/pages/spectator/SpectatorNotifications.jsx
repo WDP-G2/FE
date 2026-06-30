@@ -19,7 +19,7 @@ export default function SpectatorNotifications() {
       const response = await notificationService.getMyNotifications({ page: 0, size: 50 })
       setNotifications(response.content || [])
     } catch (err) {
-      setError(err?.message || 'Khong tai duoc thong bao')
+      setError(err?.message || 'Không tải được thông báo')
     } finally {
       setLoading(false)
     }
@@ -43,7 +43,7 @@ export default function SpectatorNotifications() {
         items.map((item) => (String(item.id) === String(id) ? { ...item, ...updated, read: true } : item)),
       )
     } catch (err) {
-      toast.error(err?.message || 'Khong danh dau duoc thong bao')
+      toast.error(err?.message || 'Không đánh dấu được thông báo')
     }
   }
 
@@ -52,23 +52,23 @@ export default function SpectatorNotifications() {
     try {
       await notificationService.markAllRead()
       setNotifications((items) => items.map((item) => ({ ...item, read: true, readStatus: 'READ' })))
-      toast.success('Da danh dau tat ca thong bao')
+      toast.success('Đã đánh dấu tất cả thông báo')
     } catch (err) {
-      toast.error(err?.message || 'Khong danh dau duoc thong bao')
+      toast.error(err?.message || 'Không đánh dấu được thông báo')
     } finally {
       setSubmitting(false)
     }
   }
 
-  if (loading) return <LoadingState label="Dang tai thong bao..." />
+  if (loading) return <LoadingState label="Đang tải thông báo..." />
   if (error) return <ErrorState message={error} onRetry={loadNotifications} />
 
   return (
     <div className="space-y-6">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wide text-[#D4A017]">Notifications</p>
-          <h2 className="text-3xl font-black text-white">Trung tam thong bao</h2>
+          <p className="text-sm font-bold uppercase tracking-wide text-[#D4A017]">Thông báo</p>
+          <h2 className="text-3xl font-black text-white">Trung tâm thông báo</h2>
         </div>
         <button
           type="button"
@@ -77,15 +77,15 @@ export default function SpectatorNotifications() {
           className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-black text-white transition hover:border-[#D4A017]/40 disabled:cursor-not-allowed disabled:text-white/30"
         >
           <CheckCheck className="h-4 w-4" />
-          Danh dau tat ca da doc
+          Đánh dấu tất cả đã đọc
         </button>
       </section>
 
       <Panel>
         <div className="mb-5 flex gap-2">
           {[
-            { id: 'ALL', label: 'Tat ca', count: notifications.length },
-            { id: 'UNREAD', label: 'Chua doc', count: unreadCount },
+            { id: 'ALL', label: 'Tất cả', count: notifications.length },
+            { id: 'UNREAD', label: 'Chưa đọc', count: unreadCount },
           ].map((item) => (
             <button
               key={item.id}
@@ -102,7 +102,7 @@ export default function SpectatorNotifications() {
         </div>
 
         {visibleNotifications.length === 0 ? (
-          <EmptyState>Khong co thong bao nao trong bo loc nay.</EmptyState>
+          <EmptyState>Không có thông báo nào trong bộ lọc này.</EmptyState>
         ) : (
           <div className="space-y-3">
             {visibleNotifications.map((notification) => (
@@ -130,7 +130,7 @@ export default function SpectatorNotifications() {
                       onClick={() => markRead(notification.id)}
                       className="shrink-0 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-black text-white/70 hover:border-[#D4A017]/40 hover:text-[#D4A017]"
                     >
-                      Da doc
+                      Đã đọc
                     </button>
                   )}
                 </div>

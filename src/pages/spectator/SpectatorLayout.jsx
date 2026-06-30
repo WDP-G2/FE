@@ -16,12 +16,12 @@ import { useAuthStore } from "@/store/authStore";
 import { notificationService } from "@/services/notificationService";
 
 const NAV_ITEMS = [
-  { to: "/spectator/dashboard", label: "Dashboard", icon: Gauge },
-  { to: "/spectator/tournaments", label: "Tournaments", icon: Trophy },
-  { to: "/spectator/betting", label: "Betting", icon: CircleDollarSign },
-  { to: "/spectator/bets", label: "My Bets", icon: History },
-  { to: "/spectator/wallet", label: "Wallet", icon: Wallet },
-  { to: "/spectator/notifications", label: "Notifications", icon: Bell },
+  { to: "/spectator/dashboard", label: "Tổng quan", icon: Gauge },
+  { to: "/spectator/tournaments", label: "Giải đấu", icon: Trophy },
+  { to: "/spectator/betting", label: "Đặt cược", icon: CircleDollarSign },
+  { to: "/spectator/bets", label: "Lịch sử cược", icon: History },
+  { to: "/spectator/wallet", label: "Ví", icon: Wallet },
+  { to: "/spectator/notifications", label: "Thông báo", icon: Bell },
 ];
 
 export default function SpectatorLayout() {
@@ -92,7 +92,7 @@ export default function SpectatorLayout() {
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-bold text-white tracking-tight leading-none mb-1">HORSE RACING</span>
               <span className="text-[9px] text-[#D4A017] tracking-widest font-semibold uppercase leading-none">
-                Spectator Portal
+                Cổng khán giả
               </span>
             </div>
           </Link>
@@ -167,7 +167,7 @@ export default function SpectatorLayout() {
               >
                 <Icon className="h-4 w-4" />
                 <span>{label}</span>
-                {label === "Notifications" && unread > 0 && (
+                {to === "/spectator/notifications" && unread > 0 && (
                   <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] leading-none text-white">
                     {unread}
                   </span>

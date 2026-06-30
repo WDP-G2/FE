@@ -5,6 +5,16 @@ import { fmtVND } from '@/utils/formatCurrency'
 import { formatDisplayDateTime } from '@/utils/dateFormat'
 import { EmptyState, ErrorState, LoadingState, Panel } from './spectatorUi'
 
+function betStatusLabel(status) {
+  if (status === 'PENDING') return 'Đang chờ'
+  if (status === 'WON') return 'Thắng cược'
+  if (status === 'LOST') return 'Thua cược'
+  if (status === 'CANCELLED') return 'Đã hủy'
+  if (status === 'REFUNDED') return 'Đã hoàn tiền'
+  if (status === 'SETTLED') return 'Đã chốt'
+  return status || '-'
+}
+
 export default function SpectatorBets() {
   const [bets, setBets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -16,7 +26,7 @@ export default function SpectatorBets() {
     try {
       setBets(await bettingService.getMyBets())
     } catch (err) {
-      setError(err?.message || 'Khong tai duoc lich su cuoc')
+      setError(err?.message || 'Không tải được lịch sử cược')
     } finally {
       setLoading(false)
     }
@@ -27,19 +37,19 @@ export default function SpectatorBets() {
     loadBets()
   }, [])
 
-  if (loading) return <LoadingState label="Dang tai lich su cuoc..." />
+  if (loading) return <LoadingState label="Đang tải lịch sử cược..." />
   if (error) return <ErrorState message={error} onRetry={loadBets} />
 
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm font-bold uppercase tracking-wide text-[#D4A017]">My Bets</p>
-        <h2 className="text-3xl font-black text-white">Lich su dat cuoc</h2>
+        <p className="text-sm font-bold uppercase tracking-wide text-[#D4A017]">Lịch sử cược</p>
+        <h2 className="text-3xl font-black text-white">Lịch sử đặt cược</h2>
       </section>
 
       <Panel>
         {bets.length === 0 ? (
-          <EmptyState>Ban chua co lenh dat cuoc nao.</EmptyState>
+          <EmptyState>Bạn chưa có lệnh đặt cược nào.</EmptyState>
         ) : (
           <div className="space-y-3">
             {bets.map((bet) => (
@@ -57,9 +67,9 @@ export default function SpectatorBets() {
                     <p className="mt-1 text-xs text-white/38">{formatDisplayDateTime(bet.placedAt)}</p>
                   </div>
                   <div className="grid gap-3 text-sm sm:grid-cols-3 lg:min-w-[420px]">
-                    <Metric label="Stake" value={fmtVND(bet.stakeAmount)} />
-                    <Metric label="Potential" value={fmtVND(bet.potentialPayoutAmount)} />
-                    <Metric label="Status" value={bet.status || '-'} />
+                    <Metric label="Tiền cược" value={fmtVND(bet.stakeAmount)} />
+                    <Metric label="Có thể nhận" value={fmtVND(bet.potentialPayoutAmount)} />
+                    <Metric label="Trạng thái" value={betStatusLabel(bet.status)} />
                   </div>
                 </div>
               </article>

@@ -39,7 +39,7 @@ export default function SpectatorTournamentDetail() {
       setLeaderboard(leaderboardData)
       setResultsByRaceId(Object.fromEntries(resultEntries))
     } catch (err) {
-      setError(err?.message || 'Khong tai duoc chi tiet giai dau')
+      setError(err?.message || 'Không tải được chi tiết giải đấu')
     } finally {
       setLoading(false)
     }
@@ -48,11 +48,12 @@ export default function SpectatorTournamentDetail() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDetail()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  if (loading) return <LoadingState label="Dang tai chi tiet giai dau..." />
+  if (loading) return <LoadingState label="Đang tải chi tiết giải đấu..." />
   if (error) return <ErrorState message={error} onRetry={loadDetail} />
-  if (!tournament) return <ErrorState message="Khong tim thay giai dau" />
+  if (!tournament) return <ErrorState message="Không tìm thấy giải đấu" />
 
   const leaderboardEntries = Array.isArray(leaderboard?.entries) ? leaderboard.entries : []
 
@@ -61,10 +62,10 @@ export default function SpectatorTournamentDetail() {
       <TournamentPublicDetailContent tournament={tournament} backTo="/spectator/tournaments" />
 
       <section className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
-        <Panel title="Ket qua race">
+        <Panel title="Kết quả cuộc đua">
           <div className="space-y-4">
             {tournament.races.length === 0 ? (
-              <EmptyState>Chua co race nao duoc cong bo.</EmptyState>
+              <EmptyState>Chưa có cuộc đua nào được công bố.</EmptyState>
             ) : (
               tournament.races.map((race) => {
                 const rows = buildRankedResultRows(resultsByRaceId[race.id] || [])
@@ -80,11 +81,11 @@ export default function SpectatorTournamentDetail() {
                         className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#D4A017]/30 bg-[#D4A017]/10 px-3 py-2 text-xs font-black text-[#D4A017] hover:bg-[#D4A017]/15"
                       >
                         <CircleDollarSign className="h-4 w-4" />
-                        Xem keo
+                        Xem kèo cược
                       </Link>
                     </div>
                     {rows.length === 0 ? (
-                      <EmptyState>Chua co ket qua cong bo cho race nay.</EmptyState>
+                      <EmptyState>Chưa có kết quả công bố cho cuộc đua này.</EmptyState>
                     ) : (
                       <div className="space-y-2">
                         {rows.slice(0, 5).map((row) => (
@@ -105,9 +106,9 @@ export default function SpectatorTournamentDetail() {
           </div>
         </Panel>
 
-        <Panel title="Leaderboard">
+        <Panel title="Bảng xếp hạng">
           {leaderboardEntries.length === 0 ? (
-            <EmptyState>Chua co leaderboard duoc finalize.</EmptyState>
+            <EmptyState>Chưa có bảng xếp hạng được chốt.</EmptyState>
           ) : (
             <div className="space-y-3">
               {leaderboardEntries.slice(0, 10).map((entry, index) => (
@@ -124,11 +125,11 @@ export default function SpectatorTournamentDetail() {
                           <ListOrdered className="h-4 w-4 shrink-0 text-white/35" />
                         )}
                         <span className="truncate font-black text-white">
-                          #{entry.raceRank || index + 1} {entry.horseName || 'Horse'}
+                          #{entry.raceRank || index + 1} {entry.horseName || 'Ngựa chưa cập nhật'}
                         </span>
                       </div>
                       <div className="mt-1 text-xs text-white/45">
-                        {entry.raceName} · {entry.jockeyUsername || 'Jockey'}
+                        {entry.raceName} · {entry.jockeyUsername || 'Jockey chưa cập nhật'}
                       </div>
                     </div>
                     <div className="shrink-0 text-sm font-black text-[#D4A017]">
@@ -147,7 +148,7 @@ export default function SpectatorTournamentDetail() {
         className="inline-flex items-center gap-2 text-sm font-bold text-white/55 hover:text-[#D4A017]"
       >
         <ArrowLeft className="h-4 w-4" />
-        Quay lai danh sach
+        Quay lại danh sách
       </Link>
     </div>
   )
