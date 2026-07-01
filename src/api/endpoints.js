@@ -45,6 +45,8 @@ export const ENDPOINTS = {
     racePrizeShares: '/admin/finance-settings/race-prize-shares',
   },
   dashboard: {
+    summary: '/admin/dashboard/summary',
+    revenue: '/admin/dashboard/revenue',
     tournamentRegistrations: '/admin/dashboard/tournament-registrations',
   },
   spectator: {
