@@ -94,8 +94,8 @@ export const refereeService = {
     }
     return axiosClient
       .put(ENDPOINTS.races.assignReferee(raceId), {
-        refereeId: Number(refereeId),
-        salaryConfigId: Number(configId),
+        refereeId,
+        salaryConfigId: configId,
       })
       .then(unwrapResponse)
   },
