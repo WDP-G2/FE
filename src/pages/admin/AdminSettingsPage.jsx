@@ -1,15 +1,17 @@
 import { useCallback, useRef, useState } from 'react'
-import { Banknote, DollarSign, FileText, MapPin, Plus, Ruler, Settings } from 'lucide-react'
+import { AlertTriangle, Banknote, DollarSign, FileText, MapPin, Plus, Ruler, Settings } from 'lucide-react'
 import AdminLayout from '@/components/AdminLayout'
 import LocationSettingsPanel from '@/components/admin/LocationSettingsPanel'
 import RaceDistanceSettingsPanel from '@/components/admin/RaceDistanceSettingsPanel'
 import DefaultRulesSettingsPanel from '@/components/admin/DefaultRulesSettingsPanel'
 import DefaultFeesSettingsPanel from '@/components/admin/DefaultFeesSettingsPanel'
 import RefereeFeeSettingsPanel from '@/components/admin/RefereeFeeSettingsPanel'
+import ViolationSettingsPanel from '@/components/admin/ViolationSettingsPanel'
 
 const tabs = [
   { key: 'fees', label: 'Lệ phí mặc định', icon: DollarSign },
   { key: 'rules', label: 'Luật mặc định', icon: FileText },
+  { key: 'violations', label: 'Cấu hình vi phạm', icon: AlertTriangle },
   { key: 'locations', label: 'Tỉnh & địa điểm đua', icon: MapPin },
   { key: 'race-distances', label: 'Khoảng cách đua', icon: Ruler },
   { key: 'referee-fee', label: 'Lương trọng tài', icon: Banknote },
@@ -82,6 +84,8 @@ export default function AdminSettingsPage() {
           <RaceDistanceSettingsPanel />
         ) : tab === 'rules' ? (
           <DefaultRulesSettingsPanel />
+        ) : tab === 'violations' ? (
+          <ViolationSettingsPanel />
         ) : tab === 'referee-fee' ? (
           <RefereeFeeSettingsPanel />
         ) : (

@@ -2,8 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Camera, Upload, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { GhostButton, PrimaryButton, Select, TextInput } from '@/pages/admin/AdminLayout';
+import { systemSettingsService } from '@/services/systemSettingsService';
 import { updateViolation } from './refereeViolationsMock';
 import { buildEvidenceStorageKey, saveEvidenceFile } from './violationEvidenceStore';
+
+const FALLBACK_VIOLATION_TYPES = [
+  'Xuất phát sai',
+  'Lái nguy hiểm',
+  'Vi phạm trang bị',
+  'Nghi doping',
+  'Check-in muộn',
+  'Khác',
+]
 
 function formatEvidenceSize(bytes) {
   if (!Number.isFinite(bytes) || bytes <= 0) return '—';
@@ -52,8 +62,9 @@ function Field({ label, children }) {
 export function ViolationEditModal({ violation, onClose }) {
   const evidenceInputRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
+  const [violationTypeOptions, setViolationTypeOptions] = useState(FALLBACK_VIOLATION_TYPES);
   const [form, setForm] = useState({
-    type: 'Lái nguy hiểm',
+    type: FALLBACK_VIOLATION_TYPES[0],
     severity: 'Phạt nhẹ',
     description: '',
     penalty: '',
@@ -65,7 +76,7 @@ export function ViolationEditModal({ violation, onClose }) {
   useEffect(() => {
     if (!violation) return;
     setForm({
-      type: violation.type ?? 'Lái nguy hiểm',
+      type: violation.type ?? FALLBACK_VIOLATION_TYPES[0],
       severity: violation.severity ?? 'Phạt nhẹ',
       description: violation.description === '(không có mô tả)' ? '' : (violation.description ?? ''),
       penalty: violation.penalty ?? '',
@@ -75,7 +86,36 @@ export function ViolationEditModal({ violation, onClose }) {
     });
   }, [violation]);
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadViolationTypes() {
+      try {
+        const response = await systemSettingsService.getPublicViolationTypes()
+        if (cancelled) return
+
+        const labels = (Array.isArray(response) ? response : [])
+          .filter((item) => item?.active !== false)
+          .map((item) => String(item?.label ?? '').trim())
+          .filter(Boolean)
+
+        if (labels.length) setViolationTypeOptions(labels)
+      } catch {
+        // fallback list keeps form usable when API is unavailable
+      }
+    }
+
+    loadViolationTypes()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   if (!violation) return null;
+
+  const resolvedTypeOptions = violationTypeOptions.includes(form.type)
+    ? violationTypeOptions
+    : [form.type, ...violationTypeOptions]
 
   const resetEvidencePreview = (previewUrl) => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -196,12 +236,11 @@ export function ViolationEditModal({ violation, onClose }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Loại vi phạm *">
               <Select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="w-full">
-                <option>Xuất phát sai</option>
-                <option>Lái nguy hiểm</option>
-                <option>Vi phạm trang bị</option>
-                <option>Nghi doping</option>
-                <option>Check-in muộn</option>
-                <option>Khác</option>
+                {resolvedTypeOptions.map((typeLabel) => (
+                  <option key={typeLabel} value={typeLabel}>
+                    {typeLabel}
+                  </option>
+                ))}
               </Select>
             </Field>
             <Field label="Mức độ *">

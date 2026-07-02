@@ -168,6 +168,26 @@ export const systemSettingsService = {
       })
     }
   },
+
+  async updateViolationTypes(types) {
+    const settings = await axiosClient
+      .put(ENDPOINTS.systemSettings.violationTypes, { types })
+      .then(unwrapResponse)
+
+    return mapSettings(settings)
+  },
+
+  async updateViolationRules(rules) {
+    const settings = await axiosClient
+      .put(ENDPOINTS.systemSettings.violationRules, { rules })
+      .then(unwrapResponse)
+
+    return mapSettings(settings)
+  },
+
+  async getPublicViolationTypes() {
+    return axiosClient.get(ENDPOINTS.systemSettings.publicViolationTypes).then(unwrapResponse)
+  },
 }
 
 export async function fetchDefaultTournamentRules() {

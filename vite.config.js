@@ -1,16 +1,14 @@
 import fs from 'node:fs'
+import net from 'node:net'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-/** BE Node.js + MongoDB Atlas — cổng mặc định (khớp BE/.env PORT) */
-const BE_API_HOST = 'localhost'
-const BE_API_PORT = 8080
-const BE_API_ORIGIN = `http://${BE_API_HOST}:${BE_API_PORT}`
+const LOCAL_API_ORIGIN = 'http://localhost:8080'
+const DEPLOY_API_ORIGIN = 'https://api.horseracing.id.vn'
 const DEV_PORT = 5173
 
 /** Copy logo từ src/assets → public để index.html dùng favicon & splash */
@@ -43,24 +41,58 @@ function logoAssetsPlugin() {
   }
 }
 
-export default defineConfig({
-  plugins: [logoAssetsPlugin(), react(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  server: {
-    host: true,
-    port: DEV_PORT,
-    strictPort: true,
-    allowedHosts: true,
-    proxy: {
-      '/api': {
-        target: BE_API_ORIGIN,
-        changeOrigin: true,
-        secure: false,
+function isOriginReachable(origin) {
+  return new Promise((resolve) => {
+    const url = new URL(origin)
+    const port = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
+    const socket = net.createConnection({ host: url.hostname, port, timeout: 700 })
+
+    const finish = (reachable) => {
+      socket.destroy()
+      resolve(reachable)
+    }
+
+    socket.once('connect', () => finish(true))
+    socket.once('timeout', () => finish(false))
+    socket.once('error', () => finish(false))
+  })
+}
+
+async function resolveDevApiOrigin(env) {
+  const configuredOrigin = env.VITE_DEV_API_ORIGIN?.trim()
+  if (configuredOrigin && configuredOrigin.toLowerCase() !== 'auto') {
+    return configuredOrigin
+  }
+
+  return (await isOriginReachable(LOCAL_API_ORIGIN))
+    ? LOCAL_API_ORIGIN
+    : DEPLOY_API_ORIGIN
+}
+
+export default defineConfig(async ({ mode }) => {
+  const env = loadEnv(mode, __dirname, '')
+  const devApiOrigin = await resolveDevApiOrigin(env)
+
+  return {
+    plugins: [logoAssetsPlugin(), react(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
       },
     },
-  },
+    server: {
+      host: true,
+      port: DEV_PORT,
+      strictPort: true,
+      // Cho phép truy cập FE qua domain ngrok (*.ngrok-free.app, *.ngrok.io, ...)
+      allowedHosts: true,
+      proxy: {
+        '/api': {
+          target: devApiOrigin,
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
+  }
 })

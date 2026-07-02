@@ -39,6 +39,9 @@ export const ENDPOINTS = {
     admin: '/admin/system-settings',
     fees: '/admin/system-settings/fees',
     raceDistances: '/admin/system-settings/race-distances',
+    violationRules: '/admin/system-settings/violation-rules',
+    violationTypes: '/admin/system-settings/violation-types',
+    publicViolationTypes: '/system-settings/violation-types',
   },
   financeSettings: {
     admin: '/admin/finance-settings',

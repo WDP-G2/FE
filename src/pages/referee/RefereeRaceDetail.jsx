@@ -37,6 +37,7 @@ import CheckInStatTile from '@/components/referee/CheckInStatTile';
 import { GlassCard, Pill, PrimaryButton, GhostButton, TextInput, Select } from '@/pages/admin/AdminLayout';
 import { useAuthStore } from '@/store/authStore';
 import { refereeService } from '@/services/refereeService';
+import { systemSettingsService } from '@/services/systemSettingsService';
 import { getApiErrorMessage } from '@/utils/apiError';
 import {
   checkinTone,
@@ -910,6 +911,28 @@ function buildViolationTimestamp(timeOfDay) {
   return `${datePart} ${timeOfDay}`
 }
 
+const FALLBACK_VIOLATION_TYPES = [
+  'Xuất phát sai',
+  'Lái nguy hiểm',
+  'Vi phạm trang bị',
+  'Nghi doping',
+  'Check-in muộn',
+  'Khác',
+]
+
+function createViolationDraft(horseNo, type) {
+  return {
+    horseNo,
+    type,
+    severity: 'Phạt nhẹ',
+    description: '',
+    penalty: '',
+    occurredAt: formatTimeOfDay(),
+    evidenceFile: null,
+    evidencePreview: '',
+  }
+}
+
 function ViolationsTab({ raceId, raceName, horses }) {
   const user = useAuthStore((s) => s.user);
   const refereeName = user?.fullName || user?.username || 'Trọng tài';
@@ -918,30 +941,46 @@ function ViolationsTab({ raceId, raceName, horses }) {
   const list = allViolations.filter((v) => String(v.raceId) === String(raceId));
   const [open, setOpen] = useState(false);
   const evidenceInputRef = useRef(null);
-  const [form, setForm] = useState({
-    horseNo: 1,
-    type: 'Lái nguy hiểm',
-    severity: 'Phạt nhẹ',
-    description: '',
-    penalty: '',
-    occurredAt: formatTimeOfDay(),
-    evidenceFile: null,
-    evidencePreview: '',
-  });
+  const [violationTypeOptions, setViolationTypeOptions] = useState(FALLBACK_VIOLATION_TYPES);
+  const [form, setForm] = useState(() => createViolationDraft(1, FALLBACK_VIOLATION_TYPES[0]));
   const [submitting, setSubmitting] = useState(false);
   const [previewEvidence, setPreviewEvidence] = useState(null);
+  const defaultViolationType = violationTypeOptions[0] || FALLBACK_VIOLATION_TYPES[0]
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadViolationTypes() {
+      try {
+        const response = await systemSettingsService.getPublicViolationTypes()
+        if (cancelled) return
+
+        const labels = (Array.isArray(response) ? response : [])
+          .filter((item) => item?.active !== false)
+          .map((item) => String(item?.label ?? '').trim())
+          .filter(Boolean)
+
+        if (labels.length) setViolationTypeOptions(labels)
+      } catch {
+        // fallback list keeps UI usable even when settings API is unavailable
+      }
+    }
+
+    loadViolationTypes()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    setForm((previous) => {
+      if (violationTypeOptions.includes(previous.type)) return previous
+      return { ...previous, type: defaultViolationType }
+    })
+  }, [defaultViolationType, violationTypeOptions])
 
   const openModal = () => {
-    setForm({
-      horseNo: horseList[0]?.no ?? 1,
-      type: 'Lái nguy hiểm',
-      severity: 'Phạt nhẹ',
-      description: '',
-      penalty: '',
-      occurredAt: formatTimeOfDay(),
-      evidenceFile: null,
-      evidencePreview: '',
-    });
+    setForm(createViolationDraft(horseList[0]?.no ?? 1, defaultViolationType));
     setOpen(true);
   };
 
@@ -952,16 +991,7 @@ function ViolationsTab({ raceId, raceName, horses }) {
   const closeModal = () => {
     resetEvidencePreview(form.evidencePreview);
     setOpen(false);
-    setForm({
-      horseNo: horseList[0]?.no ?? 1,
-      type: 'Lái nguy hiểm',
-      severity: 'Phạt nhẹ',
-      description: '',
-      penalty: '',
-      occurredAt: formatTimeOfDay(),
-      evidenceFile: null,
-      evidencePreview: '',
-    });
+    setForm(createViolationDraft(horseList[0]?.no ?? 1, defaultViolationType));
   };
 
   const handleEvidenceSelect = (file) => {
@@ -1145,12 +1175,11 @@ function ViolationsTab({ raceId, raceName, horses }) {
               </Field>
               <Field label="Loại vi phạm *">
                 <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full">
-                  <option>Xuất phát sai</option>
-                  <option>Lái nguy hiểm</option>
-                  <option>Vi phạm trang bị</option>
-                  <option>Nghi doping</option>
-                  <option>Check-in muộn</option>
-                  <option>Khác</option>
+                  {violationTypeOptions.map((typeLabel) => (
+                    <option key={typeLabel} value={typeLabel}>
+                      {typeLabel}
+                    </option>
+                  ))}
                 </Select>
               </Field>
               <Field label="Mức độ *">
