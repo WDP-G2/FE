@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import HomeNewsSection from '@/components/news/HomeNewsSection'
 import { setTournamentBannerFallback, tournamentService } from '@/services/tournamentService'
+import { rankingService } from '@/services/rankingService'
 import { fmtVND } from '@/utils/formatCurrency'
 import { formatDisplayDate } from '@/utils/dateFormat'
 import { enrichPublicTournamentCards } from '@/utils/publicTournamentCards'
@@ -20,6 +21,8 @@ import { enrichPublicTournamentCards } from '@/utils/publicTournamentCards'
 export default function HomePage() {
   const [tournaments, setTournaments] = useState([])
   const [loadingTournaments, setLoadingTournaments] = useState(true)
+  const [rankings, setRankings] = useState({ horses: [], jockeys: [] })
+  const [loadingRankings, setLoadingRankings] = useState(true)
 
   useEffect(() => {
     let ignore = false
@@ -44,7 +47,39 @@ export default function HomePage() {
     }
   }, [])
 
+  useEffect(() => {
+    let ignore = false
+    rankingService
+      .getRankings(5)
+      .then((data) => {
+        if (!ignore) {
+          setRankings({
+            horses: data.horses || [],
+            jockeys: data.jockeys || [],
+          })
+        }
+      })
+      .catch(() => {
+        if (!ignore) setRankings({ horses: [], jockeys: [] })
+      })
+      .finally(() => {
+        if (!ignore) setLoadingRankings(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const upcomingTournaments = useMemo(() => tournaments.slice(0, 3), [tournaments])
+  const topHorseRankings = useMemo(
+    () => rankings.horses.slice(0, 3).map(mapHorseRankingPreview),
+    [rankings.horses],
+  )
+  const topJockeyRankings = useMemo(
+    () => rankings.jockeys.slice(0, 3).map(mapJockeyRankingPreview),
+    [rankings.jockeys],
+  )
   const totalRaces = tournaments.reduce((total, item) => total + Number(item.raceCount || 0), 0)
   const totalRegistrations = tournaments.reduce(
     (total, item) => total + Number(item.registeredHorses || item.registrations || 0),
@@ -137,11 +172,20 @@ export default function HomePage() {
       <section className="bg-[#FAFAFA] py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            title="Bảng xếp hạng ngựa"
-            description="Sẽ cập nhật khi có dữ liệu xếp hạng tổng hợp."
+            title="Bảng xếp hạng"
+            description="Top ngựa và nài ngựa có thành tích nổi bật theo kết quả các cuộc đua đã công bố."
             to="/rankings"
           />
-          <EmptyBand icon={Trophy} text="Chưa có dữ liệu bảng xếp hạng." />
+          {loadingRankings ? (
+            <LoadingRanking />
+          ) : topHorseRankings.length === 0 && topJockeyRankings.length === 0 ? (
+            <EmptyBand icon={Trophy} text="Chưa có dữ liệu bảng xếp hạng." />
+          ) : (
+            <RankingPreview
+              horseRankings={topHorseRankings}
+              jockeyRankings={topJockeyRankings}
+            />
+          )}
         </div>
       </section>
 
@@ -269,6 +313,85 @@ function LoadingCards() {
   )
 }
 
+function LoadingRanking() {
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {[1, 2].map((item) => (
+        <div key={item} className="h-80 animate-pulse rounded-2xl bg-white" />
+      ))}
+    </div>
+  )
+}
+
+function RankingPreview({ horseRankings, jockeyRankings }) {
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <RankingGroup
+        title="Bảng xếp hạng ngựa"
+        description="Những ngựa có thành tích tốt nhất."
+        icon={Trophy}
+        rankings={horseRankings}
+        emptyText="Chưa có dữ liệu xếp hạng ngựa."
+      />
+      <RankingGroup
+        title="Bảng xếp hạng nài ngựa"
+        description="Những nài ngựa đang dẫn đầu."
+        icon={User}
+        rankings={jockeyRankings}
+        emptyText="Chưa có dữ liệu xếp hạng nài ngựa."
+      />
+    </div>
+  )
+}
+
+function RankingGroup({ title, description, icon: Icon, rankings, emptyText }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex items-start justify-between gap-4 border-b border-gray-100 pb-5">
+        <div>
+          <h3 className="text-2xl font-bold text-[#1E3A5F]">{title}</h3>
+          <p className="mt-1 text-sm text-[#1E3A5F]/55">{description}</p>
+        </div>
+        <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#D4A017]/10 text-[#D4A017]">
+          <Icon className="h-6 w-6" />
+        </span>
+      </div>
+
+      {rankings.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-[#1E3A5F]/15 p-6 text-center font-semibold text-[#1E3A5F]/55">
+          {emptyText}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {rankings.map((ranking) => (
+            <Link
+              key={ranking.key}
+              to="/rankings"
+              className="group flex items-center gap-4 rounded-2xl border border-gray-100 p-4 transition hover:border-[#D4A017] hover:bg-[#FFF8F0]"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#D4A017]/10 font-bold text-[#D4A017]">
+                #{ranking.rank}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h4 className="truncate font-bold text-[#1E3A5F] transition group-hover:text-[#D4A017]">
+                  {ranking.name}
+                </h4>
+                <p className="truncate text-sm text-[#1E3A5F]/55">{ranking.subtitle}</p>
+              </div>
+              <div className="text-right text-sm">
+                <p className="font-bold text-[#1E3A5F]">{ranking.winCount} thắng</p>
+                <p className="font-semibold text-[#D4A017]">
+                  {fmtVND(ranking.totalPrizeAmount)}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function EmptyBand({ icon: Icon, text }) {
   return (
     <div className="rounded-2xl border border-dashed border-[#1E3A5F]/15 bg-white p-10 text-center text-[#1E3A5F]/55">
@@ -276,4 +399,32 @@ function EmptyBand({ icon: Icon, text }) {
       <p className="font-semibold">{text}</p>
     </div>
   )
+}
+
+function mapHorseRankingPreview(entry, index) {
+  return {
+    key: `horse-${entry.horseId ?? index}`,
+    rank: entry.rank ?? index + 1,
+    name: entry.horseName || `Ngựa #${entry.horseId ?? index + 1}`,
+    subtitle: entry.ownerName ? `Chủ ngựa: ${entry.ownerName}` : 'Chưa cập nhật chủ ngựa',
+    winCount: Number(entry.winCount || 0),
+    totalPrizeAmount: entry.totalPrizeAmount,
+  }
+}
+
+function mapJockeyRankingPreview(entry, index) {
+  return {
+    key: `jockey-${entry.jockeyId ?? entry.jockeyUsername ?? index}`,
+    rank: entry.rank ?? index + 1,
+    name:
+      entry.jockeyFullName ||
+      entry.jockeyUsername ||
+      `Nài ngựa #${entry.jockeyId ?? index + 1}`,
+    subtitle:
+      entry.jockeyUsername && entry.jockeyFullName
+        ? `Tài khoản: ${entry.jockeyUsername}`
+        : 'Chưa cập nhật tài khoản',
+    winCount: Number(entry.winCount || 0),
+    totalPrizeAmount: entry.totalPrizeAmount,
+  }
 }

@@ -1,4 +1,6 @@
 import fs from 'node:fs'
+import http from 'node:http'
+import https from 'node:https'
 import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
@@ -72,6 +74,11 @@ async function resolveDevApiOrigin(env) {
 export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, __dirname, '')
   const devApiOrigin = await resolveDevApiOrigin(env)
+  const devApiUrl = new URL(devApiOrigin)
+  const devApiAgent =
+    devApiUrl.protocol === 'https:'
+      ? new https.Agent({ keepAlive: false })
+      : new http.Agent({ keepAlive: false })
 
   return {
     plugins: [logoAssetsPlugin(), react(), tailwindcss()],
@@ -91,6 +98,23 @@ export default defineConfig(async ({ mode }) => {
           target: devApiOrigin,
           changeOrigin: true,
           secure: false,
+          agent: devApiAgent,
+          timeout: 30000,
+          proxyTimeout: 30000,
+          configure: (proxy) => {
+            proxy.on('error', (err, _req, res) => {
+              if (!res) return
+              if (!res.headersSent) {
+                res.writeHead(502, { 'Content-Type': 'application/json' })
+              }
+              res.end(
+                JSON.stringify({
+                  message: 'Không kết nối được máy chủ API. Vui lòng thử lại sau.',
+                  detail: err.code || err.message,
+                }),
+              )
+            })
+          },
         },
       },
     },

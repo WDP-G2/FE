@@ -28,7 +28,7 @@ export default function TournamentsPage() {
         ),
       );
     } catch (err) {
-      const message = err?.message || "Khong tai duoc danh sach giai dau";
+      const message = err?.message || "Không tải được danh sách giải đấu";
       setError(message);
       toast.error(message);
     } finally {
@@ -73,7 +73,7 @@ export default function TournamentsPage() {
           <div className="pt-10 text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#D4A017]/20 bg-gradient-to-r from-[#D4A017]/10 to-[#D4A017]/5 px-5 py-2.5 shadow-sm">
               <Trophy className="h-5 w-5 text-[#D4A017]" />
-              <span className="font-semibold text-[#D4A017]">Giai đấu</span>
+              <span className="font-semibold text-[#D4A017]">Giải đấu</span>
             </div>
 
             <h1 className="mb-6 text-5xl font-bold leading-tight text-[#1E3A5F] md:text-7xl">
@@ -81,7 +81,9 @@ export default function TournamentsPage() {
             </h1>
 
             <p className="mx-auto mb-10 max-w-3xl text-xl leading-relaxed text-[#1E3A5F]/60 md:text-2xl">
-              Chỉ hiển thị dữ liệu giải đấu lấy từ API public tournament.
+              Khám phá các giải đua đang mở đăng ký, lịch tổ chức, địa điểm,
+              số lượng ngựa tham gia và tổng giải thưởng được cập nhật trực
+              tiếp từ hệ thống.
             </p>
 
             <div className="mx-auto max-w-2xl">
@@ -170,12 +172,12 @@ function TournamentCard({ tournament }) {
           <Meta
             icon={MapPin}
             text={
-              tournament.location || tournament.provinceName || "Chua cap nhat"
+              tournament.location || tournament.provinceName || "Chưa cập nhật"
             }
           />
           <Meta
             icon={Users}
-            text={`${tournament.registeredHorses || 0} dang ky`}
+            text={`${tournament.registeredHorses || 0} đăng ký`}
           />
           <Meta icon={Trophy} text={fmtVND(tournament.prizePool)} />
         </div>
