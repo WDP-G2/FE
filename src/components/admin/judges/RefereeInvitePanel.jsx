@@ -5,18 +5,19 @@ import Badge from '@/components/ui/Badge'
 import { GlassCard, GhostButton, PrimaryButton } from '@/pages/admin/AdminLayout'
 import { refereeService } from '@/services/refereeService'
 import {
+  fetchAdminInvitations,
   getInvitationSummaryForRace,
   getInvitationsForRace,
   getLatestInvitationForReferee,
   invitationStatusLabel,
   invitationStatusTone,
   REFEREE_INVITATIONS_UPDATED_EVENT,
-  sendRefereeInvitation,
 } from '@/services/refereeInvitationService'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { refereeInitial } from '@/data/adminJudgeMock'
 
 const STATUS_SORT = { ACCEPTED: 0, PENDING: 1, NONE: 2, DECLINED: 3 }
+const POLL_MS = 12_000
 
 function cardBorderClass(status) {
   if (status === 'ACCEPTED') return 'border-emerald-400/40 bg-emerald-500/[0.06]'
@@ -61,6 +62,11 @@ export default function RefereeInvitePanel({
   useEffect(() => {
     let cancelled = false
 
+    const syncInvitations = async () => {
+      await fetchAdminInvitations({ notify: false })
+      if (!cancelled) refreshInvitations()
+    }
+
     async function loadReferees() {
       try {
         setLoading(true)
@@ -80,14 +86,25 @@ export default function RefereeInvitePanel({
     }
 
     loadReferees()
-    refreshInvitations()
+    syncInvitations()
 
-    const handleInvitationsUpdated = () => refreshInvitations()
+    const timer = setInterval(() => syncInvitations(), POLL_MS)
+    const handleInvitationsUpdated = () => syncInvitations()
+    const onFocus = () => syncInvitations()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncInvitations()
+    }
 
     window.addEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, handleInvitationsUpdated)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+
     return () => {
       cancelled = true
+      clearInterval(timer)
       window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, handleInvitationsUpdated)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [race?.id])
 
@@ -115,8 +132,8 @@ export default function RefereeInvitePanel({
 
     setSendingId(referee.id)
     try {
-      sendRefereeInvitation({ tournament, race, referee, message })
-      await onInviteReferee?.(referee)
+      await onInviteReferee?.(referee, message)
+      await fetchAdminInvitations({ notify: true })
       refreshInvitations()
     } finally {
       setSendingId('')
@@ -198,16 +215,19 @@ export default function RefereeInvitePanel({
           ) : (
             refereeRows.map(({ referee, invitation, status }) => {
               const declined = status === 'DECLINED'
+              const accepted = status === 'ACCEPTED'
               const isOfficial =
                 officialRefereeId != null && String(officialRefereeId) === String(referee.id)
+              const hasAccepted = accepted || isOfficial
               const someoneElseAssigned = officialRefereeId != null && !isOfficial
               const busy = saving || sendingId === referee.id
+              const displayStatus = hasAccepted ? 'ACCEPTED' : status
 
               return (
                 <div
                   key={referee.id}
                   className={`flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center ${
-                    isOfficial ? 'border-emerald-400/40 bg-emerald-500/[0.06]' : cardBorderClass(status)
+                    hasAccepted ? 'border-emerald-400/40 bg-emerald-500/[0.06]' : cardBorderClass(displayStatus)
                   }`}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -217,11 +237,11 @@ export default function RefereeInvitePanel({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="truncate text-sm font-semibold text-white">{referee.name}</span>
-                        {isOfficial ? (
-                          <Badge tone="green">Đã phân công · chờ trọng tài chấp nhận</Badge>
-                        ) : status !== 'NONE' ? (
-                          <Badge tone={invitationStatusTone(status)}>
-                            {invitationStatusLabel(status)}
+                        {hasAccepted ? (
+                          <Badge tone="green">Đã chấp nhận</Badge>
+                        ) : displayStatus !== 'NONE' ? (
+                          <Badge tone={invitationStatusTone(displayStatus)}>
+                            {invitationStatusLabel(displayStatus)}
                           </Badge>
                         ) : (
                           <Badge tone="gray">Chưa mời</Badge>
@@ -240,7 +260,11 @@ export default function RefereeInvitePanel({
                   </div>
 
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                    {isOfficial ? (
+                    {hasAccepted ? (
+                      <GhostButton disabled className="!px-3 !py-2 text-xs opacity-60">
+                        Đã nhận lời
+                      </GhostButton>
+                    ) : status === 'PENDING' ? (
                       <GhostButton disabled className="!px-3 !py-2 text-xs opacity-60">
                         Đã gửi lời mời
                       </GhostButton>

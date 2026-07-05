@@ -3,20 +3,35 @@ import { AlertTriangle, CheckCircle2, Clock3, Flag, Gavel, XCircle } from 'lucid
 import { GlassCard } from '@/pages/admin/AdminLayout'
 import { isRaceJudgeReady } from '@/data/adminJudgeMock'
 import {
+  fetchAdminInvitations,
   getInvitationSummaryForRace,
   REFEREE_INVITATIONS_UPDATED_EVENT,
 } from '@/services/refereeInvitationService'
+
+const POLL_MS = 12_000
 
 function RaceInviteHint({ raceId }) {
   const [summary, setSummary] = useState({ pending: 0, accepted: 0, declined: 0, acceptedReferee: null })
 
   useEffect(() => {
-    const refresh = () => {
-      setSummary(getInvitationSummaryForRace(raceId))
+    let cancelled = false
+
+    const refresh = async () => {
+      await fetchAdminInvitations({ notify: false })
+      if (!cancelled) setSummary(getInvitationSummaryForRace(raceId))
     }
+
     refresh()
+    const timer = setInterval(refresh, POLL_MS)
     window.addEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refresh)
-    return () => window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refresh)
+    window.addEventListener('focus', refresh)
+
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refresh)
+      window.removeEventListener('focus', refresh)
+    }
   }, [raceId])
 
   if (summary.accepted > 0) {

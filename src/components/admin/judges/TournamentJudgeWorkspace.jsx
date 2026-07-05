@@ -1,18 +1,58 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Flag } from 'lucide-react'
 import AdminLayout from '@/components/AdminLayout'
 import { GhostButton, GlassCard } from '@/pages/admin/AdminLayout'
 import { tournamentService } from '@/services/tournamentService'
+import { fetchAdminInvitations, REFEREE_INVITATIONS_UPDATED_EVENT } from '@/services/refereeInvitationService'
 import { mapTournamentForJudges } from '@/utils/judgeTournamentUtils'
 import RaceListPanel from './RaceListPanel'
 import JudgeAssigner from './JudgeAssigner'
+
+const POLL_MS = 12_000
 
 export default function TournamentJudgeWorkspace({ tournament, onBack, onTournamentUpdated }) {
   const [activeRaceId, setActiveRaceId] = useState(tournament.races[0]?.id ?? '')
   const [, forceRender] = useState(0)
   const activeRace =
     tournament.races.find((race) => race.id === activeRaceId) ?? tournament.races[0]
+
+  useEffect(() => {
+    if (!tournament?.id || !onTournamentUpdated) return undefined
+
+    let cancelled = false
+
+    const refresh = async () => {
+      try {
+        await fetchAdminInvitations({ notify: false })
+        const response = await tournamentService.getAdminTournament(tournament.id)
+        if (!cancelled) {
+          onTournamentUpdated(mapTournamentForJudges(response.data))
+        }
+      } catch {
+        // giữ dữ liệu hiện tại nếu không tải lại được
+      }
+    }
+
+    refresh()
+    const timer = setInterval(refresh, POLL_MS)
+    const onFocus = () => refresh()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    window.addEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refresh)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refresh)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [tournament.id, onTournamentUpdated])
 
   const updateRaceJudges = (nextAssignments) => {
     if (!activeRace) return

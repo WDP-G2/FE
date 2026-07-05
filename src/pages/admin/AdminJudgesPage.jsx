@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import AdminLayout from '@/components/AdminLayout'
 import Card from '@/components/ui/Card'
-import { tournamentService } from '@/services/tournamentService'
+import {
+  ADMIN_JUDGES_PUBLISHED_TOURNAMENTS_CACHE_KEY,
+  tournamentService,
+} from '@/services/tournamentService'
 import { useFetch } from '@/hooks/useFetch'
 import { getApiErrorMessage } from '@/utils/apiError'
 import {
@@ -13,17 +17,36 @@ import {
 import TournamentJudgeWorkspace from '@/components/admin/judges/TournamentJudgeWorkspace'
 import TournamentPickerGrid from '@/components/admin/judges/TournamentPickerGrid'
 
-const JUDGES_TOURNAMENTS_CACHE_KEY = 'admin:judges:published-only-tournaments'
-
 export default function AdminJudgesPage() {
+  const location = useLocation()
   const [tournamentId, setTournamentId] = useState(null)
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
 
-  const { data: tournaments = [], loading, error } = useFetch(
+  const { data: tournaments = [], loading, error, refetch } = useFetch(
     () => loadPublishedJudgeTournaments(tournamentService),
-    { cacheKey: JUDGES_TOURNAMENTS_CACHE_KEY },
+    { cacheKey: ADMIN_JUDGES_PUBLISHED_TOURNAMENTS_CACHE_KEY, staleTime: 0 },
   )
+
+  useEffect(() => {
+    if (location.pathname !== '/admin/judges') return undefined
+
+    const refresh = () => {
+      refetch({ force: true }).catch(() => {})
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [location.pathname, refetch])
 
   useEffect(() => {
     if (!tournamentId) {

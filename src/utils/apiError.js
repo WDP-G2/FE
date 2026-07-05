@@ -38,6 +38,15 @@ const API_MESSAGE_VI = {
     'Kết quả đã được khóa. Admin cần bật giải "Đang diễn ra" để trọng tài cập nhật lại.',
   'Race results are required': 'Vui lòng nhập kết quả cuộc đua',
   'Participant does not belong to this race': 'Ngựa không thuộc cuộc đua này',
+  'Only checked-in participants can finish a race':
+    'Chỉ ngựa đã xác nhận có mặt mới được ghi hoàn thành. Hãy check-in ở tab Xác nhận có mặt.',
+  'Referee salary must be reserved before race result is finalized':
+    'Chưa giữ lương trọng tài. Trọng tài cần chấp nhận lời mời trước khi chốt kết quả.',
+  'Result participant does not belong to this race': 'Ngựa không thuộc cuộc đua này',
+  'Race result must include every approved participant':
+    'Kết quả phải bao gồm tất cả ngựa tham gia đã được duyệt',
+  'Không kết nối được máy chủ API. Vui lòng thử lại sau.':
+    'Không kết nối được máy chủ API. Kiểm tra backend đang chạy và thử lại.',
   'Jockey already accepted an invitation for this race or an overlapping race':
     'Jockey đã nhận lời mời cho cuộc đua này hoặc cuộc đua trùng giờ',
   'Jockey already accepted another invitation': 'Jockey đã chấp nhận lời mời khác',
@@ -70,8 +79,15 @@ export function getApiErrorMessage(error, options = {}) {
   const loginFlow = options.scene === 'login' || isLoginRequest(error)
 
   if (!error?.response) {
+    if (error?.code === 'ECONNABORTED') {
+      return 'Máy chủ phản hồi quá chậm. Thử lại sau.'
+    }
     if (loginFlow) return 'Không kết nối được máy chủ. Kiểm tra lại kết nối đến API.'
-    return 'Không kết nối được máy chủ'
+    return 'Không kết nối được máy chủ. Kiểm tra backend API đang chạy (port 8080) hoặc thử lại sau.'
+  }
+
+  if (status === 502 || status === 503 || status === 504) {
+    return translateApiMessage(message) || 'Máy chủ API tạm thời không phản hồi. Thử lại sau.'
   }
 
   if (loginFlow) {

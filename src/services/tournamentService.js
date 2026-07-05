@@ -1,7 +1,11 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
+import { useApiCacheStore } from '@/store/apiCacheStore'
 import { cachedRequest, invalidateCachedRequest } from '@/utils/requestCache'
+
+export const ADMIN_JUDGES_PUBLISHED_TOURNAMENTS_CACHE_KEY =
+  'admin:judges:published-only-tournaments'
 
 export const FALLBACK_TOURNAMENT_BANNER =
   'https://images.unsplash.com/photo-1507514604110-ba3347c457f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
@@ -237,6 +241,7 @@ export function mapTournament(tournament) {
 export function invalidateTournamentListCache() {
   invalidateCachedRequest('admin:tournaments')
   invalidateCachedRequest('public:tournaments')
+  useApiCacheStore.getState().removeCache(ADMIN_JUDGES_PUBLISHED_TOURNAMENTS_CACHE_KEY)
 }
 
 async function fetchAdminTournamentRaceCountMap() {
@@ -297,6 +302,7 @@ export const tournamentService = {
       .put(ENDPOINTS.tournaments.adminStatus(id), null, { params: { status } })
       .then(unwrapResponse)
 
+    invalidateTournamentListCache()
     return { data: mapTournament(tournament), raw: tournament }
   },
 

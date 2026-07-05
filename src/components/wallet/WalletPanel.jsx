@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  ExternalLink,
   Wallet,
   Eye,
   EyeOff,
@@ -982,6 +983,22 @@ export default function WalletPanel({
                   <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
                   ZaloPay chưa trả về mã QR hoặc trang thanh toán cho lệnh này. Vui lòng thử tạo lệnh nạp mới.
                 </div>
+              )}
+
+              {/* Action Link Button */}
+              {depositOrder.checkoutUrl && (
+                <a
+                  href={depositOrder.checkoutUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`w-full flex items-center justify-center gap-2 rounded-xl px-5 py-4 text-sm font-bold text-white transition-all active:scale-[0.99] shadow-lg ${depositQrValue
+                    ? 'border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#008fe5]/40'
+                    : 'bg-gradient-to-r from-[#008fe5] to-[#00bfa5] hover:from-[#007cd6] hover:to-[#00b098] shadow-sky-500/15 hover:shadow-xl'
+                    }`}
+                >
+                  <span>{depositQrValue ? 'Mở trang thanh toán dự phòng' : 'Mở trang thanh toán ZaloPay'}</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
               )}
 
             </div>

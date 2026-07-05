@@ -75,8 +75,7 @@ export function useRefereeRaces({ operationOnly = true } = {}) {
 
     try {
       const data = await loadAssignedRacesFromApi()
-      const user = useAuthStore.getState().user
-      const allowed = operationOnly ? filterRacesForRefereeOperation(data, user) : data
+      const allowed = operationOnly ? filterRacesForRefereeOperation(data) : data
       const tournamentIds = allowed.map((race) => race.tournamentId)
 
       let nameById = new Map()

@@ -1472,6 +1472,12 @@ function ResultsTab({
       return;
     }
 
+    const missingParticipant = rows.find((row) => !Number.isFinite(Number(row.participantId)))
+    if (missingParticipant) {
+      toast.error('Thiếu mã ngựa tham gia. Hãy tải lại trang và thử lại.')
+      return
+    }
+
     setSubmitting(true);
     try {
       const rankedRows = assignRanksByFinishTime(rows);
@@ -1483,19 +1489,26 @@ function ResultsTab({
         return;
       }
 
-      if (onReloadRace) await onReloadRace();
       let status = await refreshLiveRaceStatus();
 
       if (status === 'SCHEDULED') {
-        await refereeService.startRace(raceId);
-        status = 'ONGOING';
-        setLiveRaceStatus('ONGOING');
-        if (onReloadRace) await onReloadRace();
+        try {
+          await refereeService.startRace(raceId);
+          status = 'ONGOING';
+          setLiveRaceStatus('ONGOING');
+          if (onReloadRace) await onReloadRace();
+        } catch (startError) {
+          toast.error(
+            getApiErrorMessage(startError) ||
+              'Không thể bắt đầu cuộc đua. Kiểm tra cổng xuất phát và xác nhận có mặt trước.',
+          );
+          return;
+        }
       }
 
       if (status !== 'ONGOING') {
         toast.error(
-          'Chưa thể chốt kết quả. Hãy bấm "Bắt đầu cuộc đua" trước — giải phải ở trạng thái "Đang diễn ra".',
+          'Chưa thể chốt kết quả. Hãy bấm "Bắt đầu cuộc đua" trước — cuộc đua phải ở trạng thái "Đang diễn ra".',
         );
         return;
       }

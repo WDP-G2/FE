@@ -87,22 +87,51 @@ export const refereeService = {
     return created?.id
   },
 
-  async assignRaceReferee(raceId, refereeId, salaryConfigId) {
+  async createRefereeInvitation({ raceId, refereeId, salaryConfigId, message = '' }) {
     let configId = salaryConfigId
     if (configId == null) {
       configId = await this.ensureSalaryConfigId()
     }
     return axiosClient
-      .put(ENDPOINTS.races.assignReferee(raceId), {
-        refereeId,
-        salaryConfigId: configId,
+      .post(ENDPOINTS.refereeInvitations.adminCreate, {
+        raceId: Number(raceId),
+        refereeId: Number(refereeId),
+        salaryConfigId: Number(configId),
+        message: String(message ?? '').trim(),
       })
       .then(unwrapResponse)
+  },
+
+  /** @deprecated Dùng createRefereeInvitation — BE không còn endpoint gán trọng tài trực tiếp. */
+  async assignRaceReferee(raceId, refereeId, salaryConfigId) {
+    return this.createRefereeInvitation({ raceId, refereeId, salaryConfigId })
   },
 
   async getAssignedRaces() {
     const data = await axiosClient.get(ENDPOINTS.referee.races).then(unwrapResponse)
     return Array.isArray(data) ? data : []
+  },
+
+  async getRefereeInvitations() {
+    const data = await axiosClient.get(ENDPOINTS.refereeInvitations.refereeList).then(unwrapResponse)
+    return Array.isArray(data) ? data : []
+  },
+
+  async getAdminInvitations() {
+    const data = await axiosClient.get(ENDPOINTS.refereeInvitations.adminList).then(unwrapResponse)
+    return Array.isArray(data) ? data : []
+  },
+
+  async acceptRefereeInvitation(invitationId, note = '') {
+    return axiosClient
+      .put(ENDPOINTS.refereeInvitations.refereeAccept(invitationId), { note: note || undefined })
+      .then(unwrapResponse)
+  },
+
+  async rejectRefereeInvitation(invitationId, note = '') {
+    return axiosClient
+      .put(ENDPOINTS.refereeInvitations.refereeReject(invitationId), { note: note || undefined })
+      .then(unwrapResponse)
   },
 
   async enrichRacesCheckIn(races) {
@@ -257,12 +286,23 @@ export const refereeService = {
   },
 
   async startRace(raceId) {
-    return axiosClient.put(ENDPOINTS.referee.startRace(raceId)).then(unwrapResponse)
+    return axiosClient
+      .put(ENDPOINTS.referee.startRace(raceId), {}, { timeout: 30_000 })
+      .then(unwrapResponse)
   },
 
   async finalizeRaceResults(raceId, results) {
+    const payload = (Array.isArray(results) ? results : []).map((entry) => ({
+      participantId: Number(entry.participantId),
+      rank: entry.rank != null ? Number(entry.rank) : undefined,
+      finishTimeMillis:
+        entry.finishTimeMillis != null ? Number(entry.finishTimeMillis) : undefined,
+      status: entry.status,
+      note: entry.note || undefined,
+    }))
+
     return axiosClient
-      .post(ENDPOINTS.referee.finalizeResults(raceId), { results })
+      .post(ENDPOINTS.referee.finalizeResults(raceId), { results: payload }, { timeout: 60_000 })
       .then(unwrapResponse)
   },
 

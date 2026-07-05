@@ -22,6 +22,7 @@ import { useAuthStore } from '@/store/authStore';
 import {
   getPendingInvitationCountForReferee,
   REFEREE_INVITATIONS_UPDATED_EVENT,
+  fetchRefereeInvitations,
 } from '@/services/refereeInvitationService';
 
 const MAIN_TABS = [
@@ -47,13 +48,39 @@ export function RefereeRaces() {
   );
 
   useEffect(() => {
-    const refreshPending = () => {
-      setPendingInvites(getPendingInvitationCountForReferee(user))
+    let cancelled = false
+
+    const refreshPending = async () => {
+      try {
+        await fetchRefereeInvitations({ notify: false })
+        if (!cancelled) {
+          setPendingInvites(getPendingInvitationCountForReferee(user))
+        }
+      } catch {
+        if (!cancelled) setPendingInvites(0)
+      }
     }
+
     refreshPending()
+
+    const timer = setInterval(refreshPending, 12_000)
+    const onFocus = () => refreshPending()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshPending()
+    }
+
     window.addEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refreshPending)
-    return () => window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refreshPending)
-  }, [user, loading])
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, refreshPending)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [user])
 
   useEffect(() => {
     if (loading || !races.length) return;

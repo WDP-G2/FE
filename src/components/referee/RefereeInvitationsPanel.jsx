@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { CheckCircle2, Mail, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import Badge from '@/components/ui/Badge'
 import { GlassCard, PrimaryButton, GhostButton } from '@/pages/admin/AdminLayout'
 import { useAuthStore } from '@/store/authStore'
+import { getApiErrorMessage } from '@/utils/apiError'
 import {
   fetchRefereeInvitations,
   getInvitationsForReferee,
@@ -14,50 +15,73 @@ import {
 } from '@/services/refereeInvitationService'
 import { formatDisplayDate } from '@/utils/dateFormat'
 
+const POLL_MS = 12_000
+
 export default function RefereeInvitationsPanel() {
   const user = useAuthStore((state) => state.user)
   const [invitations, setInvitations] = useState([])
   const [respondingId, setRespondingId] = useState('')
-
   const [loading, setLoading] = useState(true)
 
-  const loadInvitations = () => {
-    setInvitations(getInvitationsForReferee(user))
-  }
+  const loadInvitations = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true)
+    try {
+      await fetchRefereeInvitations({ notify: false })
+      setInvitations(getInvitationsForReferee(user))
+    } catch (error) {
+      if (!silent) {
+        toast.error(getApiErrorMessage(error) || 'Không thể tải lời mời')
+      }
+    } finally {
+      if (!silent) setLoading(false)
+    }
+  }, [user])
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    fetchRefereeInvitations({ notify: false }).finally(() => {
-      if (!cancelled) {
-        loadInvitations()
-        setLoading(false)
-      }
-    })
 
-    const handleUpdated = () => loadInvitations()
-    window.addEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, handleUpdated)
+    const refresh = async ({ silent = false } = {}) => {
+      if (cancelled) return
+      await loadInvitations({ silent })
+    }
+
+    refresh()
+
+    const timer = setInterval(() => refresh({ silent: true }), POLL_MS)
+
+    const onFocus = () => refresh({ silent: true })
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh({ silent: true })
+    }
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, onFocus)
+
     return () => {
       cancelled = true
-      window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, handleUpdated)
+      clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, onFocus)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [loadInvitations])
 
-  const handleRespond = (invitationId, status) => {
+  const handleRespond = async (invitationId, status) => {
     setRespondingId(invitationId)
-    const result = respondToInvitation(invitationId, user, status)
-    loadInvitations()
-    setRespondingId('')
-    if (!result) {
-      toast.error('Không thể cập nhật lời mời')
-      return
+    try {
+      await respondToInvitation(invitationId, user, status)
+      setInvitations(getInvitationsForReferee(user))
+      toast.success(
+        status === 'ACCEPTED'
+          ? 'Đã chấp nhận lời mời — cuộc đua sẽ hiện tại tab Điều hành'
+          : 'Đã từ chối lời mời',
+      )
+    } catch (error) {
+      toast.error(getApiErrorMessage(error) || 'Không thể cập nhật lời mời')
+    } finally {
+      setRespondingId('')
     }
-    toast.success(
-      status === 'ACCEPTED'
-        ? 'Đã chấp nhận lời mời — cuộc đua sẽ hiện tại tab Điều hành sau khi admin gửi phân công'
-        : 'Đã từ chối lời mời',
-    )
   }
 
   const pending = invitations.filter((item) => item.status === 'PENDING')
@@ -72,7 +96,7 @@ export default function RefereeInvitationsPanel() {
             <div>
               <h3 className="font-bold text-white">Lời mời làm trọng tài</h3>
               <p className="text-xs text-white/50">
-                Cuộc đua admin đã phân công · {pending.length} chờ phản hồi
+                Lời mời từ admin · {pending.length} chờ phản hồi
               </p>
             </div>
           </div>
@@ -125,7 +149,7 @@ export default function RefereeInvitationsPanel() {
           <div className="p-10 text-center text-sm text-white/40">Đang tải lời mời...</div>
         ) : (
           <div className="p-10 text-center text-sm text-white/40">
-            Hiện chưa có lời mời mới. Khi admin phân công, bạn sẽ thấy tại đây.
+            Hiện chưa có lời mời mới. Khi admin gửi lời mời, bạn sẽ thấy tại đây.
           </div>
         )}
       </GlassCard>
@@ -145,7 +169,9 @@ export default function RefereeInvitationsPanel() {
                   <div className="text-xs text-white/45">
                     {item.respondedAt
                       ? `Phản hồi ${new Date(item.respondedAt).toLocaleString('vi-VN')}`
-                      : ''}
+                      : item.invitedAt
+                        ? `Mời lúc ${new Date(item.invitedAt).toLocaleString('vi-VN')}`
+                        : ''}
                   </div>
                 </div>
                 <Badge tone={invitationStatusTone(item.status)}>

@@ -99,6 +99,14 @@ export const ENDPOINTS = {
     list: '/admin/referee-salary-configs',
     byId: (id) => `/admin/referee-salary-configs/${id}`,
   },
+  refereeInvitations: {
+    adminList: '/admin/referee-invitations',
+    adminCreate: '/admin/referee-invitations',
+    adminCancel: (id) => `/admin/referee-invitations/${id}/cancel`,
+    refereeList: '/referee/invitations',
+    refereeAccept: (id) => `/referee/invitations/${id}/accept`,
+    refereeReject: (id) => `/referee/invitations/${id}/reject`,
+  },
   referee: {
     races: '/referee/races',
     dashboard: '/referee/dashboard',

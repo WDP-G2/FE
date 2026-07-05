@@ -546,18 +546,19 @@ export function summarizeParticipantCheckIn(participants = []) {
 /** Payload gửi BE — ngựa loại chỉ gửi lý do, không có rank */
 export function buildRaceFinalizePayload(rows) {
   return (Array.isArray(rows) ? rows : []).map((row) => {
+    const participantId = Number(row.participantId)
     if (row.dq) {
       const note = String(row.dqReason ?? '').trim() || undefined
       return {
-        participantId: row.participantId,
+        participantId,
         status: 'DISQUALIFIED',
         finishTimeMillis: 0,
         note,
       }
     }
     return {
-      participantId: row.participantId,
-      rank: row.position,
+      participantId,
+      rank: Number(row.position),
       finishTimeMillis: parseFinishTimeToMillis(row.time),
       status: 'FINISHED',
     }

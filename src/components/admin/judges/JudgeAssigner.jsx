@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { refereeService } from '@/services/refereeService'
-import { publishRaceAssignments } from '@/services/refereeAssignmentService'
+import { fetchAdminInvitations } from '@/services/refereeInvitationService'
 import {
   refereePaymentService,
   isRacePayoutLocked,
@@ -111,7 +111,7 @@ export default function JudgeAssigner({ tournament, race, onChangeJudges, onAssi
     onChangeJudges(assignments.filter((item) => item.refereeId !== refereeId))
   }
 
-  const inviteReferee = async (referee) => {
+  const inviteReferee = async (referee, message = '') => {
     if (!referee?.id) return
     if (payoutLocked) {
       toast.error('Cuộc đua này đã thanh toán lương — không thể gửi thêm lời mời')
@@ -124,14 +124,16 @@ export default function JudgeAssigner({ tournament, race, onChangeJudges, onAssi
 
     try {
       setSaving(true)
-      const assignment = [{ refereeId: referee.id, role: DEFAULT_JUDGE_ROLE }]
-      publishRaceAssignments({ tournament, race, assignments: assignment, refereesById })
-      await refereeService.assignRaceReferee(race.id, referee.id)
-      onChangeJudges(assignment)
-      toast.success(`Đã gửi lời mời/phân công tới ${referee.name}. Trọng tài sẽ thấy ở mục "Lời mời".`)
-      onAssigned?.({ refereeId: referee.id })
+      await refereeService.createRefereeInvitation({
+        raceId: race.id,
+        refereeId: referee.id,
+        message,
+      })
+      await fetchAdminInvitations({ notify: true })
+      toast.success(`Đã gửi lời mời tới ${referee.name}. Trọng tài sẽ thấy ở mục "Lời mời".`)
     } catch (error) {
       toast.error(getApiErrorMessage(error) || 'Không thể gửi lời mời trọng tài')
+      throw error
     } finally {
       setSaving(false)
     }
@@ -149,30 +151,20 @@ export default function JudgeAssigner({ tournament, race, onChangeJudges, onAssi
       return
     }
 
-    try {
-      setSaving(true)
-      publishRaceAssignments({
-        tournament,
-        race,
-        assignments,
-        refereesById,
-      })
-
-      await refereeService.assignRaceReferee(race.id, primary.refereeId)
-
-      toast.success('Đã gửi phân công trọng tài. Trọng tài có thể xem cuộc đua được giao.')
-      onAssigned?.({ refereeId: primary.refereeId })
-    } catch (error) {
-      toast.error(getApiErrorMessage(error) || 'Không thể gửi phân công trọng tài')
-    } finally {
-      setSaving(false)
+    if (isOfficiallyAssigned) {
+      toast.info('Phân công đã được xác nhận — trọng tài đã chấp nhận lời mời.')
+      return
     }
+
+    toast.info(
+      'Đang chờ trọng tài chấp nhận lời mời. Sau khi chấp nhận, phân công sẽ được xác nhận tự động.',
+    )
   }
 
   return (
     <div className="space-y-6">
       <JudgeWorkflowSteps
-        hasSelection={assignments.length > 0}
+        hasSelection={assignments.length > 0 || isOfficiallyAssigned}
         isAssigned={isOfficiallyAssigned}
         isRaceCompleted={isRaceCompleted}
         isPaid={isPaid}
