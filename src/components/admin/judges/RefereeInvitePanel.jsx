@@ -247,6 +247,9 @@ export default function RefereeInvitePanel({
                           <Badge tone="gray">Chưa mời</Badge>
                         )}
                       </div>
+                      {referee.email ? (
+                        <div className="truncate text-[11px] text-white/55">{referee.email}</div>
+                      ) : null}
                       <div className="truncate text-[10px] text-white/40">
                         {referee.experience > 0 ? `${referee.experience} năm` : 'Chưa có kinh nghiệm'} ·{' '}
                         {referee.specialty}
