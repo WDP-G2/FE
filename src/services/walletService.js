@@ -23,9 +23,11 @@ export function invalidateWalletCache(mode = 'all') {
   if (mode === 'all' || mode === 'admin') walletCache.admin = { data: null, at: 0 }
 }
 
-async function fetchWallet(endpoint, cacheKey) {
-  const cached = readCache(cacheKey)
-  if (cached) return cached
+async function fetchWallet(endpoint, cacheKey, { force = false } = {}) {
+  if (!force) {
+    const cached = readCache(cacheKey)
+    if (cached) return cached
+  }
 
   const data = await axiosClient.get(endpoint).then(unwrapResponse)
   writeCache(cacheKey, data)
@@ -40,7 +42,7 @@ export function peekWalletBalance(walletMode = 'user') {
 }
 
 export const walletService = {
-  getMyWallet: () => fetchWallet(ENDPOINTS.wallet.me, 'user'),
+  getMyWallet: (opts) => fetchWallet(ENDPOINTS.wallet.me, 'user', opts),
 
   getMyTransactions: () => axiosClient.get(ENDPOINTS.wallet.transactions).then(unwrapResponse),
 
@@ -71,7 +73,7 @@ export const walletService = {
     return data
   },
 
-  getAdminWallet: () => fetchWallet(ENDPOINTS.wallet.admin, 'admin'),
+  getAdminWallet: (opts) => fetchWallet(ENDPOINTS.wallet.admin, 'admin', opts),
 
   getAdminTransactions: () =>
     axiosClient.get(ENDPOINTS.wallet.adminTransactions).then(unwrapResponse),

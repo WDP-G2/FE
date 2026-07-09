@@ -432,7 +432,7 @@ export default function WalletPanel({
     try {
       const loadWallet = isAdminWallet ? walletService.getAdminWallet : walletService.getMyWallet
       const loadTx = isAdminWallet ? walletService.getAdminTransactions : walletService.getMyTransactions
-      const [walletData, txs] = await Promise.all([loadWallet(), loadTx()])
+      const [walletData, txs] = await Promise.all([loadWallet({ force: true }), loadTx()])
       setWallet(walletData)
       setTransactions(Array.isArray(txs) ? txs.map(mapTransaction) : [])
     } catch (err) {
@@ -509,7 +509,7 @@ export default function WalletPanel({
     const loadWallet = isAdminWallet ? walletService.getAdminWallet : walletService.getMyWallet
     const loadTx = isAdminWallet ? walletService.getAdminTransactions : walletService.getMyTransactions
 
-    Promise.all([loadWallet(), loadTx()])
+    Promise.all([loadWallet({ force: true }), loadTx()])
       .then(([walletData, txs]) => {
         if (ignore) return
         setWallet(walletData)

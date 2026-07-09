@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { authService } from '@/services/authService'
 import { invalidateTournamentListCache } from '@/services/tournamentService'
 import { useApiCacheStore } from '@/store/apiCacheStore'
+import { invalidateWalletCache } from '@/services/walletService'
 import { getStoredToken, setStoredToken, removeStoredToken } from '@/utils/tokenStorage'
 import { isTokenExpired, getRoleFromToken } from '@/utils/jwtDecode'
 import { applyAuthToState, mapAuthResponseToUser } from '@/utils/mapAuthResponse'
@@ -11,6 +12,7 @@ function persistLogin(auth) {
   const { token, user, role, isAuthenticated } = applyAuthToState(auth)
   if (!token) throw new Error('Không nhận được token từ server')
   setStoredToken(token)
+  invalidateWalletCache('all')
   return { token, user, role, isAuthenticated }
 }
 
@@ -45,6 +47,7 @@ export const useAuthStore = create((set, get) => ({
     removeStoredToken()
     useApiCacheStore.getState().clearCache()
     invalidateTournamentListCache()
+    invalidateWalletCache('all')
     set({
       token: null,
       user: null,
