@@ -10,7 +10,7 @@ import { tournamentService, invalidateTournamentListCache } from '@/services/tou
 import { locationSettingsService } from '@/services/locationSettingsService'
 import { fetchDefaultTournamentRules } from '@/services/systemSettingsService'
 import { useApiCacheStore } from '@/store/apiCacheStore'
-import { getApiErrorMessage } from '@/utils/apiError'
+import { matchProvinceForTournament } from '@/components/tournament-detail/RacesTab/helpers'
 
 const STATUS_LABELS = {
   DRAFT: 'Nháp',
@@ -56,12 +56,39 @@ function addDays(date, days) {
   return `${year}-${month}-${day}`
 }
 
-function makeDraft(tournament) {
+function resolveProvinceId(tournament) {
+  if (tournament.provinceId != null && tournament.provinceId !== '') {
+    return String(tournament.provinceId)
+  }
+  if (tournament.raw?.provinceId) {
+    return String(tournament.raw.provinceId)
+  }
+  const raceWithProvince = (tournament.races || []).find(
+    (race) => race?.provinceId != null && race.provinceId !== '',
+  )
+  if (raceWithProvince) {
+    return String(raceWithProvince.provinceId)
+  }
+  return ''
+}
+
+function makeDraft(tournament, provinces = []) {
+  let provinceId = resolveProvinceId(tournament)
+  let location = tournament.location ?? ''
+
+  if (!provinceId && provinces.length) {
+    const matched = matchProvinceForTournament(tournament, provinces)
+    if (matched) {
+      provinceId = matched.id
+      if (!location.trim()) location = matched.name
+    }
+  }
+
   return {
     name: tournament.name ?? '',
     description: tournament.description ?? '',
-    location: tournament.location ?? '',
-    provinceId: tournament.provinceId ?? '',
+    location,
+    provinceId,
     registrationOpenDate: tournament.registrationOpenDate ?? '',
     registrationCloseDate: tournament.registrationCloseDate ?? '',
     startDate: tournament.startDate ?? '',
@@ -82,7 +109,7 @@ function buildUpdatePayload(tournament, draft) {
     name: draft.name.trim(),
     description: draft.description.trim(),
     location: draft.location.trim(),
-    provinceId: Number(draft.provinceId),
+    provinceId: draft.provinceId || null,
     bannerUrl: raw.bannerUrl ?? null,
     registrationOpenAt: dateTime(draft.registrationOpenDate, '08:00'),
     registrationCloseAt: dateTime(draft.registrationCloseDate, '17:00'),
@@ -202,6 +229,28 @@ export default function SettingsTab({ tournament, setTournament }) {
     savedStatusCodeRef.current = tournament.statusCode ?? 'DRAFT'
     setDraft(makeDraft(tournament))
   }, [tournament])
+
+  useEffect(() => {
+    if (!provinces.length) return
+
+    setDraft((previous) => {
+      if (previous.provinceId) return previous
+
+      const resolved = resolveProvinceId(tournament)
+      if (resolved) {
+        return { ...previous, provinceId: resolved }
+      }
+
+      const matched = matchProvinceForTournament(tournament, provinces)
+      if (!matched) return previous
+
+      return {
+        ...previous,
+        provinceId: matched.id,
+        location: previous.location?.trim() ? previous.location : matched.name,
+      }
+    })
+  }, [provinces, tournament])
 
   useEffect(() => {
     return () => {
@@ -336,12 +385,19 @@ export default function SettingsTab({ tournament, setTournament }) {
           draft.statusCode,
         )
         nextTournament = statusResponse.data
-        invalidateTournamentListCache()
       }
 
-      savedStatusCodeRef.current = nextTournament.statusCode ?? draft.statusCode
-      setTournament({ ...nextTournament, rules: systemDefaultRules })
-      setDraft({ ...makeDraft(nextTournament), rules: systemDefaultRules })
+      const syncedTournament = {
+        ...nextTournament,
+        rules: systemDefaultRules,
+        statusCode: nextTournament.statusCode ?? draft.statusCode,
+      }
+
+      savedStatusCodeRef.current = syncedTournament.statusCode
+      useApiCacheStore.getState().setCache(`admin:tournament:${tournament.id}`, syncedTournament)
+      invalidateTournamentListCache()
+      setTournament(syncedTournament)
+      setDraft(makeDraft(syncedTournament, provinces))
       toast.success(
         statusChanged && !baseChanged ? 'Đã cập nhật trạng thái giải đấu' : 'Đã lưu cài đặt giải đấu',
       )
@@ -370,9 +426,11 @@ export default function SettingsTab({ tournament, setTournament }) {
       setScheduling(true)
       const response = await tournamentService.scheduleTournament(tournament.id)
       savedStatusCodeRef.current = response.data.statusCode ?? savedStatusCodeRef.current
-      setTournament({ ...response.data, rules: systemDefaultRules })
-      setDraft({ ...makeDraft(response.data), rules: systemDefaultRules })
-      useApiCacheStore.getState().setCache(`admin:tournament:${tournament.id}`, response.data)
+      const syncedTournament = { ...response.data, rules: systemDefaultRules }
+      useApiCacheStore.getState().setCache(`admin:tournament:${tournament.id}`, syncedTournament)
+      invalidateTournamentListCache()
+      setTournament(syncedTournament)
+      setDraft(makeDraft(syncedTournament, provinces))
       toast.success('Đã lên lịch giải đấu — trọng tài có thể check-in ngựa')
     } catch (error) {
       console.error('Không thể lên lịch giải đấu', error?.response?.data || error)
@@ -566,7 +624,7 @@ export default function SettingsTab({ tournament, setTournament }) {
           saving={saving}
           onCancel={() => {
             savedStatusCodeRef.current = tournament.statusCode ?? 'DRAFT'
-            setDraft({ ...makeDraft(tournament), rules: systemDefaultRules })
+            setDraft({ ...makeDraft(tournament, provinces), rules: systemDefaultRules })
           }}
           onSave={saveSettings}
         />

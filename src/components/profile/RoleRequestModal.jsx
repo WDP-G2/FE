@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FileText, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
-import KycVerificationSteps from '@/components/profile/KycVerificationSteps'
 import { ROLE_LABELS } from '@/constants/roleApplication'
 import {
   getFileHint,
@@ -99,15 +98,13 @@ function FieldError({ message }) {
   return <p className="mt-1.5 text-xs font-medium text-red-600">{message}</p>
 }
 
-export default function RoleRequestModal({ role, fullName, onClose, onSubmit, onKycComplete }) {
+export default function RoleRequestModal({ role, fullName, onClose, onSubmit }) {
   const fields = useMemo(() => ROLE_FIELDS[role] || [], [role])
   const [values, setValues] = useState(() => buildInitialValues(role, fullName))
   const [files, setFiles] = useState({})
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [workflowStep, setWorkflowStep] = useState('profile')
-  const [draftSaved, setDraftSaved] = useState(false)
 
   const fileFieldNames = useMemo(
     () => new Set(fields.filter((f) => f.type === 'file').map((f) => f.name)),
@@ -169,12 +166,7 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit, on
     setUploading(true)
     try {
       await onSubmit({ values, files, fileFieldNames })
-      if (role === 'SPECTATOR') {
-        onClose()
-      } else {
-        setDraftSaved(true)
-        setWorkflowStep('kyc')
-      }
+      onClose()
     } finally {
       setUploading(false)
       setSubmitting(false)
@@ -182,14 +174,6 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit, on
   }
 
   const handleClose = () => {
-    if (
-      draftSaved &&
-      !window.confirm(
-        'Hồ sơ đã được lưu ở trạng thái nháp. Nếu đóng lúc này, bạn sẽ cần gửi lại hồ sơ để bắt đầu KYC mới. Bạn vẫn muốn đóng?',
-      )
-    ) {
-      return
-    }
     onClose()
   }
 
@@ -227,7 +211,6 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit, on
           </button>
         </div>
 
-        {workflowStep === 'profile' ? (
         <form onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-5" noValidate>
           {fields.map((f) => (
             <div key={f.name}>
@@ -326,14 +309,6 @@ export default function RoleRequestModal({ role, fullName, onClose, onSubmit, on
             </button>
           </div>
         </form>
-        ) : (
-          <div className="overflow-y-auto p-6">
-            <KycVerificationSteps
-              role={role}
-              onComplete={onKycComplete}
-            />
-          </div>
-        )}
       </div>
     </div>
   )

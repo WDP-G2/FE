@@ -31,8 +31,11 @@ const API_MESSAGE_VI = {
   'Gate number must be assigned before race starts': 'Phải phân cổng xuất phát trước khi bắt đầu đua',
   'Cannot update gate after race has started, finished, or been cancelled':
     'Không thể đổi cổng sau khi cuộc đua đã bắt đầu, kết thúc hoặc bị hủy',
-  'Only scheduled races can be started': 'Chỉ có thể bắt đầu cuộc đua ở trạng thái Đã lên lịch',
-  'Race does not have enough checked-in participants': 'Chưa đủ ngựa check-in để bắt đầu cuộc đua',
+  'Only scheduled races can be started': 'Chỉ có thể bắt đầu cuộc đua khi cuộc đua ở trạng thái "Sắp diễn ra"',
+  'Race does not have enough checked-in participants':
+    'Chưa đủ ngựa check-in để bắt đầu cuộc đua. Hãy xác nhận có mặt và phân cổng xuất phát cho tất cả ngựa.',
+  'Chỉ có thể bắt đầu cuộc đua khi cuộc đua ở trạng thái Sắp diễn ra. Admin cần lên lịch giải trước.':
+    'Cuộc đua chưa lên lịch. Admin cần bấm "Lên lịch giải đấu" trước khi trọng tài bắt đầu.',
   'Only ongoing races can be finalized': 'Chỉ có thể chốt kết quả khi cuộc đua đang diễn ra',
   'Race result has already been finalized':
     'Kết quả đã được khóa. Admin cần bật giải "Đang diễn ra" để trọng tài cập nhật lại.',

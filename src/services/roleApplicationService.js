@@ -12,7 +12,11 @@ function appendFormFields(formData, fields) {
 const multipartHeaders = { 'Content-Type': 'multipart/form-data' }
 
 export const roleApplicationService = {
-  getMyApplication: () => axiosClient.get(ENDPOINTS.roleApplications.me).then(unwrapResponse),
+  getMyApplication: (options = {}) => {
+    const params = {}
+    if (options.role) params.role = options.role
+    return axiosClient.get(ENDPOINTS.roleApplications.me, { params }).then(unwrapResponse)
+  },
 
   submitSpectator: (payload) =>
     axiosClient.post(ENDPOINTS.roleApplications.spectator, payload).then(unwrapResponse),

@@ -17,8 +17,8 @@ export function formatCompactVND(amount) {
 
 export function toRevenueChartPoints(revenue = []) {
   return (Array.isArray(revenue) ? revenue : []).map((item) => ({
-    label: item?.label || `T${item?.month ?? ''}`,
-    value: Number(item?.amount ?? 0) / 1_000_000,
+    label: item?.label || item?.month || '',
+    value: Number(item?.value ?? item?.amount ?? 0) / 1_000_000,
     growthPercent: item?.growthPercent,
   }))
 }

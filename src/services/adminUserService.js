@@ -112,6 +112,11 @@ export function mapRoleApplication(application, emailFromUser = '') {
   }
 }
 
+export function resolveUserId(user) {
+  const id = String(user?.rawId ?? user?.id ?? '').trim()
+  return id || null
+}
+
 export const adminUserService = {
   async getUsers() {
     const data = await cachedRequest('admin:users', () =>
@@ -150,19 +155,21 @@ export const adminUserService = {
   },
 
   async activateUser(id) {
+    const userId = String(id ?? '').trim()
     await axiosClient
-      .put(ENDPOINTS.admin.activateUser(id), {}, { headers: { 'Content-Type': 'application/json' } })
+      .put(ENDPOINTS.admin.activateUser(userId), {}, { headers: { 'Content-Type': 'application/json' } })
       .then(unwrapResponse)
     invalidateCachedRequest('admin:users')
-    return this.getUserById(id)
+    return this.getUserById(userId)
   },
 
   async deactivateUser(id) {
+    const userId = String(id ?? '').trim()
     await axiosClient
-      .put(ENDPOINTS.admin.deactivateUser(id), {}, { headers: { 'Content-Type': 'application/json' } })
+      .put(ENDPOINTS.admin.deactivateUser(userId), {}, { headers: { 'Content-Type': 'application/json' } })
       .then(unwrapResponse)
     invalidateCachedRequest('admin:users')
-    return this.getUserById(id)
+    return this.getUserById(userId)
   },
 
   async updateUserRole(id, role) {

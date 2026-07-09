@@ -235,8 +235,8 @@ export function HorseOwnerRegistrations() {
     setSaving(true);
     try {
       const registration = await raceRegistrationService.registerForRace(selectedOption.raceId, {
-        horseId: Number(selectedOption.horseId),
-        jockeyInvitationId: Number(selectedOption.rawId ?? selectedOption.id),
+        horseId: selectedOption.horseId,
+        jockeyInvitationId: selectedOption.rawId ?? selectedOption.id,
         note: note.trim() || undefined,
       });
       setRegistrations((prev) => [registration, ...prev]);

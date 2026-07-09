@@ -6,7 +6,7 @@ import {
   getEvidenceMediaUrl,
   isEvidenceImage,
   isEvidenceVideo,
-} from './refereeViolationsMock'
+} from '@/utils/violationUtils'
 
 function isCloudinaryUrl(url) {
   return /res\.cloudinary\.com/i.test(String(url || ''))

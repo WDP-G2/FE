@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { refereeService } from '@/services/refereeService'
+import { TOURNAMENT_STATUS_UPDATED_EVENT } from '@/services/tournamentService'
 import {
   loadAssignedRacesFromApi,
   filterRacesForRefereeOperation,
@@ -111,8 +112,23 @@ export function useRefereeRaces({ operationOnly = true } = {}) {
 
   useEffect(() => {
     const handleInvitationsUpdated = () => reload({ silent: true })
+    const handleTournamentStatusUpdated = () => reload({ silent: true })
+
     window.addEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, handleInvitationsUpdated)
-    return () => window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, handleInvitationsUpdated)
+    window.addEventListener(TOURNAMENT_STATUS_UPDATED_EVENT, handleTournamentStatusUpdated)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') reload({ silent: true })
+    }
+    window.addEventListener('focus', handleTournamentStatusUpdated)
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      window.removeEventListener(REFEREE_INVITATIONS_UPDATED_EVENT, handleInvitationsUpdated)
+      window.removeEventListener(TOURNAMENT_STATUS_UPDATED_EVENT, handleTournamentStatusUpdated)
+      window.removeEventListener('focus', handleTournamentStatusUpdated)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [reload])
 
   return { races, loading, refreshing, error, reload }

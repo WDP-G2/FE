@@ -62,6 +62,9 @@ import {
   sanitizeRaceTimeInput,
   recompactFinishedRanks,
   assignRanksByFinishTime,
+  isValidParticipantId,
+  canAutoStartRaceForFinalize,
+  needsRefereeStartRace,
   sortResultRowsForDisplay,
   normalizeRaceStatusCode,
   normalizeTournamentStatusCode,
@@ -73,9 +76,7 @@ import {
 } from '@/utils/refereeRaceUtils';
 import { useRefereeRaces } from './useRefereeRaces';
 import { tournamentService } from '@/services/tournamentService';
-// TODO: Tích hợp API Violations sau
-import { addViolation, useRefereeViolations } from './refereeViolationsMock';
-import { buildEvidenceStorageKey, saveEvidenceFile } from './violationEvidenceStore';
+import { buildViolationTimestamp, formatViolationDisplayId, formatViolationTimestamp, mapActiveViolationTypeLabels } from '@/utils/violationUtils';
 import { ViolationEvidencePreviewModal, ViolationEvidenceThumbnail } from './ViolationEvidencePreview';
 
 
@@ -876,7 +877,6 @@ function ActionBtn({ tone, icon: Icon, active, title, onClick, disabled }) {
 }
 
 /* ---------------- Violations ---------------- */
-// TODO: Tích hợp API Violations sau
 function formatEvidenceSize(bytes) {
   if (!Number.isFinite(bytes) || bytes <= 0) return '—'
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -902,13 +902,6 @@ function isValidTimeOfDay(value) {
   const minutes = Number(match[2])
   const seconds = Number(match[3])
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59
-}
-
-function buildViolationTimestamp(timeOfDay) {
-  const now = new Date()
-  const pad = (value) => String(value).padStart(2, '0')
-  const datePart = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  return `${datePart} ${timeOfDay}`
 }
 
 const FALLBACK_VIOLATION_TYPES = [
@@ -937,8 +930,8 @@ function ViolationsTab({ raceId, raceName, horses }) {
   const user = useAuthStore((s) => s.user);
   const refereeName = user?.fullName || user?.username || 'Trọng tài';
   const horseList = Array.isArray(horses) ? horses : [];
-  const allViolations = useRefereeViolations();
-  const list = allViolations.filter((v) => String(v.raceId) === String(raceId));
+  const [list, setList] = useState([]);
+  const [loadingViolations, setLoadingViolations] = useState(true);
   const [open, setOpen] = useState(false);
   const evidenceInputRef = useRef(null);
   const [violationTypeOptions, setViolationTypeOptions] = useState(FALLBACK_VIOLATION_TYPES);
@@ -946,6 +939,24 @@ function ViolationsTab({ raceId, raceName, horses }) {
   const [submitting, setSubmitting] = useState(false);
   const [previewEvidence, setPreviewEvidence] = useState(null);
   const defaultViolationType = violationTypeOptions[0] || FALLBACK_VIOLATION_TYPES[0]
+
+  const loadViolations = useCallback(async () => {
+    if (!raceId) return;
+    try {
+      setLoadingViolations(true);
+      const data = await refereeService.getRaceViolations(raceId);
+      setList(data);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || 'Không tải được danh sách vi phạm');
+      setList([]);
+    } finally {
+      setLoadingViolations(false);
+    }
+  }, [raceId]);
+
+  useEffect(() => {
+    loadViolations();
+  }, [loadViolations]);
 
   useEffect(() => {
     let cancelled = false
@@ -955,10 +966,7 @@ function ViolationsTab({ raceId, raceName, horses }) {
         const response = await systemSettingsService.getPublicViolationTypes()
         if (cancelled) return
 
-        const labels = (Array.isArray(response) ? response : [])
-          .filter((item) => item?.active !== false)
-          .map((item) => String(item?.label ?? '').trim())
-          .filter(Boolean)
+        const labels = mapActiveViolationTypeLabels(response)
 
         if (labels.length) setViolationTypeOptions(labels)
       } catch {
@@ -1041,33 +1049,26 @@ function ViolationsTab({ raceId, raceName, horses }) {
 
     setSubmitting(true);
     try {
-      const violationId = `V-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`;
-      const storageKey = buildEvidenceStorageKey(violationId, form.evidenceFile.name);
-      await saveEvidenceFile(storageKey, form.evidenceFile);
-
-      const v = {
-        id: violationId,
+      await refereeService.createViolation(
         raceId,
-        raceName,
-        horseNo: h.no,
-        horse: h.horse,
-        jockey: h.jockey,
-        type: form.type,
-        severity: form.severity,
-        description: form.description || '(không có mô tả)',
-        penalty: form.penalty || 'Cảnh cáo',
-        evidence: [{
-          name: form.evidenceFile.name,
-          size: formatEvidenceSize(form.evidenceFile.size),
-          storageKey,
-          mimeType: form.evidenceFile.type,
-        }],
-        timestamp: buildViolationTimestamp(form.occurredAt),
-        reporter: refereeName,
-      };
-      addViolation(v);
+        {
+          participantId: h.id,
+          horseNo: h.no,
+          horseName: h.horse,
+          jockeyName: h.jockey,
+          type: form.type,
+          severity: form.severity,
+          description: form.description || '(không có mô tả)',
+          penalty: form.penalty || 'Cảnh cáo',
+          occurredAt: buildViolationTimestamp(form.occurredAt),
+        },
+        form.evidenceFile,
+      );
       closeModal();
+      await loadViolations();
       toast.success('Đã ghi nhận vi phạm');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || 'Không ghi nhận được vi phạm');
     } finally {
       setSubmitting(false);
     }
@@ -1092,7 +1093,10 @@ function ViolationsTab({ raceId, raceName, horses }) {
         </div>
 
         <div className="p-5 space-y-3">
-          {list.length === 0 && (
+          {loadingViolations && (
+            <div className="text-center py-12 text-white/40 text-sm">Đang tải vi phạm...</div>
+          )}
+          {!loadingViolations && list.length === 0 && (
             <div className="text-center py-12 text-white/40 text-sm">
               <CheckCircle2 className="w-10 h-10 mx-auto mb-2 opacity-30" />
               Chưa có vi phạm nào được ghi nhận trong cuộc đua này.
@@ -1107,7 +1111,7 @@ function ViolationsTab({ raceId, raceName, horses }) {
                   </div>
                   <div>
                     <div className="font-bold text-white text-sm">{v.horse} <span className="text-white/40 text-xs">· {v.jockey}</span></div>
-                    <div className="text-[11px] text-[#D4A017] font-mono">{v.id} · {v.timestamp}</div>
+                    <div className="text-[11px] text-[#D4A017] font-mono">{formatViolationDisplayId(v)} · {formatViolationTimestamp(v)}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1142,7 +1146,7 @@ function ViolationsTab({ raceId, raceName, horses }) {
                 </div>
               )}
               <div className="mt-3 text-[10px] text-white/40 flex items-center gap-1.5">
-                <Gavel className="w-3 h-3" /> Ghi bởi {v.reporter}
+                <Gavel className="w-3 h-3" /> Ghi bởi {v.reporter || refereeName}
               </div>
             </div>
           ))}
@@ -1339,8 +1343,7 @@ function ResultsTab({
   );
   const tournamentCompleted = tournamentStatus === 'COMPLETED';
   const canEdit = canRefereeEditRaceResults(liveRaceStatus, tournamentStatus);
-  const needsManualStart =
-    liveRaceStatus === 'SCHEDULED' && tournamentStatus !== 'ONGOING' && !canEdit;
+  const needsManualStart = needsRefereeStartRace(liveRaceStatus, tournamentStatus);
   const hasSavedResults = liveRaceStatus === 'RESULT_CONFIRMED';
 
   const [rows, setRows] = useState([]);
@@ -1430,7 +1433,13 @@ function ResultsTab({
 
   const updateRow = (id, patch) => {
     if (!patch || typeof patch !== 'object') return;
-    setRows((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    setRows((prev) => {
+      const next = prev.map((x) => (x.id === id ? { ...x, ...patch } : x));
+      if ('time' in patch || 'dq' in patch || 'dqReason' in patch) {
+        return assignRanksByFinishTime(next);
+      }
+      return next;
+    });
   };
 
   const toggleDq = (id) => {
@@ -1472,7 +1481,7 @@ function ResultsTab({
       return;
     }
 
-    const missingParticipant = rows.find((row) => !Number.isFinite(Number(row.participantId)))
+    const missingParticipant = rows.find((row) => !isValidParticipantId(row.participantId ?? row.id))
     if (missingParticipant) {
       toast.error('Thiếu mã ngựa tham gia. Hãy tải lại trang và thử lại.')
       return
@@ -1491,7 +1500,7 @@ function ResultsTab({
 
       let status = await refreshLiveRaceStatus();
 
-      if (status === 'SCHEDULED') {
+      if (canAutoStartRaceForFinalize(status, tournamentStatus)) {
         try {
           await refereeService.startRace(raceId);
           status = 'ONGOING';
@@ -1508,7 +1517,9 @@ function ResultsTab({
 
       if (status !== 'ONGOING') {
         toast.error(
-          'Chưa thể chốt kết quả. Hãy bấm "Bắt đầu cuộc đua" trước — cuộc đua phải ở trạng thái "Đang diễn ra".',
+          tournamentStatus === 'ONGOING'
+            ? 'Giải đang diễn ra nhưng cuộc đua chưa bắt đầu. Bấm "Bắt đầu cuộc đua" (cần check-in + phân cổng trước).'
+            : 'Chưa thể chốt kết quả. Hãy bấm "Bắt đầu cuộc đua" trước — cuộc đua phải ở trạng thái "Đang diễn ra".',
         );
         return;
       }

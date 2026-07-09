@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   CalendarDays,
   ChevronDown,
@@ -37,12 +37,13 @@ const STATUS_TABS = [
 const ADMIN_TOURNAMENTS_CACHE_KEY = "admin:tournaments";
 
 export default function AdminTournamentsPage() {
-  const { data, loading, error: fetchError } = useFetch(
+  const location = useLocation();
+  const { data, loading, error: fetchError, refetch } = useFetch(
     async () => {
       const response = await tournamentService.getAdminTournaments();
       return response.data;
     },
-    { cacheKey: ADMIN_TOURNAMENTS_CACHE_KEY },
+    { cacheKey: ADMIN_TOURNAMENTS_CACHE_KEY, staleTime: 0 },
   );
   const tournaments = data ?? [];
   const [status, setStatus] = useState("Tất cả");
@@ -53,6 +54,28 @@ export default function AdminTournamentsPage() {
     fetchError?.response?.data?.message ||
     fetchError?.message ||
     (fetchError ? "Không thể tải danh sách giải đấu." : "");
+
+  useEffect(() => {
+    if (location.pathname !== "/admin/tournaments") return undefined;
+
+    const refresh = () => {
+      refetch({ force: true }).catch(() => {});
+    };
+
+    refresh();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [location.pathname, refetch]);
 
   const statusTabs = useMemo(() => {
     const usedStatuses = new Set(

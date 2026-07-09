@@ -16,7 +16,7 @@ import AdminLayout from '@/components/AdminLayout'
 import RoleApplicationDetailModal from '@/components/admin/RoleApplicationDetailModal'
 import InviteUserModal from '@/components/InviteUserModal'
 import { PrimaryButton } from '@/components/ui/AdminButton'
-import { adminUserService, ROLE_VALUES } from '@/services/adminUserService'
+import { adminUserService, resolveUserId, ROLE_VALUES } from '@/services/adminUserService'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { useFetch } from '@/hooks/useFetch'
 import { useApiCacheStore } from '@/store/apiCacheStore'
@@ -84,8 +84,8 @@ export default function AdminUsersPage() {
       return
     }
 
-    const userId = Number(item.rawId)
-    if (!Number.isFinite(userId)) {
+    const userId = resolveUserId(item)
+    if (!userId) {
       toast.error('Không xác định được người dùng')
       return
     }
@@ -109,7 +109,7 @@ export default function AdminUsersPage() {
 
       setData((prev) => ({
         users: (prev?.users ?? []).map((u) =>
-          u.rawId === item.rawId
+          String(u.rawId ?? u.id) === userId
             ? {
                 ...u,
                 active: nextActive,
@@ -300,7 +300,7 @@ export default function AdminUsersPage() {
                           ) : (
                             <button
                               type="button"
-                              disabled={togglingUserId === Number(item.rawId)}
+                              disabled={togglingUserId === String(item.rawId ?? item.id)}
                               onClick={() => handleToggleUserActive(item)}
                               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
                                 item.active

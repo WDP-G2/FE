@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Edit2, Save, ShieldCheck, User, X } from "lucide-react";
+import { Camera, Edit2, Save, User, X } from "lucide-react";
 import { toast } from "sonner";
 import { HorseOwnerLayout } from "./HorseOwnerLayout";
 import { GlassCard, TextInput } from "../admin/AdminLayout";
@@ -10,50 +10,12 @@ import {
 import ChangePasswordModal from "@/components/profile/ChangePasswordModal";
 import { useAuthStore } from "@/store/authStore";
 import { userService } from "@/services/userService";
-import { roleApplicationService } from "@/services/roleApplicationService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatDisplayDate } from "@/utils/dateFormat";
 import { validateFileField } from "@/utils/roleApplicationValidation";
 
-const ROLE_LABELS = {
-  USER: "Người dùng",
-  OWNER: "Chủ ngựa",
-  ADMIN: "Admin",
-  JOCKEY: "Jockey",
-  SPECTATOR: "Khán giả",
-  REFEREE: "Trọng tài",
-};
-
-const APPROVAL_LABELS = {
-  NONE: "Chưa gửi yêu cầu",
-  PENDING: "Đang chờ duyệt",
-  APPROVED: "Đã duyệt",
-  REJECTED: "Bị từ chối",
-  DRAFT: "Bản nháp",
-};
-
-const KYC_STATUS_LABELS = {
-  NOT_STARTED: "Chưa xác minh",
-  PENDING: "Đang xác minh",
-  PASSED: "Đã xác minh",
-  FAILED: "Không đạt",
-  REJECTED: "Bị từ chối",
-};
-
 function formatDate(value) {
   return formatDisplayDate(value, "—");
-}
-
-function getRoleLabel(role) {
-  return ROLE_LABELS[role] || role || "—";
-}
-
-function getApprovalLabel(status) {
-  return APPROVAL_LABELS[status] || status || "—";
-}
-
-function getKycStatusLabel(status) {
-  return KYC_STATUS_LABELS[status] || status || "—";
 }
 
 function ReadonlyField({ label, children, className = "" }) {
@@ -73,18 +35,12 @@ export function HorseOwnerProfile() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [phoneDraft, setPhoneDraft] = useState(user?.phone || "");
   const [avatarPreview, setAvatarPreview] = useState("");
-  const [roleApplication, setRoleApplication] = useState(null);
   const avatarPreviewRef = useRef("");
 
   useEffect(() => {
     fetchProfile()
       .then((fresh) => setPhoneDraft(fresh?.phone || ""))
       .catch(() => {});
-
-    roleApplicationService
-      .getMyApplication()
-      .then((application) => setRoleApplication(application || null))
-      .catch(() => setRoleApplication(null));
   }, [fetchProfile]);
 
   useEffect(() => {
@@ -198,7 +154,7 @@ export function HorseOwnerProfile() {
           </div>
 
           <h2 className="text-lg font-bold text-white">{displayName}</h2>
-          <p className="mt-1 text-sm font-semibold text-[#D4A017]">{getRoleLabel(user?.role)}</p>
+          <p className="mt-1 text-sm font-semibold text-[#D4A017]">Chủ ngựa</p>
           <p className="mt-2 text-xs text-white/50">
             Thành viên từ {formatDate(user?.createdAt)}
           </p>
@@ -266,40 +222,6 @@ export function HorseOwnerProfile() {
                   </div>
                 )}
               </HorseOwnerProfileField>
-              <ReadonlyField label="Địa chỉ hồ sơ chủ ngựa" className="sm:col-span-2">
-                {roleApplication?.address || "—"}
-              </ReadonlyField>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-6">
-            <h3 className="mb-5 flex items-center gap-2 font-bold text-white">
-              <ShieldCheck className="h-4 w-4 text-[#D4A017]" />
-              Thông tin đăng ký & KYC
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ReadonlyField label="Vai trò hồ sơ">{getRoleLabel(roleApplication?.role)}</ReadonlyField>
-              <ReadonlyField label="Trạng thái hồ sơ">
-                {getApprovalLabel(roleApplication?.status)}
-              </ReadonlyField>
-              <ReadonlyField label="Trạng thái KYC">
-                {getKycStatusLabel(roleApplication?.kycStatus)}
-              </ReadonlyField>
-              <ReadonlyField label="Tên trang trại">{roleApplication?.stableName || "—"}</ReadonlyField>
-              <ReadonlyField label="Số năm kinh nghiệm">
-                {roleApplication?.experienceYears ?? "—"}
-              </ReadonlyField>
-              <ReadonlyField label="Họ tên KYC">{roleApplication?.kycFullName || "—"}</ReadonlyField>
-              <ReadonlyField label="Số CCCD">{roleApplication?.idNumberMasked || "—"}</ReadonlyField>
-              <ReadonlyField label="Ngày sinh">{roleApplication?.dateOfBirth || "—"}</ReadonlyField>
-              <ReadonlyField label="Giới tính">{roleApplication?.gender || "—"}</ReadonlyField>
-              <ReadonlyField label="Ngày cấp">{roleApplication?.issueDate || "—"}</ReadonlyField>
-              <ReadonlyField label="Địa chỉ hồ sơ chủ ngựa" className="sm:col-span-2">
-                {roleApplication?.address || "—"}
-              </ReadonlyField>
-              <ReadonlyField label="Địa chỉ KYC / CCCD" className="sm:col-span-2">
-                {roleApplication?.kycAddress || "—"}
-              </ReadonlyField>
             </div>
           </GlassCard>
 

@@ -5,6 +5,8 @@ import { unwrapResponse } from '@/api/response'
 export const RACE_REGISTRATION_STATUS_LABELS = {
   PENDING: 'Chờ duyệt',
   APPROVED: 'Đã duyệt',
+  ONGOING: 'Đang chạy',
+  COMPLETED: 'Hoàn thành',
   REJECTED: 'Từ chối',
   WITHDRAWN: 'Đã rút',
   CANCELLED: 'Đã hủy',
@@ -13,6 +15,8 @@ export const RACE_REGISTRATION_STATUS_LABELS = {
 export const RACE_REGISTRATION_STATUS_TONES = {
   PENDING: 'gold',
   APPROVED: 'green',
+  ONGOING: 'purple',
+  COMPLETED: 'green',
   REJECTED: 'red',
   WITHDRAWN: 'gray',
   CANCELLED: 'red',
@@ -20,22 +24,43 @@ export const RACE_REGISTRATION_STATUS_TONES = {
 
 export const ACTIVE_RACE_REGISTRATION_STATUSES = ['PENDING', 'APPROVED']
 
+const STATUS_LABEL_TO_CODE = {
+  'Chờ duyệt': 'PENDING',
+  'Đã duyệt': 'APPROVED',
+  'Từ chối': 'REJECTED',
+  'Đã rút': 'WITHDRAWN',
+  'Đang chạy': 'ONGOING',
+  'Hoàn thành': 'COMPLETED',
+}
+
+function normalizeStatusCode(status) {
+  if (!status) return 'PENDING'
+  const value = String(status).trim()
+  if (RACE_REGISTRATION_STATUS_LABELS[value]) return value
+  return STATUS_LABEL_TO_CODE[value] || value.toUpperCase()
+}
+
 export function mapRaceRegistration(registration) {
-  const statusCode = registration?.status ?? 'PENDING'
+  const statusCode = normalizeStatusCode(registration?.status)
 
   return {
     id: String(registration?.id ?? ''),
     rawId: registration?.id,
     raceId: registration?.raceId,
     raceName: registration?.raceName ?? '',
+    raceNumber: registration?.raceNumber ?? null,
+    raceScheduledAt: registration?.raceScheduledAt ?? null,
+    tournamentStartDate: registration?.tournamentStartDate ?? null,
     tournamentId: registration?.tournamentId,
+    tournamentName: registration?.tournamentName ?? '',
     ownerId: registration?.ownerId,
-    ownerUsername: registration?.ownerUsername ?? '',
+    ownerUsername: registration?.ownerUsername ?? registration?.ownerName ?? '',
     horseId: registration?.horseId,
     horseName: registration?.horseName ?? '',
     jockeyId: registration?.jockeyId,
-    jockeyUsername: registration?.jockeyUsername ?? '',
+    jockeyUsername: registration?.jockeyUsername ?? registration?.jockeyName ?? '',
     jockeyInvitationId: registration?.jockeyInvitationId,
+    checkInStatus: registration?.checkInStatus ?? 'PENDING',
     statusCode,
     status: RACE_REGISTRATION_STATUS_LABELS[statusCode] ?? statusCode,
     statusTone: RACE_REGISTRATION_STATUS_TONES[statusCode] ?? 'gray',
@@ -45,7 +70,7 @@ export function mapRaceRegistration(registration) {
     withdrawNote: registration?.withdrawNote ?? '',
     reviewedBy: registration?.reviewedBy ?? null,
     reviewedAt: registration?.reviewedAt ?? null,
-    createdAt: registration?.createdAt ?? null,
+    createdAt: registration?.createdAt ?? registration?.registeredAt ?? null,
     updatedAt: registration?.updatedAt ?? null,
     raw: registration,
   }

@@ -55,6 +55,14 @@ export const walletService = {
   getMyDepositOrder: (id) =>
     axiosClient.get(ENDPOINTS.wallet.depositOrderById(id)).then(unwrapResponse),
 
+  payMyDepositOrderWithCard: async (id, payload) => {
+    const data = await axiosClient
+      .post(ENDPOINTS.wallet.payDepositOrderWithCard(id), payload)
+      .then(unwrapResponse)
+    invalidateWalletCache('user')
+    return data
+  },
+
   getMyWithdrawals: () => axiosClient.get(ENDPOINTS.wallet.withdrawals).then(unwrapResponse),
 
   createWithdrawal: async (payload) => {
@@ -81,6 +89,14 @@ export const walletService = {
 
   getAdminDepositOrder: (id) =>
     axiosClient.get(ENDPOINTS.wallet.adminDepositOrderById(id)).then(unwrapResponse),
+
+  payAdminDepositOrderWithCard: async (id, payload) => {
+    const data = await axiosClient
+      .post(ENDPOINTS.wallet.adminPayDepositOrderWithCard(id), payload)
+      .then(unwrapResponse)
+    invalidateWalletCache('admin')
+    return data
+  },
 
   getAdminWithdrawals: () =>
     axiosClient.get(ENDPOINTS.wallet.adminWithdrawals).then(unwrapResponse),

@@ -5,6 +5,7 @@ import AdminLayout from '@/components/AdminLayout'
 import Card from '@/components/ui/Card'
 import {
   ADMIN_JUDGES_PUBLISHED_TOURNAMENTS_CACHE_KEY,
+  TOURNAMENT_STATUS_UPDATED_EVENT,
   tournamentService,
 } from '@/services/tournamentService'
 import { useFetch } from '@/hooks/useFetch'
@@ -41,10 +42,12 @@ export default function AdminJudgesPage() {
 
     window.addEventListener('focus', refresh)
     document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener(TOURNAMENT_STATUS_UPDATED_EVENT, refresh)
 
     return () => {
       window.removeEventListener('focus', refresh)
       document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener(TOURNAMENT_STATUS_UPDATED_EVENT, refresh)
     }
   }, [location.pathname, refetch])
 
@@ -84,9 +87,11 @@ export default function AdminJudgesPage() {
     }
 
     loadTournamentDetail()
+    window.addEventListener(TOURNAMENT_STATUS_UPDATED_EVENT, loadTournamentDetail)
 
     return () => {
       cancelled = true
+      window.removeEventListener(TOURNAMENT_STATUS_UPDATED_EVENT, loadTournamentDetail)
     }
   }, [tournamentId])
 

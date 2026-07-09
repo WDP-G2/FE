@@ -75,9 +75,19 @@ export function sumRacePrizeAmount(results = []) {
 
 export function getRefereeRaceDisplayLabel(race) {
   const tournament = normalizeTournamentStatusCode(race?.tournamentStatus)
-  if (tournament === 'COMPLETED') return 'Đã kết thúc'
-  if (tournament === 'ONGOING') return 'Đang diễn ra'
   const raceStatus = normalizeRaceStatusCode(race?.status)
+  if (raceStatus === 'RESULT_CONFIRMED') return 'Đã chốt kết quả'
+  if (tournament === 'COMPLETED') return 'Đã kết thúc'
+  if (tournament === 'ONGOING' && raceStatus === 'ONGOING') return 'Đang diễn ra'
+  if (tournament === 'ONGOING' && raceStatus === 'SCHEDULED') return 'Sắp diễn ra'
+  if (
+    raceStatus === 'DRAFT' &&
+    (tournament === 'PUBLISHED' ||
+      tournament === 'OPEN_REGISTRATION' ||
+      tournament === 'REGISTRATION_CLOSED')
+  ) {
+    return RACE_STATUS_VI[tournament] || raceStatusLabel(tournament)
+  }
   if (raceStatus === 'RESULT_CONFIRMED') return 'Đã chốt kết quả'
   if (raceStatus === 'ONGOING') return 'Đang diễn ra'
   if (raceStatus === 'SCHEDULED') return 'Sắp diễn ra'
@@ -97,6 +107,7 @@ export function getRefereeRaceStatusTone(race) {
 const RACE_STATUS_ALIASES = {
   'ĐANG DIỄN RA': 'ONGOING',
   'ĐANG ĐUA': 'ONGOING',
+  'ĐANG CHẠY': 'ONGOING',
   'SẮP DIỄN RA': 'SCHEDULED',
   'ĐÃ LÊN LỊCH': 'SCHEDULED',
   'ĐÃ CHỐT KẾT QUẢ': 'RESULT_CONFIRMED',
@@ -107,6 +118,7 @@ const TOURNAMENT_STATUS_ALIASES = {
   'ĐANG DIỄN RA': 'ONGOING',
   'ĐÃ KẾT THÚC': 'COMPLETED',
   'ĐÃ LÊN LỊCH': 'SCHEDULED',
+  'ĐÃ CÔNG BỐ': 'PUBLISHED',
   'ĐANG MỞ ĐĂNG KÝ': 'OPEN_REGISTRATION',
   'ĐÃ ĐÓNG ĐĂNG KÝ': 'REGISTRATION_CLOSED',
 }
@@ -183,25 +195,38 @@ export function checkInDisplayLabel(status) {
   return 'Chờ'
 }
 
-export const REFEREE_CHECK_IN_STATUSES = ['CHECKED_IN', 'ABSENT']
+export function canAutoStartRaceForFinalize(raceStatus, tournamentStatus) {
+  const race = normalizeRaceStatusCode(raceStatus)
+  if (race === 'ONGOING' || race === 'RESULT_CONFIRMED') return false
+  if (race === 'SCHEDULED') return true
+  return normalizeTournamentStatusCode(tournamentStatus) === 'ONGOING'
+}
+
+export function needsRefereeStartRace(raceStatus, tournamentStatus) {
+  const tournament = normalizeTournamentStatusCode(tournamentStatus)
+  const race = normalizeRaceStatusCode(raceStatus)
+  if (tournament !== 'ONGOING') return false
+  return race !== 'ONGOING' && race !== 'RESULT_CONFIRMED'
+}
 
 export function canRefereeCheckIn(raceStatus) {
-  return raceStatus === 'SCHEDULED'
+  return normalizeRaceStatusCode(raceStatus) === 'SCHEDULED'
 }
 
 export function getRefereeCheckInBlockedMessage(raceStatus, statusLabel) {
   if (canRefereeCheckIn(raceStatus)) return ''
-  const label = statusLabel || raceStatusLabel(raceStatus) || 'hiện tại'
+  const race = normalizeRaceStatusCode(raceStatus)
+  const label = statusLabel || raceStatusLabel(race) || 'hiện tại'
 
-  if (raceStatus === 'OPEN_REGISTRATION' || raceStatus === 'PUBLISHED') {
+  if (race === 'OPEN_REGISTRATION' || race === 'PUBLISHED') {
     return `Cuộc đua đang ở trạng thái "${label}". Admin cần đóng đăng ký giải, rồi lên lịch giải đấu — sau đó trọng tài mới check-in được.`
   }
 
-  if (raceStatus === 'REGISTRATION_CLOSED') {
+  if (race === 'REGISTRATION_CLOSED') {
     return `Cuộc đua đang ở trạng thái "${label}". Admin cần bấm "Lên lịch giải đấu" (tab Cài đặt giải) — sau đó trọng tài mới check-in được.`
   }
 
-  if (raceStatus === 'DRAFT') {
+  if (race === 'DRAFT') {
     return `Cuộc đua đang ở trạng thái "${label}". Giải cần được công bố, mở/đóng đăng ký và lên lịch trước khi trọng tài check-in.`
   }
 
@@ -373,9 +398,10 @@ export function mapRaceFromApi(raw, index = 0, { tournamentStatus = '' } = {}) {
     tabBucket: getRefereeRaceTabBucket(raceCore),
     checkedInDisplay: checkedInCount,
     checkedInCount,
-    winnerDisplay: raw?.winnerDisplay || '--',
+    winnerDisplay: raw?.winnerName || raw?.winnerDisplay || '--',
     prizeDisplay: 'Xem chi tiết',
-    resultFinalizedAt: raw?.resultFinalizedAt,
+    resultFinalizedAt: raw?.resultFinalizedAt || null,
+    totalPrizeAmount: Number(raw?.totalPrizeAmount ?? 0),
     prizes: Array.isArray(raw?.prizes) ? raw.prizes : [],
   }
 }
@@ -383,7 +409,7 @@ export function mapRaceFromApi(raw, index = 0, { tournamentStatus = '' } = {}) {
 export function mapParticipantFromApi(raw, index = 0) {
   return {
     id: raw?.id,
-    participantId: raw?.id,
+    participantId: raw?.participantId ?? raw?.id,
     no: raw?.gateNumber ?? index + 1,
     horse: raw?.horseName ?? missingBe('horseName'),
     owner: raw?.ownerUsername ?? missingBe('ownerUsername'),
@@ -543,10 +569,15 @@ export function summarizeParticipantCheckIn(participants = []) {
   }
 }
 
+export function isValidParticipantId(value) {
+  const id = String(value ?? '').trim()
+  return id.length > 0
+}
+
 /** Payload gửi BE — ngựa loại chỉ gửi lý do, không có rank */
 export function buildRaceFinalizePayload(rows) {
   return (Array.isArray(rows) ? rows : []).map((row) => {
-    const participantId = Number(row.participantId)
+    const participantId = String(row.participantId ?? row.id ?? '').trim()
     if (row.dq) {
       const note = String(row.dqReason ?? '').trim() || undefined
       return {

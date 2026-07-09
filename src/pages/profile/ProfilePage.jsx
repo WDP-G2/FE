@@ -94,27 +94,14 @@ export default function ProfilePage() {
   const handleRoleSubmit = async (role, payload) => {
     try {
       await submitRoleApplication(role, payload)
-      if (role === 'SPECTATOR') {
-        await fetchProfile()
-        toast.success('Đã gửi yêu cầu Khán giả. Hồ sơ đang chờ quản trị viên duyệt.')
-        setOpenRole(null)
-        return
-      }
-      toast.success('Đã lưu hồ sơ nháp. Vui lòng hoàn tất xác minh KYC.')
+      await fetchProfile()
+      toast.success(
+        `Đã gửi hồ sơ ${ROLE_LABELS[role]}. Hồ sơ đang chờ quản trị viên duyệt.`,
+      )
+      setOpenRole(null)
     } catch (err) {
       toast.error(getApiErrorMessage(err))
       throw err
-    }
-  }
-
-  const handleKycComplete = async (role) => {
-    try {
-      await fetchProfile()
-      toast.success(`KYC thành công. Hồ sơ ${ROLE_LABELS[role]} đang chờ quản trị viên duyệt.`)
-    } catch {
-      toast.success('KYC thành công. Hồ sơ đang chờ quản trị viên duyệt.')
-    } finally {
-      setOpenRole(null)
     }
   }
 
@@ -367,7 +354,6 @@ export default function ProfilePage() {
           fullName={displayName}
           onClose={() => setOpenRole(null)}
           onSubmit={(payload) => handleRoleSubmit(openRole, payload)}
-          onKycComplete={() => handleKycComplete(openRole)}
         />
       )}
     </div>

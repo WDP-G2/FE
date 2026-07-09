@@ -7,6 +7,8 @@ import { cachedRequest, invalidateCachedRequest } from '@/utils/requestCache'
 export const ADMIN_JUDGES_PUBLISHED_TOURNAMENTS_CACHE_KEY =
   'admin:judges:published-only-tournaments'
 
+export const TOURNAMENT_STATUS_UPDATED_EVENT = 'tournament-status-updated'
+
 export const FALLBACK_TOURNAMENT_BANNER =
   'https://images.unsplash.com/photo-1507514604110-ba3347c457f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
 
@@ -183,7 +185,7 @@ function raceRequest(race) {
   return {
     name: race.name,
     distance: race.distance || '1000m',
-    venueId: race.venueId ? Number(race.venueId) : null,
+    venueId: race.venueId || null,
     scheduledStartAt: dateTime(date, time),
     scheduledEndAt: endTime ? dateTime(date, endTime) : addOneHourDateTime(date, time),
     minParticipants,
@@ -241,7 +243,12 @@ export function mapTournament(tournament) {
 export function invalidateTournamentListCache() {
   invalidateCachedRequest('admin:tournaments')
   invalidateCachedRequest('public:tournaments')
+  useApiCacheStore.getState().removeCache('admin:tournaments')
+  useApiCacheStore.getState().removeCache('public:tournaments')
   useApiCacheStore.getState().removeCache(ADMIN_JUDGES_PUBLISHED_TOURNAMENTS_CACHE_KEY)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(TOURNAMENT_STATUS_UPDATED_EVENT))
+  }
 }
 
 async function fetchAdminTournamentRaceCountMap() {

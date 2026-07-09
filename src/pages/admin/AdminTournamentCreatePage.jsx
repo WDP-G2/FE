@@ -57,7 +57,7 @@ function buildTournamentPayload(form, bannerUrl) {
     name: form.name.trim(),
     description: form.description.trim(),
     location: form.location.trim(),
-    provinceId: Number(form.provinceId),
+    provinceId: form.provinceId || null,
     bannerUrl,
     registrationOpenAt: dateTime(form.registrationOpenDate, "08:00"),
     registrationCloseAt: dateTime(form.registrationCloseDate, "17:00"),

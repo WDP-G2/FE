@@ -46,7 +46,7 @@ function horseFormData(horse) {
 }
 
 export function mapHorse(horse) {
-  const statusCode = horse?.status ?? 'PENDING'
+  const statusCode = horse?.status ?? horse?.approvalStatus ?? 'PENDING'
 
   return {
     id: String(horse?.id ?? ''),
@@ -138,5 +138,13 @@ export const horseService = {
       .then(unwrapResponse)
     invalidateCachedRequest('admin:horses')
     return mapHorse(data)
+  },
+
+  async getOwnerResults() {
+    return axiosClient.get(ENDPOINTS.horses.ownerResults).then(unwrapResponse)
+  },
+
+  async getOwnerDashboard() {
+    return axiosClient.get(ENDPOINTS.horses.ownerDashboard).then(unwrapResponse)
   },
 }

@@ -46,7 +46,7 @@ function mergeJockeyAccountsWithProfiles(accounts, approvedProfiles) {
       username: profile.username || account.username,
       avatarUrl: profile.avatarUrl || account.avatarUrl,
       active: account.active,
-      hasApprovedProfile: account.active,
+      hasApprovedProfile: true,
       statusCode: account.active ? profile.statusCode : "INACTIVE",
       status: account.active ? profile.status : "Tài khoản bị khóa",
       statusTone: account.active ? profile.statusTone : "red",
@@ -110,6 +110,23 @@ function summarizeJockeyInvitations(invitations) {
     totalCount: invitations.length,
     assigned: accepted.map((invitation) => invitation.horseName).filter(Boolean).join(", "),
   };
+}
+
+function jockeySortKey(jockey) {
+  const usernameMatch = String(jockey?.username || "").match(/jockey0*(\d+)/i);
+  if (usernameMatch) return Number(usernameMatch[1]);
+
+  const licenseMatch = String(jockey?.license || "").match(/(\d+)/);
+  if (licenseMatch) return Number(licenseMatch[1]);
+
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function compareJockeys(first, second) {
+  const numberDiff = jockeySortKey(first) - jockeySortKey(second);
+  if (numberDiff !== 0) return numberDiff;
+
+  return String(first?.name || "").localeCompare(String(second?.name || ""), "vi");
 }
 
 async function loadInvitableTournaments() {
@@ -316,16 +333,18 @@ export function useHorseOwnerJockeys() {
 
   const filteredJockeys = useMemo(
     () =>
-      enrichedJockeys.filter((jockey) => {
-        const normalized = search.trim().toLowerCase();
-        const matchSearch =
-          !normalized ||
-          `${jockey.name} ${jockey.username} ${jockey.email ?? ""} ${jockey.license}`
-            .toLowerCase()
-            .includes(normalized);
-        const matchStatus = filterStatus === "Tất cả" || jockey.status === filterStatus;
-        return matchSearch && matchStatus;
-      }),
+      enrichedJockeys
+        .filter((jockey) => {
+          const normalized = search.trim().toLowerCase();
+          const matchSearch =
+            !normalized ||
+            `${jockey.name} ${jockey.username} ${jockey.email ?? ""} ${jockey.license}`
+              .toLowerCase()
+              .includes(normalized);
+          const matchStatus = filterStatus === "Tất cả" || jockey.status === filterStatus;
+          return matchSearch && matchStatus;
+        })
+        .sort(compareJockeys),
     [enrichedJockeys, filterStatus, search],
   );
 
@@ -452,9 +471,9 @@ export function useHorseOwnerJockeys() {
     try {
       setSaving(true);
       const invitation = await jockeyService.createInvitation({
-        horseId: Number(inviteForm.horseId),
-        raceId: Number(inviteForm.raceId),
-        jockeyId: Number(inviteTarget.userId),
+        horseId: inviteForm.horseId,
+        raceId: inviteForm.raceId,
+        jockeyId: inviteTarget.userId,
         remunerationAmount,
         message: inviteForm.message,
       });

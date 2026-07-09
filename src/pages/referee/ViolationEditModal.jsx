@@ -3,8 +3,9 @@ import { AlertTriangle, Camera, Upload, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { GhostButton, PrimaryButton, Select, TextInput } from '@/pages/admin/AdminLayout';
 import { systemSettingsService } from '@/services/systemSettingsService';
-import { updateViolation } from './refereeViolationsMock';
-import { buildEvidenceStorageKey, saveEvidenceFile } from './violationEvidenceStore';
+import { refereeService } from '@/services/refereeService';
+import { getApiErrorMessage } from '@/utils/apiError';
+import { buildViolationTimestamp, mapActiveViolationTypeLabels } from '@/utils/violationUtils';
 
 const FALLBACK_VIOLATION_TYPES = [
   'Xuất phát sai',
@@ -59,7 +60,7 @@ function Field({ label, children }) {
   );
 }
 
-export function ViolationEditModal({ violation, onClose }) {
+export function ViolationEditModal({ violation, onClose, onUpdated }) {
   const evidenceInputRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [violationTypeOptions, setViolationTypeOptions] = useState(FALLBACK_VIOLATION_TYPES);
@@ -94,10 +95,7 @@ export function ViolationEditModal({ violation, onClose }) {
         const response = await systemSettingsService.getPublicViolationTypes()
         if (cancelled) return
 
-        const labels = (Array.isArray(response) ? response : [])
-          .filter((item) => item?.active !== false)
-          .map((item) => String(item?.label ?? '').trim())
-          .filter(Boolean)
+        const labels = mapActiveViolationTypeLabels(response)
 
         if (labels.length) setViolationTypeOptions(labels)
       } catch {
@@ -171,34 +169,29 @@ export function ViolationEditModal({ violation, onClose }) {
 
     setSubmitting(true);
     try {
-      const updates = {
-        type: form.type,
-        severity: form.severity,
-        description: form.description.trim(),
-        penalty: form.penalty.trim() || 'Cảnh cáo',
-        timestamp: `${extractDateFromTimestamp(violation.timestamp)} ${form.occurredAt}`,
-      };
+      const occurredAt = buildViolationTimestamp(
+        form.occurredAt,
+        violation.timestamp ? new Date(String(violation.timestamp).replace(' ', 'T')) : new Date(),
+      );
 
-      if (form.evidenceFile) {
-        const storageKey = buildEvidenceStorageKey(violation.id, form.evidenceFile.name);
-        await saveEvidenceFile(storageKey, form.evidenceFile);
-        updates.evidence = [{
-          name: form.evidenceFile.name,
-          size: formatEvidenceSize(form.evidenceFile.size),
-          storageKey,
-          mimeType: form.evidenceFile.type,
-        }];
-      }
-
-      const ok = updateViolation(violation.id, updates);
-      if (!ok) {
-        toast.error('Không tìm thấy vi phạm để cập nhật');
-        return;
-      }
+      await refereeService.updateViolation(
+        violation.id,
+        {
+          type: form.type,
+          severity: form.severity,
+          description: form.description.trim(),
+          penalty: form.penalty.trim() || 'Cảnh cáo',
+          occurredAt,
+        },
+        form.evidenceFile || null,
+      );
 
       resetEvidencePreview(form.evidencePreview);
       toast.success('Đã cập nhật vi phạm');
+      onUpdated?.();
       onClose();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || 'Không cập nhật được vi phạm');
     } finally {
       setSubmitting(false);
     }
@@ -218,7 +211,7 @@ export function ViolationEditModal({ violation, onClose }) {
             <AlertTriangle className="w-5 h-5 text-[#D4A017]" />
             <div>
               <h3 className="font-bold text-white">Chỉnh sửa vi phạm</h3>
-              <p className="text-xs text-white/50 font-mono">{violation.id} · {violation.raceName}</p>
+              <p className="text-xs text-white/50 font-mono">{violation.displayCode || violation.id} · {violation.raceName}</p>
             </div>
           </div>
           <button type="button" onClick={close} className="text-white/60 hover:text-white">

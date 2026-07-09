@@ -16,12 +16,12 @@ import {
 const REVENUE_MONTHS = 6
 
 export default function AdminDashboardPage() {
-  const { data: summary, loading: summaryLoading } = useFetch(
+  const { data: summary, loading: summaryLoading, error: summaryError } = useFetch(
     () => dashboardService.getAdminSummary(),
     { cacheKey: 'admin:dashboard:summary' },
   )
 
-  const { data: revenue = [], loading: revenueLoading } = useFetch(
+  const { data: revenue = [], loading: revenueLoading, error: revenueError } = useFetch(
     () => dashboardService.getAdminRevenue(REVENUE_MONTHS),
     { cacheKey: `admin:dashboard:revenue:${REVENUE_MONTHS}` },
   )
@@ -64,9 +64,15 @@ export default function AdminDashboardPage() {
   const revenuePoints = useMemo(() => toRevenueChartPoints(revenue), [revenue])
 
   const loading = summaryLoading || revenueLoading
+  const errorMessage = summaryError?.message || revenueError?.message || ''
 
   return (
     <AdminLayout>
+      {errorMessage && (
+        <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {errorMessage}
+        </div>
+      )}
       <section aria-label="Chỉ số tổng quan" className="mb-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {loading && !summary
           ? Array.from({ length: 4 }).map((_, index) => (

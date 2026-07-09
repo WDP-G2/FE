@@ -45,6 +45,10 @@ function mapSettings(settings) {
     data: {
       ...settings,
       defaultTournamentRules,
+      violationTypes: Array.isArray(settings?.violationTypes) ? settings.violationTypes : [],
+      violationPenaltyRules: Array.isArray(settings?.violationPenaltyRules)
+        ? settings.violationPenaltyRules
+        : [],
       raceDistances: (Array.isArray(settings?.raceDistances) ? settings.raceDistances : [])
         .map(mapDistance)
         .filter((item) => item.meters > 0),

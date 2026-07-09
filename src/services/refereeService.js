@@ -32,6 +32,23 @@ function mapReferee(user, profile) {
   }
 }
 
+import { mapViolationFromApi } from '@/utils/violationUtils'
+
+const multipartHeaders = { 'Content-Type': 'multipart/form-data' }
+
+function buildViolationFormData(payload, evidenceFile) {
+  const formData = new FormData()
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      formData.append(key, String(value))
+    }
+  })
+  if (evidenceFile) {
+    formData.append('evidence', evidenceFile)
+  }
+  return formData
+}
+
 export const refereeService = {
   async getAvailableReferees() {
     try {
@@ -89,14 +106,14 @@ export const refereeService = {
 
   async createRefereeInvitation({ raceId, refereeId, salaryConfigId, message = '' }) {
     let configId = salaryConfigId
-    if (configId == null) {
+    if (configId == null || configId === '') {
       configId = await this.ensureSalaryConfigId()
     }
     return axiosClient
       .post(ENDPOINTS.refereeInvitations.adminCreate, {
-        raceId: Number(raceId),
-        refereeId: Number(refereeId),
-        salaryConfigId: Number(configId),
+        raceId: String(raceId),
+        refereeId: String(refereeId),
+        salaryConfigId: configId != null ? String(configId) : undefined,
         message: String(message ?? '').trim(),
       })
       .then(unwrapResponse)
@@ -293,7 +310,7 @@ export const refereeService = {
 
   async finalizeRaceResults(raceId, results) {
     const payload = (Array.isArray(results) ? results : []).map((entry) => ({
-      participantId: Number(entry.participantId),
+      participantId: String(entry.participantId ?? '').trim(),
       rank: entry.rank != null ? Number(entry.rank) : undefined,
       finishTimeMillis:
         entry.finishTimeMillis != null ? Number(entry.finishTimeMillis) : undefined,
@@ -311,6 +328,38 @@ export const refereeService = {
     return Array.isArray(data) ? data : []
   },
 
+  async getMyViolations() {
+    const data = await axiosClient.get(ENDPOINTS.referee.violations).then(unwrapResponse)
+    return (Array.isArray(data) ? data : []).map(mapViolationFromApi)
+  },
+
+  async getRaceViolations(raceId) {
+    const data = await axiosClient.get(ENDPOINTS.referee.raceViolations(raceId)).then(unwrapResponse)
+    return (Array.isArray(data) ? data : []).map(mapViolationFromApi)
+  },
+
+  async createViolation(raceId, payload, evidenceFile) {
+    const data = await axiosClient
+      .post(
+        ENDPOINTS.referee.createViolation(raceId),
+        buildViolationFormData(payload, evidenceFile),
+        { headers: multipartHeaders, timeout: 120_000 },
+      )
+      .then(unwrapResponse)
+    return mapViolationFromApi(data)
+  },
+
+  async updateViolation(violationId, payload, evidenceFile) {
+    const data = await axiosClient
+      .put(
+        ENDPOINTS.referee.updateViolation(violationId),
+        buildViolationFormData(payload, evidenceFile),
+        { headers: multipartHeaders, timeout: 120_000 },
+      )
+      .then(unwrapResponse)
+    return mapViolationFromApi(data)
+  },
+
   async loadRefereeHistoryRaces() {
     const mapped = await this.loadAssignedRacesMapped()
     const history = mapped.filter((race) => isRefereeRaceHistory(race))
@@ -319,17 +368,21 @@ export const refereeService = {
     const withResults = await Promise.all(
       enriched.map(async (race) => {
         if (!race?.id) return race
+        const prizeFromSummary = Number(race.totalPrizeAmount ?? 0)
         try {
           const results = await this.getRaceResults(race.id)
-          const prizeTotal = sumRacePrizeAmount(results)
+          const prizeTotal = sumRacePrizeAmount(results) || prizeFromSummary
           return {
             ...race,
-            winnerDisplay: pickWinnerFromRaceResults(results),
+            winnerDisplay: pickWinnerFromRaceResults(results) || race.winnerDisplay,
             prizeDisplay: prizeTotal > 0 ? fmtVND(prizeTotal) : '—',
             resultsCount: results.length,
           }
         } catch {
-          return race
+          return {
+            ...race,
+            prizeDisplay: prizeFromSummary > 0 ? fmtVND(prizeFromSummary) : '—',
+          }
         }
       }),
     )

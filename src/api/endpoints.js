@@ -120,6 +120,10 @@ export const ENDPOINTS = {
     startRace: (raceId) => `/referee/races/${raceId}/start`,
     finalizeResults: (raceId) => `/referee/races/${raceId}/results/finalize`,
     payments: '/referee/payments',
+    violations: '/referee/violations',
+    raceViolations: (raceId) => `/referee/races/${raceId}/violations`,
+    createViolation: (raceId) => `/referee/races/${raceId}/violations`,
+    updateViolation: (id) => `/referee/violations/${id}`,
   },
   raceRegistrations: {
     ownerList: '/owner/race-registrations',
@@ -137,6 +141,8 @@ export const ENDPOINTS = {
   horses: {
     ownerList: '/owner/horses',
     ownerById: (id) => `/owner/horses/${id}`,
+    ownerResults: '/owner/results',
+    ownerDashboard: '/owner/dashboard',
     approved: '/horses/approved',
     adminList: '/admin/horses',
     adminApprove: (id) => `/admin/horses/${id}/approve`,
@@ -168,11 +174,13 @@ export const ENDPOINTS = {
     transactions: '/wallets/me/transactions',
     depositOrders: '/wallets/me/deposit-orders',
     depositOrderById: (id) => `/wallets/me/deposit-orders/${id}`,
+    payDepositOrderWithCard: (id) => `/wallets/me/deposit-orders/${id}/pay-with-card`,
     withdrawals: '/wallets/me/withdrawals',
     admin: '/admin/wallet',
     adminTransactions: '/admin/wallet/transactions',
     adminDepositOrders: '/admin/wallet/deposit-orders',
     adminDepositOrderById: (id) => `/admin/wallet/deposit-orders/${id}`,
+    adminPayDepositOrderWithCard: (id) => `/admin/wallet/deposit-orders/${id}/pay-with-card`,
     adminWithdrawals: '/admin/wallet/withdrawals',
   },
   roleApplications: {

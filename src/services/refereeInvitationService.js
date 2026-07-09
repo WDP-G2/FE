@@ -87,8 +87,8 @@ export async function respondToInvitation(invitationId, user, nextStatus, note =
   if (![STATUS.ACCEPTED, STATUS.DECLINED].includes(nextStatus)) return null
   if (!user || invitationId == null) return null
 
-  const id = Number(invitationId)
-  if (!Number.isFinite(id)) return null
+  const id = String(invitationId)
+  if (!id) return null
 
   if (nextStatus === STATUS.ACCEPTED) {
     await refereeService.acceptRefereeInvitation(id, note)
@@ -98,8 +98,8 @@ export async function respondToInvitation(invitationId, user, nextStatus, note =
 
   await loadRefereeInvitationsFromApi()
   notifyInvitationsUpdated()
-  return cachedRefereeInvitations.find((item) => String(item.id) === String(id)) ?? {
-    id: String(id),
+  return cachedRefereeInvitations.find((item) => String(item.id) === id) ?? {
+    id,
     status: nextStatus,
   }
 }

@@ -27,6 +27,30 @@ import HorseRacingThreeBackground from './HorseRacingThreeBackground'
 const PRESETS = [100_000, 500_000, 1_000_000, 5_000_000, 10_000_000]
 const PROVIDER = 'ZALOPAY'
 
+const DEPOSIT_METHODS = [
+  {
+    id: 'QR',
+    title: 'Quét QR ZaloPay',
+    description: 'Thanh toán bằng ví ZaloPay Sandbox',
+    badge: 'Nhanh gọn',
+    accent: 'from-sky-500 via-blue-500 to-blue-600',
+  },
+  {
+    id: 'VISA',
+    title: 'Thẻ Visa / Mastercard',
+    description: 'Nhập thẻ test ngay trên web, tiền tự vào ví',
+    badge: 'Sandbox',
+    accent: 'from-violet-500 via-purple-500 to-indigo-600',
+  },
+]
+
+const VISA_TEST_CARD = {
+  number: '4111111111111111',
+  name: 'NGUYEN VAN A',
+  expiry: '01/25',
+  cvv: '123',
+}
+
 const TX_LABELS = {
   DEPOSIT: { label: 'Nạp tiền', color: 'text-emerald-300', bg: 'bg-emerald-500/15' },
   WITHDRAW: { label: 'Rút tiền', color: 'text-rose-300', bg: 'bg-rose-500/15' },
@@ -312,7 +336,14 @@ export default function WalletPanel({
   const [selectedAmount, setSelectedAmount] = useState(0)
   const [customAmount, setCustomAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [depositMethod, setDepositMethod] = useState('QR')
   const [depositOrder, setDepositOrder] = useState(null)
+  const [cardForm, setCardForm] = useState({
+    cardNumber: VISA_TEST_CARD.number,
+    cardName: VISA_TEST_CARD.name,
+    expiry: VISA_TEST_CARD.expiry,
+    cvv: VISA_TEST_CARD.cvv,
+  })
   const [bankForm, setBankForm] = useState({
     bankName: '',
     bankAccountNumber: '',
@@ -326,14 +357,45 @@ export default function WalletPanel({
   const handleCopy = (text, type) => {
     if (!text) return
     navigator.clipboard.writeText(text)
-    toast.success(`Đã sao chép ${type === 'code' ? 'mã lệnh nạp' : 'nội dung chuyển khoản'}`)
     if (type === 'code') {
+      toast.success('Đã sao chép mã lệnh nạp')
       setCopiedCode(true)
       setTimeout(() => setCopiedCode(false), 2000)
     } else {
+      toast.success('Đã sao chép nội dung chuyển khoản')
       setCopiedContent(true)
       setTimeout(() => setCopiedContent(false), 2000)
     }
+  }
+
+  const openPaymentGateway = (url) => {
+    if (!url) {
+      toast.error('Chưa có liên kết thanh toán')
+      return
+    }
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  const validateCardForm = () => {
+    if (!cardForm.cardNumber.trim() || !cardForm.cardName.trim() || !cardForm.expiry.trim() || !cardForm.cvv.trim()) {
+      toast.error('Vui lòng nhập đầy đủ thông tin thẻ')
+      return false
+    }
+    return true
+  }
+
+  const payDepositWithCard = async (orderId) => {
+    if (!validateCardForm()) return null
+    const payWithCard = isAdminWallet
+      ? walletService.payAdminDepositOrderWithCard
+      : walletService.payMyDepositOrderWithCard
+
+    return payWithCard(orderId, {
+      cardNumber: cardForm.cardNumber.replace(/\s+/g, ''),
+      cardName: cardForm.cardName.trim(),
+      expiry: cardForm.expiry.trim(),
+      cvv: cardForm.cvv.trim(),
+    })
   }
 
 
@@ -355,7 +417,11 @@ export default function WalletPanel({
   }, [showBalance])
 
   const amount = selectedAmount || toNumber(customAmount)
-  const depositQrValue = depositOrder?.qrCode || depositOrder?.checkoutUrl
+  const activeDepositChannel = depositOrder?.paymentChannel || depositMethod
+  const isVisaDeposit = activeDepositChannel === 'VISA'
+  const paymentGatewayUrl =
+    depositOrder?.cashierOrderUrl || depositOrder?.checkoutUrl || depositOrder?.orderUrl || ''
+  const depositQrValue = !isVisaDeposit ? depositOrder?.qrCode || depositOrder?.checkoutUrl : ''
   const isProviderQr = Boolean(depositOrder?.qrCode)
   const availableBalance = toNumber(wallet?.availableBalance)
   const holdBalance = toNumber(wallet?.holdBalance)
@@ -500,12 +566,24 @@ export default function WalletPanel({
           amount,
           currency: 'VND',
           provider: PROVIDER,
+          paymentChannel: depositMethod,
         })
-        setDepositOrder(order)
-        if (order?.id) {
-          startDepositPolling(order.id)
+
+        if (depositMethod === 'VISA') {
+          stopDepositPolling()
+          const paid = await payDepositWithCard(order.id)
+          setDepositOrder(paid)
+          invalidateWalletCache(isAdminWallet ? 'admin' : 'user')
+          await loadWalletData({ showLoading: false })
+          toast.success(`Nạp tiền thành công ${fmtVND(amount)}`)
+          setDepositOrder(null)
+        } else {
+          setDepositOrder(order)
+          if (order?.id) {
+            startDepositPolling(order.id)
+          }
+          toast.success(`Đã tạo lệnh nạp ${fmtVND(amount)}`)
         }
-        toast.success(`Đã tạo lệnh nạp ${fmtVND(amount)}`)
       } else {
         if (!validateWithdrawal()) return
         const createWithdrawal = isAdminWallet
@@ -747,20 +825,88 @@ export default function WalletPanel({
           {mode === 'deposit' && (
             <div className="space-y-3 pt-2">
               <div className={ui.sectionTitle}>Phương thức nạp</div>
-              <div className="p-4.5 rounded-2xl border border-sky-500/20 bg-sky-500/5 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 via-blue-500 to-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-sky-500/10 shrink-0">
-                    Zalo
-                  </div>
-                  <div>
-                    <div className={ui.methodName}>Cổng Ví Điện Tử ZaloPay</div>
-                    <div className={ui.methodDesc}>Thanh toán trực tiếp, giao dịch hoàn thành tức thì</div>
-                  </div>
-                </div>
-                <span className={ui.methodBadge}>
-                  Nhanh gọn
-                </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {DEPOSIT_METHODS.map((method) => {
+                  const active = depositMethod === method.id
+                  return (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => {
+                        setDepositMethod(method.id)
+                        setDepositOrder(null)
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                        active
+                          ? 'border-[#D4A017] bg-[#D4A017]/10 shadow-lg shadow-[#D4A017]/10'
+                          : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${method.accent} flex items-center justify-center text-white font-black text-xs shadow-md shrink-0`}
+                          >
+                            {method.id === 'VISA' ? 'VISA' : 'Zalo'}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-white">{method.title}</div>
+                            <div className="text-[11px] text-white/55 mt-0.5 leading-relaxed">
+                              {method.description}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 bg-sky-500/10 border border-sky-500/20 rounded-full px-2 py-0.5 shrink-0">
+                          {method.badge}
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
+
+              {depositMethod === 'VISA' && (
+                <div className="rounded-2xl border border-violet-500/25 bg-violet-500/5 p-4 space-y-3">
+                  <p className="text-sm font-bold text-white">Nhập thẻ Visa test (tiền ảo)</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Field label="Số thẻ" required labelClassName={ui.fieldLabel}>
+                      <input
+                        value={cardForm.cardNumber}
+                        onChange={(e) => setCardForm({ ...cardForm, cardNumber: e.target.value.replace(/\D/g, '') })}
+                        className={ui.input}
+                        placeholder="4111111111111111"
+                      />
+                    </Field>
+                    <Field label="Tên chủ thẻ" required labelClassName={ui.fieldLabel}>
+                      <input
+                        value={cardForm.cardName}
+                        onChange={(e) => setCardForm({ ...cardForm, cardName: e.target.value })}
+                        className={ui.inputUpper}
+                        placeholder="NGUYEN VAN A"
+                      />
+                    </Field>
+                    <Field label="Hết hạn (MM/YY)" required labelClassName={ui.fieldLabel}>
+                      <input
+                        value={cardForm.expiry}
+                        onChange={(e) => setCardForm({ ...cardForm, expiry: e.target.value })}
+                        className={ui.input}
+                        placeholder="01/25"
+                      />
+                    </Field>
+                    <Field label="CVV" required labelClassName={ui.fieldLabel}>
+                      <input
+                        value={cardForm.cvv}
+                        onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                        className={ui.input}
+                        placeholder="123"
+                      />
+                    </Field>
+                  </div>
+                  <p className="text-[11px] text-white/50">
+                    Nhập thẻ test rồi bấm「Tạo lệnh nạp」— tiền sẽ tự cộng vào ví hệ thống ngay.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -947,8 +1093,9 @@ export default function WalletPanel({
                 <div className={ui.ticketPunchR}></div>
               </div>
 
-              {/* QR Code Section */}
-              {depositQrValue ? (
+              {/* Visa: thanh toán trực tiếp trên web, không hiện QR */}
+              {!isVisaDeposit && (
+                depositQrValue ? (
                 <div className="relative mb-5 rounded-2xl border border-[#008fe5]/20 bg-[#0A1628] p-5 shadow-lg shadow-sky-950/10 overflow-hidden">
                   <HorseRacingThreeBackground />
                   <div className="relative z-10 flex flex-col items-center gap-4 text-center">
@@ -983,12 +1130,12 @@ export default function WalletPanel({
                   <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
                   ZaloPay chưa trả về mã QR hoặc trang thanh toán cho lệnh này. Vui lòng thử tạo lệnh nạp mới.
                 </div>
-              )}
+              ))}
 
               {/* Action Link Button */}
-              {depositOrder.checkoutUrl && (
+              {paymentGatewayUrl && !isVisaDeposit && (
                 <a
-                  href={depositOrder.checkoutUrl}
+                  href={paymentGatewayUrl}
                   target="_blank"
                   rel="noreferrer"
                   className={`w-full flex items-center justify-center gap-2 rounded-xl px-5 py-4 text-sm font-bold text-white transition-all active:scale-[0.99] shadow-lg ${depositQrValue

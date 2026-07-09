@@ -10,21 +10,6 @@ const COMMON_FIELDS = [
   { key: 'bio', label: 'Giới thiệu' },
 ]
 
-const KYC_FIELDS = [
-  { key: 'kycStatus', label: 'Trạng thái KYC' },
-  { key: 'kycFullName', label: 'Họ tên trên CCCD' },
-  { key: 'idNumberMasked', label: 'Số CCCD' },
-  { key: 'dateOfBirth', label: 'Ngày sinh' },
-  { key: 'gender', label: 'Giới tính' },
-  { key: 'kycAddress', label: 'Địa chỉ trên CCCD' },
-  { key: 'issueDate', label: 'Ngày cấp' },
-  { key: 'faceScore', label: 'Điểm đối chiếu khuôn mặt', format: 'number' },
-  { key: 'kycRejectReason', label: 'Lý do KYC thất bại' },
-  { key: 'cccdFrontImageUrl', label: 'CCCD mặt trước', format: 'url' },
-  { key: 'cccdBackImageUrl', label: 'CCCD mặt sau', format: 'url' },
-  { key: 'selfieImageUrl', label: 'Ảnh selfie', format: 'url' },
-]
-
 const ROLE_FIELDS = {
   OWNER: [
     { key: 'stableName', label: 'Tên trang trại / Chuồng ngựa' },
@@ -87,11 +72,9 @@ function collectFields(application, fieldDefs) {
 export function buildRoleApplicationDetailRows(application) {
   const roleCode = application?.role ?? 'USER'
   const roleFields = ROLE_FIELDS[roleCode] ?? []
-  const kycFields = ['OWNER', 'JOCKEY', 'REFEREE'].includes(roleCode) ? KYC_FIELDS : []
   return [
     ...collectFields(application, COMMON_FIELDS),
     ...collectFields(application, roleFields),
-    ...collectFields(application, kycFields),
   ]
 }
 
