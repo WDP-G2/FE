@@ -275,6 +275,20 @@ export default function AdminBetMarketsPage() {
     }
   };
 
+  const settleMarket = async (marketId) => {
+    setSaving(true);
+    try {
+      await adminBettingService.settleMarket(marketId);
+      toast.success("Đã chốt kết quả cược và thanh toán cho người thắng");
+      await refreshMarkets();
+      await loadMarketBets(marketId);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const loadMarketBets = async (marketId) => {
     if (!marketId) {
       setMarketBets([]);
@@ -424,6 +438,7 @@ export default function AdminBetMarketsPage() {
                 saving={saving}
                 onOpen={() => openMarket(selectedRaceMarket.id)}
                 onClose={() => closeMarket(selectedRaceMarket.id)}
+                onSettle={() => settleMarket(selectedRaceMarket.id)}
                 onViewBets={() => loadMarketBets(selectedRaceMarket.id)}
               />
             ) : (
@@ -520,7 +535,7 @@ export default function AdminBetMarketsPage() {
   );
 }
 
-function MarketSummary({ market, saving, onOpen, onClose, onViewBets }) {
+function MarketSummary({ market, saving, onOpen, onClose, onSettle, onViewBets }) {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -569,6 +584,16 @@ function MarketSummary({ market, saving, onOpen, onClose, onViewBets }) {
             className="h-11 rounded-xl bg-rose-500 px-4 text-sm font-bold text-white transition hover:bg-rose-600 disabled:opacity-50"
           >
             Đóng kèo cược
+          </button>
+        )}
+        {market.status === "CLOSED" && (
+          <button
+            type="button"
+            disabled={saving}
+            onClick={onSettle}
+            className="h-11 rounded-xl bg-purple-500 px-4 text-sm font-bold text-white transition hover:bg-purple-600 disabled:opacity-50"
+          >
+            Chốt kết quả cược
           </button>
         )}
         <button
