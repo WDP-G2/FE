@@ -26,6 +26,11 @@ export const adminBettingService = {
     return mapBetMarket(data)
   },
 
+  async settleMarket(id) {
+    const data = await axiosClient.put(ENDPOINTS.betting.adminSettleMarket(id)).then(unwrapResponse)
+    return mapBetMarket(data)
+  },
+
   async getMarketBets(id) {
     const data = await axiosClient.get(ENDPOINTS.betting.adminMarketBets(id)).then(unwrapResponse)
     return (Array.isArray(data) ? data : []).map(mapBet)
