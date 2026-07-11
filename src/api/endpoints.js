@@ -81,6 +81,7 @@ export const ENDPOINTS = {
     adminCreateMarket: (raceId) => `/admin/races/${raceId}/bet-market`,
     adminOpenMarket: (id) => `/admin/bet-markets/${id}/open`,
     adminCloseMarket: (id) => `/admin/bet-markets/${id}/close`,
+    adminSettleMarket: (id) => `/admin/bet-markets/${id}/settle`,
     adminMarkets: '/admin/bet-markets',
     adminMarketBets: (id) => `/admin/bet-markets/${id}/bets`,
     publicMarket: (raceId) => `/races/${raceId}/bet-market`,
