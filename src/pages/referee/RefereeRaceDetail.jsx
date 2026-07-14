@@ -78,6 +78,7 @@ import { useRefereeRaces } from './useRefereeRaces';
 import { tournamentService } from '@/services/tournamentService';
 import { buildViolationTimestamp, formatViolationDisplayId, formatViolationTimestamp, mapActiveViolationTypeLabels } from '@/utils/violationUtils';
 import { ViolationEvidencePreviewModal, ViolationEvidenceThumbnail } from './ViolationEvidencePreview';
+import { RaceSimulationTrack } from '@/components/race-simulation/RaceSimulationTrack';
 
 
 const TABS = [
@@ -1349,6 +1350,8 @@ function ResultsTab({
   const [rows, setRows] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [loadingResults, setLoadingResults] = useState(false);
+  const [simulationStatus, setSimulationStatus] = useState(null);
+  const manualCanEdit = canEdit && !simulationStatus;
 
   const refreshLiveRaceStatus = useCallback(async () => {
     if (!raceId) return normalizeRaceStatusCode(race?.status);
@@ -1584,7 +1587,17 @@ function ResultsTab({
         </GlassCard>
       )}
 
-      {canEdit && (
+      <RaceSimulationTrack
+        raceId={raceId}
+        canOperate={canEdit && !hasSavedResults}
+        onStateChange={setSimulationStatus}
+        onConfirmed={async () => {
+          await refreshLiveRaceStatus();
+          if (onReloadRace) await onReloadRace();
+        }}
+      />
+
+      {manualCanEdit && (
         <GlassCard className="p-4 flex items-start gap-3 bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/30">
           <Info className="w-5 h-5 text-emerald-300 mt-0.5 shrink-0" />
           <div className="text-xs text-white/70 leading-relaxed">
@@ -1619,22 +1632,24 @@ function ResultsTab({
         <div className="p-5">
           <ResultsTable
             rows={displayRows}
-            readOnly={!canEdit}
-            onUpdate={canEdit ? updateRow : undefined}
-            onToggleDq={canEdit ? toggleDq : undefined}
+            readOnly={!manualCanEdit}
+            onUpdate={manualCanEdit ? updateRow : undefined}
+            onToggleDq={manualCanEdit ? toggleDq : undefined}
           />
         </div>
         <div className="p-5 border-t border-white/10 flex items-center justify-between flex-wrap gap-3 bg-gradient-to-r from-[#D4A017]/5 to-transparent">
           <div className="text-xs text-white/60 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-300" />
-            {canEdit
+            {manualCanEdit
               ? 'Có thể ghi/sửa kết quả khi giải đang diễn ra'
+              : simulationStatus
+                ? 'Kết quả thủ công đã khóa vì cuộc đua có mô phỏng'
               : 'Admin cần bật giải "Đang diễn ra" để ghi kết quả'}
           </div>
           <PrimaryButton
             icon={Send}
             onClick={handleFinalize}
-            disabled={submitting || !canEdit}
+            disabled={submitting || !manualCanEdit}
           >
             {submitting
               ? 'Đang lưu...'

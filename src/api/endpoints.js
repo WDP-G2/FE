@@ -76,6 +76,7 @@ export const ENDPOINTS = {
     adminParticipants: (id) => `/admin/races/${id}/participants`,
     registrations: (id) => `/races/${id}/registrations`,
     results: (id) => `/races/${id}/results`,
+    simulation: (id) => `/races/${id}/simulation`,
   },
   betting: {
     adminCreateMarket: (raceId) => `/admin/races/${raceId}/bet-market`,
@@ -120,6 +121,8 @@ export const ENDPOINTS = {
       `/referee/races/${raceId}/participants/${participantId}/check-in`,
     startRace: (raceId) => `/referee/races/${raceId}/start`,
     finalizeResults: (raceId) => `/referee/races/${raceId}/results/finalize`,
+    generateSimulation: (raceId) => `/referee/races/${raceId}/simulation`,
+    confirmSimulation: (raceId) => `/referee/races/${raceId}/simulation/confirm`,
     payments: '/referee/payments',
     violations: '/referee/violations',
     raceViolations: (raceId) => `/referee/races/${raceId}/violations`,

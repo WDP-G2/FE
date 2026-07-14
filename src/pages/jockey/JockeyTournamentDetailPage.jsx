@@ -5,6 +5,7 @@ import { TournamentPublicDetailContent } from "@/components/tournament-detail";
 import { GlassCard } from "@/pages/admin/AdminLayout";
 import { tournamentService } from "@/services/tournamentService";
 import { JockeyLayout } from "./JockeyLayout";
+import { TournamentRaceSimulations } from "@/components/race-simulation/TournamentRaceSimulations";
 
 export function JockeyTournamentDetailPage() {
   const { pathname } = useLocation();
@@ -57,7 +58,10 @@ export function JockeyTournamentDetailPage() {
           {error}
         </GlassCard>
       ) : tournament ? (
-        <TournamentPublicDetailContent tournament={tournament} backTo="/jockey/tournaments" />
+        <>
+          <TournamentPublicDetailContent tournament={tournament} backTo="/jockey/tournaments" />
+          <TournamentRaceSimulations races={tournament.races} />
+        </>
       ) : (
         <GlassCard className="p-10 text-center text-white/50">
           <Trophy className="mx-auto mb-3 h-10 w-10 text-white/30" />

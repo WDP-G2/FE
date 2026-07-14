@@ -22,6 +22,8 @@ export function mapRaceResultFromApi(raw) {
     status: raw?.status,
     note: raw?.note ?? '',
     prizeAmount,
+    source: raw?.source || 'MANUAL',
+    simulationRunId: raw?.simulationRunId || null,
   }
 }
 

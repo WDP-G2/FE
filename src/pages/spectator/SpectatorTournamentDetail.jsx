@@ -7,6 +7,7 @@ import { fmtVND } from '@/utils/formatCurrency'
 import { formatDisplayDateTime } from '@/utils/dateFormat'
 import { buildRankedResultRows } from '@/services/raceResultService'
 import { EmptyState, ErrorState, LoadingState, Panel } from './spectatorUi'
+import { RaceSimulationTrack } from '@/components/race-simulation/RaceSimulationTrack'
 
 export default function SpectatorTournamentDetail() {
   const { id } = useParams()
@@ -83,6 +84,9 @@ export default function SpectatorTournamentDetail() {
                         <CircleDollarSign className="h-4 w-4" />
                         Xem kèo cược
                       </Link>
+                    </div>
+                    <div className="mb-3">
+                      <RaceSimulationTrack raceId={race.id} />
                     </div>
                     {rows.length === 0 ? (
                       <EmptyState>Chưa có kết quả công bố cho cuộc đua này.</EmptyState>
