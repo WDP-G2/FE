@@ -1,6 +1,7 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
+import { idempotencyConfig } from '@/utils/idempotency'
 
 const WALLET_CACHE_TTL_MS = 60_000
 const walletCache = {
@@ -67,8 +68,8 @@ export const walletService = {
 
   getMyWithdrawals: () => axiosClient.get(ENDPOINTS.wallet.withdrawals).then(unwrapResponse),
 
-  createWithdrawal: async (payload) => {
-    const data = await axiosClient.post(ENDPOINTS.wallet.withdrawals, payload).then(unwrapResponse)
+  createWithdrawal: async (payload, idempotencyKey) => {
+    const data = await axiosClient.post(ENDPOINTS.wallet.withdrawals, payload, idempotencyConfig(idempotencyKey)).then(unwrapResponse)
     invalidateWalletCache('user')
     return data
   },
@@ -103,11 +104,23 @@ export const walletService = {
   getAdminWithdrawals: () =>
     axiosClient.get(ENDPOINTS.wallet.adminWithdrawals).then(unwrapResponse),
 
-  createAdminWithdrawal: async (payload) => {
+  createAdminWithdrawal: async (payload, idempotencyKey) => {
     const data = await axiosClient
-      .post(ENDPOINTS.wallet.adminWithdrawals, payload)
+      .post(ENDPOINTS.wallet.adminWithdrawals, payload, idempotencyConfig(idempotencyKey))
       .then(unwrapResponse)
     invalidateWalletCache('admin')
     return data
   },
+
+  approveWithdrawal: (id, idempotencyKey) =>
+    axiosClient.put(ENDPOINTS.wallet.adminApproveWithdrawal(id), null, idempotencyConfig(idempotencyKey)).then(unwrapResponse),
+
+  rejectWithdrawal: (id, note, idempotencyKey) =>
+    axiosClient.put(ENDPOINTS.wallet.adminRejectWithdrawal(id), { note }, idempotencyConfig(idempotencyKey)).then(unwrapResponse),
+
+  markWithdrawalPaid: (id, idempotencyKey) =>
+    axiosClient.put(ENDPOINTS.wallet.adminPaidWithdrawal(id), null, idempotencyConfig(idempotencyKey)).then(unwrapResponse),
+
+  getReconciliation: () =>
+    axiosClient.get(ENDPOINTS.wallet.adminReconciliation).then(unwrapResponse),
 }

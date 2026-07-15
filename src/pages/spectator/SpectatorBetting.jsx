@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { CircleDollarSign, Coins, Trophy } from "lucide-react";
@@ -8,6 +8,7 @@ import { fmtVND, formatMoneyInput, parseMoneyInput } from "@/utils/formatCurrenc
 import { formatDisplayDateTime } from "@/utils/dateFormat";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { EmptyState, ErrorState, LoadingState, Panel } from "./spectatorUi";
+import { createIdempotencyKey } from "@/utils/idempotency";
 
 function marketStatusLabel(status) {
   if (status === "OPEN") return "Đang mở";
@@ -26,6 +27,7 @@ export default function SpectatorBetting() {
   const [stakeAmount, setStakeAmount] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const betIdempotencyKeyRef = useRef(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -137,10 +139,12 @@ export default function SpectatorBetting() {
 
     setSubmitting(true);
     try {
+      if (!betIdempotencyKeyRef.current) betIdempotencyKeyRef.current = createIdempotencyKey();
       await bettingService.placeBet(selectedMarket.raceId, {
         participantId: Number(selectedParticipantId),
         stakeAmount: amount,
-      });
+      }, betIdempotencyKeyRef.current);
+      betIdempotencyKeyRef.current = null;
       toast.success("Đặt cược thành công");
       await loadMarkets();
     } catch (err) {

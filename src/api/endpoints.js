@@ -186,6 +186,10 @@ export const ENDPOINTS = {
     adminDepositOrderById: (id) => `/admin/wallet/deposit-orders/${id}`,
     adminPayDepositOrderWithCard: (id) => `/admin/wallet/deposit-orders/${id}/pay-with-card`,
     adminWithdrawals: '/admin/wallet/withdrawals',
+    adminApproveWithdrawal: (id) => `/admin/wallet/withdrawals/${id}/approve`,
+    adminRejectWithdrawal: (id) => `/admin/wallet/withdrawals/${id}/reject`,
+    adminPaidWithdrawal: (id) => `/admin/wallet/withdrawals/${id}/paid`,
+    adminReconciliation: '/admin/wallet/reconciliation',
   },
   roleApplications: {
     me: '/role-applications/me',

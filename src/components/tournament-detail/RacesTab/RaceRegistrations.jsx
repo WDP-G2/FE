@@ -223,7 +223,8 @@ export default function RaceRegistrations({ race, tournament }) {
                     {registration.jockeyUsername || "Chưa cập nhật"}
                   </td>
                   <td className="px-5 py-4 font-semibold text-white/85">
-                    {fmtVND(registration.entryFeeAmount)}
+                    <div>{fmtVND(registration.entryFeeAmount + registration.depositAmount)}</div>
+                    <div className="text-[10px] font-normal text-white/45">Phí {fmtVND(registration.entryFeeAmount)} · Cọc {fmtVND(registration.depositAmount)}</div>
                   </td>
                   <td className="px-5 py-4">
                     <Badge tone={registration.statusTone}>{registration.status}</Badge>

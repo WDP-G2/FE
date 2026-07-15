@@ -1,6 +1,7 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
+import { idempotencyConfig, stableIdempotencyKey } from '@/utils/idempotency'
 
 function number(value, fallback = 0) {
   const parsed = Number(value)
@@ -53,7 +54,7 @@ export const raceSimulationService = {
   },
   async confirm(raceId, runId) {
     return axiosClient
-      .post(ENDPOINTS.referee.confirmSimulation(raceId), { runId })
+      .post(ENDPOINTS.referee.confirmSimulation(raceId), { runId }, idempotencyConfig(stableIdempotencyKey(`race-simulation-confirm:${raceId}:${runId}`)))
       .then(unwrapResponse)
   },
 }

@@ -1,6 +1,7 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
+import { idempotencyConfig, stableIdempotencyKey } from '@/utils/idempotency'
 import { mapUser } from '@/services/adminUserService'
 import {
   readRefereeFeeSettings,
@@ -224,7 +225,7 @@ export const refereeService = {
         {
           ...raw,
           tournamentName: raw.tournamentName || nameById.get(String(raw.tournamentId)),
-          tournamentStatus: statusById.get(String(raw.tournamentId)) ?? '',
+          tournamentStatus: statusById.get(String(raw.tournamentId)) ?? raw.tournamentStatus ?? '',
         },
         index,
       ),
@@ -319,7 +320,7 @@ export const refereeService = {
     }))
 
     return axiosClient
-      .post(ENDPOINTS.referee.finalizeResults(raceId), { results: payload }, { timeout: 60_000 })
+      .post(ENDPOINTS.referee.finalizeResults(raceId), { results: payload }, { ...idempotencyConfig(stableIdempotencyKey(`race-finalize:${raceId}`)), timeout: 60_000 })
       .then(unwrapResponse)
   },
 

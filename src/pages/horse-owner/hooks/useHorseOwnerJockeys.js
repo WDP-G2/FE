@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { horseService } from "@/services/horseService";
@@ -6,6 +6,7 @@ import { jockeyService } from "@/services/jockeyService";
 import { tournamentService } from "@/services/tournamentService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatDisplayDate, formatDisplayDateTime } from "@/utils/dateFormat";
+import { createIdempotencyKey } from "@/utils/idempotency";
 
 const INVITABLE_STATUSES = ["PUBLISHED", "OPEN_REGISTRATION"];
 const emptyInviteForm = {
@@ -160,6 +161,7 @@ export function useHorseOwnerJockeys() {
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const inviteIdempotencyKeyRef = useRef(null);
   const [inviteTarget, setInviteTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
   const [invitationDetailTarget, setInvitationDetailTarget] = useState(null);
@@ -470,13 +472,15 @@ export function useHorseOwnerJockeys() {
 
     try {
       setSaving(true);
+      if (!inviteIdempotencyKeyRef.current) inviteIdempotencyKeyRef.current = createIdempotencyKey();
       const invitation = await jockeyService.createInvitation({
         horseId: inviteForm.horseId,
         raceId: inviteForm.raceId,
         jockeyId: inviteTarget.userId,
         remunerationAmount,
         message: inviteForm.message,
-      });
+      }, inviteIdempotencyKeyRef.current);
+      inviteIdempotencyKeyRef.current = null;
       setInvitations((prev) => [invitation, ...prev]);
       toast.success(
         selectedTournamentId

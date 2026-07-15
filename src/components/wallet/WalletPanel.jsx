@@ -23,6 +23,7 @@ import { invalidateWalletCache, walletService } from '@/services/walletService'
 import { fmtVND } from '@/utils/formatCurrency'
 import { getApiErrorMessage } from '@/utils/apiError'
 import HorseRacingThreeBackground from './HorseRacingThreeBackground'
+import { createIdempotencyKey, stableIdempotencyKey } from '@/utils/idempotency'
 
 const PRESETS = [100_000, 500_000, 1_000_000, 5_000_000, 10_000_000]
 const PROVIDER = 'ZALOPAY'
@@ -139,6 +140,8 @@ function mapTransaction(tx) {
   const isCredit = isPositiveDirection(direction)
   return {
     id: tx.id,
+    operationId: tx.operationId,
+    operationType: tx.operationType,
     type: tx.type,
     direction,
     amount,
@@ -151,6 +154,8 @@ function mapTransaction(tx) {
     metadata: tx.metadata,
     availableAfter: tx.availableAfter,
     holdAfter: tx.holdAfter,
+    availableDelta: toNumber(tx.availableDelta),
+    holdDelta: toNumber(tx.holdDelta),
     time: formatTxTime(tx.createdAt),
   }
 }
@@ -329,8 +334,12 @@ export default function WalletPanel({
   const isAdminWallet = walletMode === 'admin'
   const ui = WALLET_UI
   const depositPollRef = useRef(null)
+  const withdrawalIdempotencyKeyRef = useRef(null)
   const [wallet, setWallet] = useState(null)
   const [transactions, setTransactions] = useState([])
+  const [adminWithdrawals, setAdminWithdrawals] = useState([])
+  const [reconciliation, setReconciliation] = useState(null)
+  const [processingWithdrawalId, setProcessingWithdrawalId] = useState('')
   const [loadingData, setLoadingData] = useState(true)
   const [mode, setMode] = useState('deposit')
   const [selectedAmount, setSelectedAmount] = useState(0)
@@ -366,14 +375,6 @@ export default function WalletPanel({
       setCopiedContent(true)
       setTimeout(() => setCopiedContent(false), 2000)
     }
-  }
-
-  const openPaymentGateway = (url) => {
-    if (!url) {
-      toast.error('Chưa có liên kết thanh toán')
-      return
-    }
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   const validateCardForm = () => {
@@ -413,7 +414,9 @@ export default function WalletPanel({
   useEffect(() => {
     try {
       localStorage.setItem('wallet_show_balance', String(showBalance))
-    } catch { }
+    } catch {
+      // localStorage can be unavailable in private/browser-restricted contexts.
+    }
   }, [showBalance])
 
   const amount = selectedAmount || toNumber(customAmount)
@@ -441,6 +444,58 @@ export default function WalletPanel({
       setLoadingData(false)
     }
   }, [isAdminWallet])
+
+  const loadAdminFinance = useCallback(async () => {
+    if (!isAdminWallet) return
+    try {
+      const [withdrawals, report] = await Promise.all([
+        walletService.getAdminWithdrawals(),
+        walletService.getReconciliation(),
+      ])
+      setAdminWithdrawals(Array.isArray(withdrawals) ? withdrawals : [])
+      setReconciliation(report || null)
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || 'Không tải được dữ liệu đối soát')
+    }
+  }, [isAdminWallet])
+
+  useEffect(() => {
+    if (!isAdminWallet) return undefined
+    let cancelled = false
+    Promise.all([walletService.getAdminWithdrawals(), walletService.getReconciliation()])
+      .then(([withdrawals, report]) => {
+        if (cancelled) return
+        setAdminWithdrawals(Array.isArray(withdrawals) ? withdrawals : [])
+        setReconciliation(report || null)
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error(getApiErrorMessage(err) || 'Không tải được dữ liệu đối soát')
+      })
+    return () => { cancelled = true }
+  }, [isAdminWallet])
+
+  const transitionWithdrawal = async (row, action) => {
+    const scope = `withdrawal:${row.id}:${action}`
+    setProcessingWithdrawalId(String(row.id))
+    try {
+      if (action === 'approve') {
+        await walletService.approveWithdrawal(row.id, stableIdempotencyKey(scope))
+      } else if (action === 'reject') {
+        const note = window.prompt('Lý do từ chối yêu cầu rút tiền', 'Thông tin không hợp lệ')
+        if (note === null) return
+        await walletService.rejectWithdrawal(row.id, note, stableIdempotencyKey(scope))
+      } else {
+        await walletService.markWithdrawalPaid(row.id, stableIdempotencyKey(scope))
+      }
+      toast.success('Đã cập nhật yêu cầu rút tiền')
+      invalidateWalletCache('all')
+      await Promise.all([loadAdminFinance(), loadWalletData({ showLoading: false })])
+    } catch (err) {
+      toast.error(getApiErrorMessage(err))
+    } finally {
+      setProcessingWithdrawalId('')
+    }
+  }
 
   const stopDepositPolling = useCallback(() => {
     if (depositPollRef.current) {
@@ -496,7 +551,7 @@ export default function WalletPanel({
     }
 
     const orderId = params.get('orderId')
-    loadWalletData({ showLoading: true })
+    Promise.resolve().then(() => loadWalletData({ showLoading: true }))
     window.history.replaceState({}, '', window.location.pathname)
 
     if (orderId) {
@@ -589,13 +644,15 @@ export default function WalletPanel({
         const createWithdrawal = isAdminWallet
           ? walletService.createAdminWithdrawal
           : walletService.createWithdrawal
+        if (!withdrawalIdempotencyKeyRef.current) withdrawalIdempotencyKeyRef.current = createIdempotencyKey()
         await createWithdrawal({
           amount,
           bankName: bankForm.bankName,
           bankAccountNumber: bankForm.bankAccountNumber,
           bankAccountName: bankForm.bankAccountName,
           reason: bankForm.reason || undefined,
-        })
+        }, withdrawalIdempotencyKeyRef.current)
+        withdrawalIdempotencyKeyRef.current = null
         setDepositOrder(null)
         toast.success(`Đã gửi yêu cầu rút ${fmtVND(amount)}`)
       }
@@ -724,6 +781,46 @@ export default function WalletPanel({
           </div>
         </div>
       </div>
+
+      {isAdminWallet && (
+        <div className={`${ui.card} ${ui.cardPadSm} space-y-4`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-extrabold text-white">Duyệt rút tiền & đối soát</h3>
+              <p className="text-xs text-white/55">Treasury và nghĩa vụ user được hiển thị riêng, không cộng thành một tổng.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-bold">
+              <span className="rounded-lg border border-sky-400/25 bg-sky-500/10 px-3 py-2 text-sky-200">Treasury: {fmtVND(reconciliation?.balances?.treasuryAsset || 0)}</span>
+              <span className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 py-2 text-violet-200">Nghĩa vụ user: {fmtVND(reconciliation?.balances?.userLiability || 0)}</span>
+              {toNumber(reconciliation?.balances?.treasuryAsset) < 0 && <span className="rounded-lg border border-rose-400/30 bg-rose-500/15 px-3 py-2 text-rose-200">Cảnh báo treasury âm</span>}
+            </div>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            {adminWithdrawals.filter((row) => ['PENDING', 'APPROVED'].includes(row.status)).map((row) => (
+              <div key={row.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-black">{fmtVND(row.amount)}</p>
+                    <p className="mt-1 text-xs text-white/55">{row.bankName} · {row.accountName} · {row.bankAccount}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${row.status === 'PENDING' ? 'bg-amber-500/15 text-amber-200' : 'bg-sky-500/15 text-sky-200'}`}>{row.status}</span>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  {row.status === 'PENDING' && <button disabled={processingWithdrawalId === String(row.id)} onClick={() => transitionWithdrawal(row, 'approve')} className="rounded-lg bg-emerald-500/20 px-3 py-2 text-xs font-bold text-emerald-200 disabled:opacity-40">Duyệt</button>}
+                  {row.status === 'PENDING' && <button disabled={processingWithdrawalId === String(row.id)} onClick={() => transitionWithdrawal(row, 'reject')} className="rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-bold text-rose-200 disabled:opacity-40">Từ chối</button>}
+                  {row.status === 'APPROVED' && <button disabled={processingWithdrawalId === String(row.id)} onClick={() => transitionWithdrawal(row, 'paid')} className="rounded-lg bg-sky-500/20 px-3 py-2 text-xs font-bold text-sky-200 disabled:opacity-40">Xác nhận đã trả</button>}
+                </div>
+              </div>
+            ))}
+            {!adminWithdrawals.some((row) => ['PENDING', 'APPROVED'].includes(row.status)) && <p className="text-xs text-white/50">Không có yêu cầu rút tiền đang mở.</p>}
+          </div>
+          {reconciliation?.issues && (
+            <div className="rounded-xl border border-white/10 bg-black/10 px-4 py-3 text-xs text-white/65">
+              Hold lệch: {reconciliation.issues.holdMismatches?.count || 0} · Ví trùng: {reconciliation.issues.duplicateWallets || 0} · Race thiếu settlement: {reconciliation.issues.racesMissingFinancialSettlement || 0} · Treasury alerts: {reconciliation.issues.openTreasuryAlerts || 0}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Forms & presets Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1256,7 +1353,13 @@ export default function WalletPanel({
                       {/* Expandable Meta details (Timestamp & Balances after tx) */}
                       <div className={ui.txFooter}>
                         <span>{tx.time}</span>
-                        <div className="flex gap-2">
+                          <div className="flex gap-2">
+                          {tx.availableDelta !== 0 && (
+                            <span className={tx.availableDelta > 0 ? ui.amountCredit : ui.amountDebit}>Available {tx.availableDelta > 0 ? '+' : ''}{fmtVND(tx.availableDelta).replace(/\s?₫/, '')}</span>
+                          )}
+                          {tx.holdDelta !== 0 && (
+                            <span className={ui.holdText}>Hold {tx.holdDelta > 0 ? '+' : ''}{fmtVND(tx.holdDelta).replace(/\s?₫/, '')}</span>
+                          )}
                           {tx.availableAfter != null && (
                             <span>Khả dụng: {fmtVND(tx.availableAfter).replace(/\s?₫/, '')}</span>
                           )}
@@ -1271,6 +1374,12 @@ export default function WalletPanel({
                         <div className={ui.txRef}>
                           <span className="opacity-75">{tx.referenceType}:</span>
                           <span className={ui.txRefId}>#{tx.referenceId || '—'}</span>
+                        </div>
+                      )}
+                      {tx.operationId && (
+                        <div className={ui.txRef}>
+                          <span className="opacity-75">Operation:</span>
+                          <span className={ui.txRefId}>#{tx.operationId}</span>
                         </div>
                       )}
                     </div>

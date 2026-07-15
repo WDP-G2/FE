@@ -1,6 +1,7 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
+import { idempotencyConfig } from '@/utils/idempotency'
 
 const INVITATION_STATUS_LABELS = {
   PENDING: 'Chờ phản hồi',
@@ -133,6 +134,7 @@ export function mapJockeyInvitation(invitation) {
     reward: remunerationAmount,
     taxAmount: Number(invitation?.taxAmount ?? 0),
     jockeyPayoutAmount: Number(invitation?.jockeyPayoutAmount ?? 0),
+    rewardStatus: invitation?.rewardStatus ?? 'NONE',
     createdAt: invitation?.createdAt ?? null,
     updatedAt: invitation?.updatedAt ?? null,
     respondedAt: invitation?.respondedAt ?? null,
@@ -167,9 +169,9 @@ export const jockeyService = {
     return Array.isArray(data) ? data.map(mapJockeyInvitation) : []
   },
 
-  async createInvitation({ horseId, raceId, jockeyId, message, remunerationAmount }) {
+  async createInvitation({ horseId, raceId, jockeyId, message, remunerationAmount }, idempotencyKey) {
     const data = await axiosClient
-      .post(ENDPOINTS.jockeys.ownerInvitations, { horseId, raceId, jockeyId, message, remunerationAmount })
+      .post(ENDPOINTS.jockeys.ownerInvitations, { horseId, raceId, jockeyId, message, remunerationAmount }, idempotencyConfig(idempotencyKey))
       .then(unwrapResponse)
     return mapJockeyInvitation(data)
   },

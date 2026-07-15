@@ -63,7 +63,6 @@ import {
   recompactFinishedRanks,
   assignRanksByFinishTime,
   isValidParticipantId,
-  canAutoStartRaceForFinalize,
   needsRefereeStartRace,
   sortResultRowsForDisplay,
   normalizeRaceStatusCode,
@@ -109,6 +108,7 @@ export function RefereeRaceDetail() {
 
   const handleStartRace = async () => {
     if (!id) return;
+    if (startingRace) return;
     setStartingRace(true);
     try {
       await refereeService.startRace(id);
@@ -199,7 +199,7 @@ export function RefereeRaceDetail() {
                 <p className="text-sm text-[#D4A017]/80 mt-0.5">{race.tournamentName}</p>
               </div>
             </div>
-            {race.status === 'SCHEDULED' && (
+            {race.status === 'SCHEDULED' && race.tournamentStatus === 'ONGOING' && (
               <PrimaryButton icon={Play} onClick={handleStartRace} disabled={startingRace}>
                 {startingRace ? 'Đang bắt đầu...' : 'Bắt đầu cuộc đua'}
               </PrimaryButton>
@@ -233,6 +233,12 @@ export function RefereeRaceDetail() {
           })}
         </div>
       </GlassCard>
+
+      {race.status === 'SCHEDULED' && race.tournamentStatus !== 'ONGOING' && (
+        <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Cuộc đua đang ở trạng thái Sắp diễn ra. Vui lòng chờ admin bắt đầu giải trước khi bấm Bắt đầu cuộc đua.
+        </div>
+      )}
 
       {tab === 'overview' && <OverviewTab race={race} participants={participants} goManagement={goManagement} />}
       {tab === 'management' && (
@@ -1501,28 +1507,11 @@ function ResultsTab({
         return;
       }
 
-      let status = await refreshLiveRaceStatus();
-
-      if (canAutoStartRaceForFinalize(status, tournamentStatus)) {
-        try {
-          await refereeService.startRace(raceId);
-          status = 'ONGOING';
-          setLiveRaceStatus('ONGOING');
-          if (onReloadRace) await onReloadRace();
-        } catch (startError) {
-          toast.error(
-            getApiErrorMessage(startError) ||
-              'Không thể bắt đầu cuộc đua. Kiểm tra cổng xuất phát và xác nhận có mặt trước.',
-          );
-          return;
-        }
-      }
+      const status = await refreshLiveRaceStatus();
 
       if (status !== 'ONGOING') {
         toast.error(
-          tournamentStatus === 'ONGOING'
-            ? 'Giải đang diễn ra nhưng cuộc đua chưa bắt đầu. Bấm "Bắt đầu cuộc đua" (cần check-in + phân cổng trước).'
-            : 'Chưa thể chốt kết quả. Hãy bấm "Bắt đầu cuộc đua" trước — cuộc đua phải ở trạng thái "Đang diễn ra".',
+          'Cuộc đua chưa bắt đầu. Hãy bấm "Bắt đầu cuộc đua" trước khi nhập hoặc xác nhận kết quả.',
         );
         return;
       }

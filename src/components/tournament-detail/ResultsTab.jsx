@@ -44,6 +44,18 @@ function RaceResultCard({ race, tournament, open, onToggle }) {
             prizeFor(item),
           ])}
         />
+        {Array.isArray(race.financialSettlementSnapshot?.prizes) && race.financialSettlementSnapshot.prizes.length > 0 && (
+          <div className="border-t border-white/10 px-6 py-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">Phân bổ thưởng đã khóa</p>
+            <div className="flex flex-wrap gap-2">
+              {race.financialSettlementSnapshot.prizes.map((prize) => (
+                <span key={prize.registrationId} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/65">
+                  Hạng {prize.rank}: Owner {formatVnd(prize.ownerAmount)} · Jockey {formatVnd(prize.jockeyAmount)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         {disqualifiedRows.length > 0 && (
           <div className="border-t border-white/10 px-6 py-4">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/45">
@@ -92,6 +104,11 @@ function RaceResultCard({ race, tournament, open, onToggle }) {
           <span className="text-sm text-white/55">
             {formatDisplayDate(race.date)} · {race.time} · Quán quân: {champion}
           </span>
+          {race.financialSettlementStatus && race.financialSettlementStatus !== 'NONE' && (
+            <span className="mt-2 block text-xs font-semibold text-emerald-300">
+              Settlement: {race.financialSettlementStatus}{race.financialSettledAt ? ` · ${new Date(race.financialSettledAt).toLocaleString('vi-VN')}` : ''} · Kết quả đã khóa
+            </span>
+          )}
         </span>
         <span className="font-bold text-[#dda50e]">{formatVnd(getTotalPrize(race))}</span>
         <ArrowRight className={`h-5 w-5 text-white/45 transition ${open ? 'rotate-90' : ''}`} />

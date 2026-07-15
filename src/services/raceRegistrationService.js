@@ -1,6 +1,7 @@
 import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
+import { idempotencyConfig, stableIdempotencyKey } from '@/utils/idempotency'
 
 export const RACE_REGISTRATION_STATUS_LABELS = {
   PENDING: 'Chờ duyệt',
@@ -65,6 +66,9 @@ export function mapRaceRegistration(registration) {
     status: RACE_REGISTRATION_STATUS_LABELS[statusCode] ?? statusCode,
     statusTone: RACE_REGISTRATION_STATUS_TONES[statusCode] ?? 'gray',
     entryFeeAmount: Number(registration?.entryFeeAmount ?? 0),
+    depositAmount: Number(registration?.depositAmount ?? 0),
+    paymentStatus: registration?.paymentStatus ?? 'UNCHARGED',
+    depositStatus: registration?.depositStatus ?? 'NONE',
     ownerNote: registration?.ownerNote ?? '',
     reviewNote: registration?.reviewNote ?? '',
     withdrawNote: registration?.withdrawNote ?? '',
@@ -107,7 +111,7 @@ export const raceRegistrationService = {
   async approveRegistration(id, note = '') {
     const payload = note?.trim() ? { note: note.trim() } : null
     const data = await axiosClient
-      .put(ENDPOINTS.raceRegistrations.adminApprove(id), payload)
+      .put(ENDPOINTS.raceRegistrations.adminApprove(id), payload, idempotencyConfig(stableIdempotencyKey(`registration-approve:${id}`)))
       .then(unwrapResponse)
     return mapRaceRegistration(data)
   },

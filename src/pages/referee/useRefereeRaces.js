@@ -19,7 +19,7 @@ function mapAssignedRaces(data, { nameById = new Map(), statusById = new Map() }
   return data.map((raw, index) => mapRaceFromApi({
     ...raw,
     tournamentName: raw.tournamentName || nameById.get(String(raw.tournamentId)),
-    tournamentStatus: statusById.get(String(raw.tournamentId)) ?? '',
+    tournamentStatus: statusById.get(String(raw.tournamentId)) ?? raw.tournamentStatus ?? '',
   }, index))
 }
 

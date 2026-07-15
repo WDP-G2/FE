@@ -11,7 +11,7 @@ const RACE_STATUS_VI = {
   REGISTRATION_CLOSED: 'Đóng đăng ký',
   SCHEDULED: 'Sắp diễn ra',
   ONGOING: 'Đang diễn ra',
-  RESULT_CONFIRMED: 'Đã chốt kết quả',
+  RESULT_CONFIRMED: 'Đã kết thúc',
   CANCELLED: 'Đã hủy',
 }
 
@@ -36,12 +36,7 @@ export function raceTabBucket(status) {
   return 'upcoming'
 }
 
-/** Tab/nhãn trọng tài — theo trạng thái giải (admin), không dùng "Đã chốt kết quả" */
 export function getRefereeRaceTabBucket(race) {
-  const tournament = normalizeTournamentStatusCode(race?.tournamentStatus)
-  if (tournament === 'COMPLETED') return 'completed'
-  if (tournament === 'ONGOING') return 'ongoing'
-  if (tournament === 'CANCELLED') return 'cancelled'
   const raceStatus = normalizeRaceStatusCode(race?.status)
   if (raceStatus === 'RESULT_CONFIRMED') return 'completed'
   if (raceStatus === 'ONGOING') return 'ongoing'
@@ -52,9 +47,7 @@ export function getRefereeRaceTabBucket(race) {
 /** Race đã kết thúc / đã chốt kết quả — dùng cho trang Lịch sử */
 export function isRefereeRaceHistory(race) {
   const raceStatus = normalizeRaceStatusCode(race?.status)
-  if (raceStatus === 'RESULT_CONFIRMED') return true
-  if (normalizeTournamentStatusCode(race?.tournamentStatus) === 'COMPLETED') return true
-  return getRefereeRaceTabBucket(race) === 'completed'
+  return raceStatus === 'RESULT_CONFIRMED'
 }
 
 export function pickWinnerFromRaceResults(results = []) {
@@ -74,21 +67,8 @@ export function sumRacePrizeAmount(results = []) {
 }
 
 export function getRefereeRaceDisplayLabel(race) {
-  const tournament = normalizeTournamentStatusCode(race?.tournamentStatus)
   const raceStatus = normalizeRaceStatusCode(race?.status)
-  if (raceStatus === 'RESULT_CONFIRMED') return 'Đã chốt kết quả'
-  if (tournament === 'COMPLETED') return 'Đã kết thúc'
-  if (tournament === 'ONGOING' && raceStatus === 'ONGOING') return 'Đang diễn ra'
-  if (tournament === 'ONGOING' && raceStatus === 'SCHEDULED') return 'Sắp diễn ra'
-  if (
-    raceStatus === 'DRAFT' &&
-    (tournament === 'PUBLISHED' ||
-      tournament === 'OPEN_REGISTRATION' ||
-      tournament === 'REGISTRATION_CLOSED')
-  ) {
-    return RACE_STATUS_VI[tournament] || raceStatusLabel(tournament)
-  }
-  if (raceStatus === 'RESULT_CONFIRMED') return 'Đã chốt kết quả'
+  if (raceStatus === 'RESULT_CONFIRMED') return 'Đã kết thúc'
   if (raceStatus === 'ONGOING') return 'Đang diễn ra'
   if (raceStatus === 'SCHEDULED') return 'Sắp diễn ra'
   if (raceStatus === 'CANCELLED') return 'Đã hủy'
@@ -153,13 +133,7 @@ export function normalizeTournamentStatusCode(status) {
 export function canRefereeEditRaceResults(raceStatus, tournamentStatus) {
   const tournament = normalizeTournamentStatusCode(tournamentStatus)
   const race = normalizeRaceStatusCode(raceStatus)
-  if (tournament === 'COMPLETED' || tournament === 'CANCELLED') return false
-  if (race === 'CANCELLED') return false
-  if (tournament === 'ONGOING') return true
-  if (!tournament && (race === 'ONGOING' || race === 'SCHEDULED' || race === 'RESULT_CONFIRMED')) {
-    return true
-  }
-  return false
+  return tournament === 'ONGOING' && race === 'ONGOING'
 }
 
 export function raceStatusTone(status) {
@@ -195,18 +169,10 @@ export function checkInDisplayLabel(status) {
   return 'Chờ'
 }
 
-export function canAutoStartRaceForFinalize(raceStatus, tournamentStatus) {
-  const race = normalizeRaceStatusCode(raceStatus)
-  if (race === 'ONGOING' || race === 'RESULT_CONFIRMED') return false
-  if (race === 'SCHEDULED') return true
-  return normalizeTournamentStatusCode(tournamentStatus) === 'ONGOING'
-}
-
 export function needsRefereeStartRace(raceStatus, tournamentStatus) {
   const tournament = normalizeTournamentStatusCode(tournamentStatus)
   const race = normalizeRaceStatusCode(raceStatus)
-  if (tournament !== 'ONGOING') return false
-  return race !== 'ONGOING' && race !== 'RESULT_CONFIRMED'
+  return tournament === 'ONGOING' && race === 'SCHEDULED'
 }
 
 export function canRefereeCheckIn(raceStatus) {
@@ -401,6 +367,7 @@ export function mapRaceFromApi(raw, index = 0, { tournamentStatus = '' } = {}) {
     winnerDisplay: raw?.winnerName || raw?.winnerDisplay || '--',
     prizeDisplay: 'Xem chi tiết',
     resultFinalizedAt: raw?.resultFinalizedAt || null,
+    resultFinalizedBy: raw?.resultFinalizedBy || null,
     totalPrizeAmount: Number(raw?.totalPrizeAmount ?? 0),
     prizes: Array.isArray(raw?.prizes) ? raw.prizes : [],
   }

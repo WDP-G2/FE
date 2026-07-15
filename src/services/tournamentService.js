@@ -131,6 +131,9 @@ function mapRace(race, index) {
     refereeId: race?.refereeId == null ? '' : String(race.refereeId),
     refereeName: race?.refereeUsername ?? race?.refereeName ?? '',
     prizes: mapRacePrizes(Array.isArray(race?.prizes) ? race.prizes : []),
+    financialSettlementStatus: race?.financialSettlementStatus ?? 'NONE',
+    financialSettledAt: race?.financialSettledAt ?? null,
+    financialSettlementSnapshot: race?.financialSettlementSnapshot ?? null,
     raw: race,
   }
 }

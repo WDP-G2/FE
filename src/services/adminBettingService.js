@@ -2,6 +2,7 @@ import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
 import { mapBet, mapBetMarket } from '@/services/bettingService'
+import { idempotencyConfig, stableIdempotencyKey } from '@/utils/idempotency'
 
 export const adminBettingService = {
   async getMarkets() {
@@ -27,7 +28,7 @@ export const adminBettingService = {
   },
 
   async settleMarket(id) {
-    const data = await axiosClient.put(ENDPOINTS.betting.adminSettleMarket(id)).then(unwrapResponse)
+    const data = await axiosClient.put(ENDPOINTS.betting.adminSettleMarket(id), null, idempotencyConfig(stableIdempotencyKey(`bet-market-settle:${id}`))).then(unwrapResponse)
     return mapBetMarket(data)
   },
 

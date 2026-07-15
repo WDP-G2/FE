@@ -2,6 +2,7 @@ import axiosClient from '@/api/axiosClient'
 import { ENDPOINTS } from '@/api/endpoints'
 import { unwrapResponse } from '@/api/response'
 import { invalidateWalletCache } from '@/services/walletService'
+import { idempotencyConfig } from '@/utils/idempotency'
 
 function toNumber(value) {
   const number = Number(value ?? 0)
@@ -77,8 +78,8 @@ export const bettingService = {
     return (Array.isArray(data) ? data : []).map(mapBetMarket).filter(Boolean)
   },
 
-  async placeBet(raceId, payload) {
-    const data = await axiosClient.post(ENDPOINTS.betting.placeBet(raceId), payload).then(unwrapResponse)
+  async placeBet(raceId, payload, idempotencyKey) {
+    const data = await axiosClient.post(ENDPOINTS.betting.placeBet(raceId), payload, idempotencyConfig(idempotencyKey)).then(unwrapResponse)
     invalidateWalletCache('user')
     return mapBet(data)
   },

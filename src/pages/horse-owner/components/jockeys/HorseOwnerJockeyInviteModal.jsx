@@ -96,6 +96,7 @@ export function HorseOwnerJockeyInviteModal({
               }
               placeholder="VD: 5000000"
             />
+            <p className="mt-2 text-xs text-amber-200/80">Khoản thù lao này sẽ được chuyển sang số dư tạm giữ ngay khi gửi lời mời.</p>
           </HorseOwnerFormField>
 
           <HorseOwnerFormField label="Lời nhắn">
