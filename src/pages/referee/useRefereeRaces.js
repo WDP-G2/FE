@@ -107,7 +107,9 @@ export function useRefereeRaces({ operationOnly = true } = {}) {
   }, [userId, operationOnly])
 
   useEffect(() => {
-    reload()
+    queueMicrotask(() => {
+      reload()
+    })
   }, [reload])
 
   useEffect(() => {
