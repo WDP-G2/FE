@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Settings, Trash2 } from 'lucide-react'
 import Card from '@/components/ui/Card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import Field from '@/components/ui/Field'
 import { Input, Select, TextArea } from '@/components/ui/Input'
 import { PanelActions, PanelHeader } from '@/components/ui/Panel'
@@ -11,6 +12,7 @@ import { locationSettingsService } from '@/services/locationSettingsService'
 import { fetchDefaultTournamentRules } from '@/services/systemSettingsService'
 import { useApiCacheStore } from '@/store/apiCacheStore'
 import { matchProvinceForTournament } from '@/components/tournament-detail/RacesTab/helpers'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 const STATUS_LABELS = {
   DRAFT: 'Nháp',
@@ -217,6 +219,15 @@ export default function SettingsTab({ tournament, setTournament }) {
   const [deleting, setDeleting] = useState(false)
   const [provinces, setProvinces] = useState([])
   const [loadingProvinces, setLoadingProvinces] = useState(false)
+  const [confirmState, setConfirmState] = useState(null)
+
+  const closeConfirm = () => setConfirmState(null)
+  const askConfirm = (options) => setConfirmState(options)
+  const runConfirm = () => {
+    const action = confirmState?.onConfirm
+    closeConfirm()
+    action?.()
+  }
   const savedStatusCodeRef = useRef(tournament.statusCode ?? 'DRAFT')
   const today = getTodayDate()
   const registrationOpenMin = addDays(today, 1)
@@ -413,15 +424,16 @@ export default function SettingsTab({ tournament, setTournament }) {
     }
   }
 
-  const scheduleTournament = async () => {
-    if (
-      !window.confirm(
-        `Lên lịch giải "${tournament.name}"? Các cuộc đua sẽ chuyển sang trạng thái "Sắp diễn ra" để trọng tài check-in.`,
-      )
-    ) {
-      return
-    }
+  const scheduleTournament = () => {
+    askConfirm({
+      title: 'Lên lịch giải đấu',
+      message: `Lên lịch giải "${tournament.name}"? Các cuộc đua sẽ chuyển sang trạng thái "Sắp diễn ra" để trọng tài check-in.`,
+      confirmLabel: 'Lên lịch',
+      onConfirm: performScheduleTournament,
+    })
+  }
 
+  const performScheduleTournament = async () => {
     try {
       setScheduling(true)
       const response = await tournamentService.scheduleTournament(tournament.id)
@@ -440,15 +452,17 @@ export default function SettingsTab({ tournament, setTournament }) {
     }
   }
 
-  const deleteTournament = async () => {
-    if (
-      !window.confirm(
-        `Xóa giải đấu "${tournament.name}"? Hành động này không thể hoàn tác.`,
-      )
-    ) {
-      return
-    }
+  const deleteTournament = () => {
+    askConfirm({
+      title: 'Xóa giải đấu',
+      message: `Xóa giải đấu "${tournament.name}"? Hành động này không thể hoàn tác.`,
+      confirmLabel: 'Xóa giải đấu',
+      tone: 'danger',
+      onConfirm: performDeleteTournament,
+    })
+  }
 
+  const performDeleteTournament = async () => {
     try {
       setDeleting(true)
       await tournamentService.deleteTournament(tournament.id)
@@ -485,20 +499,29 @@ export default function SettingsTab({ tournament, setTournament }) {
               disabled={loadingProvinces}
               onChange={(event) => {
                 const provinceId = event.target.value
+                const applyProvince = () => {
+                  const province = provinces.find((item) => item.id === provinceId)
+                  updateDraft({
+                    provinceId,
+                    location: province?.name || draft.location,
+                  })
+                }
+
                 if (
                   tournament.races.length > 0 &&
-                  String(provinceId) !== String(tournament.provinceId) &&
-                  !window.confirm(
-                    'Giải đã có cuộc đua. Backend sẽ từ chối đổi tỉnh nếu địa điểm đua không thuộc tỉnh mới. Tiếp tục chọn?',
-                  )
+                  String(provinceId) !== String(tournament.provinceId)
                 ) {
+                  askConfirm({
+                    title: 'Đổi tỉnh/thành phố',
+                    message:
+                      'Giải đã có cuộc đua. Backend sẽ từ chối đổi tỉnh nếu địa điểm đua không thuộc tỉnh mới. Tiếp tục chọn?',
+                    confirmLabel: 'Tiếp tục',
+                    onConfirm: applyProvince,
+                  })
                   return
                 }
-                const province = provinces.find((item) => item.id === provinceId)
-                updateDraft({
-                  provinceId,
-                  location: province?.name || draft.location,
-                })
+
+                applyProvince()
               }}
             >
               <option value="">{loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}</option>
@@ -642,6 +665,15 @@ export default function SettingsTab({ tournament, setTournament }) {
           {deleting ? 'Đang xóa...' : 'Xóa giải đấu'}
         </button>
       </Card>
+      <ConfirmDialog
+        open={Boolean(confirmState)}
+        title={confirmState?.title}
+        message={confirmState?.message}
+        confirmLabel={confirmState?.confirmLabel}
+        tone={confirmState?.tone}
+        onConfirm={runConfirm}
+        onCancel={closeConfirm}
+      />
     </div>
   )
 }
