@@ -253,7 +253,7 @@ export function useHorseOwnerJockeys() {
 
   const getJockeyRaceLockReason = (raceId) => {
     if (!raceId || !acceptedRaceLockMap.has(String(raceId))) return null;
-    return "Jockey đã nhận lời mời khác cho cuộc đua này";
+    return "Đã khóa (jockey bận)";
   };
 
   const isHorseRaceBlocked = (horseId, raceId) =>
