@@ -169,6 +169,22 @@ export const jockeyService = {
     return Array.isArray(data) ? data.map(mapJockeyInvitation) : []
   },
 
+  /** Races this jockey already accepted (from any owner) — used to lock the invite form's race picker. */
+  async getAcceptedRaceLocks(jockeyId) {
+    if (!jockeyId) return []
+    const data = await axiosClient
+      .get(ENDPOINTS.jockeys.ownerJockeyAcceptedRaces(jockeyId))
+      .then(unwrapResponse)
+    return Array.isArray(data)
+      ? data.map((row) => ({
+          raceId: row?.raceId ? String(row.raceId) : '',
+          tournamentId: row?.tournamentId ? String(row.tournamentId) : '',
+          raceLabel: row?.raceLabel ?? '',
+          tournamentName: row?.tournamentName ?? '',
+        }))
+      : []
+  },
+
   async createInvitation({ horseId, raceId, jockeyId, message, remunerationAmount }, idempotencyKey) {
     const data = await axiosClient
       .post(ENDPOINTS.jockeys.ownerInvitations, { horseId, raceId, jockeyId, message, remunerationAmount }, idempotencyConfig(idempotencyKey))

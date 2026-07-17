@@ -20,6 +20,7 @@ export function HorseOwnerJockeys() {
     filterStatus,
     filteredJockeys,
     formatRaceDate,
+    getJockeyRaceLockReason,
     handleInviteHorseChange,
     handleInviteRaceChange,
     invitations,
@@ -104,6 +105,7 @@ export function HorseOwnerJockeys() {
         <HorseOwnerJockeyInviteModal
           approvedHorses={approvedHorses}
           form={inviteForm}
+          getJockeyRaceLockReason={getJockeyRaceLockReason}
           inviteTarget={inviteTarget}
           isHorseDisabledForSelectedRace={isHorseDisabledForSelectedRace}
           isRaceDisabledForSelectedHorse={isRaceDisabledForSelectedHorse}

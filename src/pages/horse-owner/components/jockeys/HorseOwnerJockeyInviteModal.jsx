@@ -6,6 +6,7 @@ import { formatMoneyInput, parseMoneyInput } from "@/utils/formatCurrency";
 export function HorseOwnerJockeyInviteModal({
   approvedHorses,
   form,
+  getJockeyRaceLockReason,
   inviteTarget,
   isHorseDisabledForSelectedRace,
   isRaceDisabledForSelectedHorse,
@@ -62,17 +63,24 @@ export function HorseOwnerJockeyInviteModal({
               onChange={(event) => onChangeRace(event.target.value)}
               className="w-full rounded-xl border border-white/10 bg-[#17191d] px-4 py-2.5 text-sm text-white focus:border-[#D4A017] focus:outline-none focus:ring-2 focus:ring-[#D4A017]/20"
             >
-              {raceOptions.map((race) => (
-                <option
-                  key={race.id}
-                  value={race.id}
-                  disabled={isRaceDisabledForSelectedHorse(race.id)}
-                  className="bg-[#17191d] text-white"
-                >
-                  {race.label} · {race.meta}
-                  {isRaceDisabledForSelectedHorse(race.id) ? " · ngựa đã có lời mời" : ""}
-                </option>
-              ))}
+              {raceOptions.map((race) => {
+                const lockReason = getJockeyRaceLockReason?.(race.id);
+                return (
+                  <option
+                    key={race.id}
+                    value={race.id}
+                    disabled={isRaceDisabledForSelectedHorse(race.id)}
+                    className="bg-[#17191d] text-white"
+                  >
+                    {race.label} · {race.meta}
+                    {lockReason
+                      ? ` · ${lockReason}`
+                      : isRaceDisabledForSelectedHorse(race.id)
+                        ? " · ngựa đã có lời mời"
+                        : ""}
+                  </option>
+                );
+              })}
             </select>
           </HorseOwnerFormField>
 

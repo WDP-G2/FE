@@ -56,6 +56,11 @@ function mergeJockeyAccountsWithProfiles(accounts, approvedProfiles) {
   });
 }
 
+function isUpcomingRace(scheduledStartAt) {
+  const startAt = parseDate(scheduledStartAt);
+  return !startAt || startAt.getTime() >= Date.now();
+}
+
 function buildRaceOptions(tournaments) {
   return tournaments.flatMap((tournament) =>
     (tournament.races ?? [])
@@ -63,7 +68,8 @@ function buildRaceOptions(tournaments) {
         (race) =>
           race.id &&
           INVITABLE_STATUSES.includes(tournament.statusCode) &&
-          INVITABLE_STATUSES.includes(race.statusCode ?? race.raw?.status),
+          INVITABLE_STATUSES.includes(race.statusCode ?? race.raw?.status) &&
+          isUpcomingRace(race.scheduledStartAt),
       )
       .map((race) => ({
         id: String(race.id),
@@ -167,6 +173,7 @@ export function useHorseOwnerJockeys() {
   const [invitationDetailTarget, setInvitationDetailTarget] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [inviteForm, setInviteForm] = useState(emptyInviteForm);
+  const [acceptedRaceLocks, setAcceptedRaceLocks] = useState([]);
 
   const approvedHorses = useMemo(
     () => horses.filter((horse) => horse.statusCode === "APPROVED"),
@@ -239,8 +246,18 @@ export function useHorseOwnerJockeys() {
       );
   }, [invitations, inviteForm.raceId, inviteTarget, raceOptionById]);
 
+  const acceptedRaceLockMap = useMemo(
+    () => new Map(acceptedRaceLocks.map((lock) => [String(lock.raceId), lock])),
+    [acceptedRaceLocks],
+  );
+
+  const getJockeyRaceLockReason = (raceId) => {
+    if (!raceId || !acceptedRaceLockMap.has(String(raceId))) return null;
+    return "Jockey đã nhận lời mời khác cho cuộc đua này";
+  };
+
   const isHorseRaceBlocked = (horseId, raceId) =>
-    Boolean(getHorseRaceBlockReason(horseId, raceId));
+    Boolean(getHorseRaceBlockReason(horseId, raceId)) || Boolean(getJockeyRaceLockReason(raceId));
 
   const isHorseDisabledForSelectedRace = (horseId) => isHorseRaceBlocked(horseId, inviteForm.raceId);
 
@@ -397,6 +414,13 @@ export function useHorseOwnerJockeys() {
       remunerationAmount: "",
       message: "",
     });
+    setAcceptedRaceLocks([]);
+    jockeyService
+      .getAcceptedRaceLocks(jockey.userId)
+      .then(setAcceptedRaceLocks)
+      .catch((error) => {
+        console.warn("Không thể tải danh sách race đã khóa của jockey", error?.response?.data || error);
+      });
   };
 
   const openDetail = async (jockey) => {
@@ -449,7 +473,20 @@ export function useHorseOwnerJockeys() {
   const closeInvite = () => {
     setInviteTarget(null);
     setInviteForm(emptyInviteForm);
+    setAcceptedRaceLocks([]);
   };
+
+  useEffect(() => {
+    if (!inviteTarget || !inviteForm.raceId) return;
+    if (!isHorseRaceBlocked(inviteForm.horseId, inviteForm.raceId)) return;
+
+    const fallback = findFirstAvailableInvitePair();
+    if (!fallback) return;
+    queueMicrotask(() => {
+      setInviteForm((prev) => ({ ...prev, horseId: fallback.horseId, raceId: fallback.raceId }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acceptedRaceLockMap, inviteTarget]);
 
   const submitInvite = async () => {
     if (!inviteTarget || !inviteForm.horseId) {
@@ -541,6 +578,7 @@ export function useHorseOwnerJockeys() {
     invitationDetailTarget,
     isHorseDisabledForSelectedRace,
     isRaceDisabledForSelectedHorse,
+    getJockeyRaceLockReason,
     jockeys,
     loading,
     loadingDetail,
