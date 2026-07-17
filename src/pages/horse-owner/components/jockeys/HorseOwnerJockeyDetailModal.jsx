@@ -1,4 +1,4 @@
-import { Award, FileText, X } from "lucide-react";
+import { Award, FileText, Mail, X } from "lucide-react";
 import { GlassCard, Pill } from "../../../admin/AdminLayout";
 
 export function HorseOwnerJockeyDetailModal({
@@ -26,6 +26,12 @@ export function HorseOwnerJockeyDetailModal({
             <div className="min-w-0">
               <h2 className="truncate text-xl font-bold text-white">{jockey.name}</h2>
               <p className="mt-1 text-sm text-white/45">{jockey.license}</p>
+              {jockey.email && (
+                <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-white/55">
+                  <Mail className="h-3.5 w-3.5 shrink-0 text-[#D4A017]" />
+                  {jockey.email}
+                </p>
+              )}
               <div className="mt-2">
                 <Pill tone={jockey.statusTone}>{jockey.status}</Pill>
               </div>
