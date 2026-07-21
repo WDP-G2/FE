@@ -10,7 +10,7 @@ import react from '@vitejs/plugin-react'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const LOCAL_API_ORIGIN = 'http://localhost:8080'
-const DEPLOY_API_ORIGIN = 'https://api.horseracing.id.vn'
+const DEPLOY_API_ORIGIN = 'https://be-production-dcb3.up.railway.app'
 const DEV_PORT = 5173
 
 /** Copy logo từ src/assets → public để index.html dùng favicon & splash */

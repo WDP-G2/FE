@@ -1,6 +1,6 @@
 /** Biến từ `.env` (VITE_*) — chỉ key / value, không logic */
 export const LOCAL_API_BASE_URL = '/api/v1'
-export const DEPLOY_API_BASE_URL = 'https://api.horseracing.id.vn/api/v1'
+export const DEPLOY_API_BASE_URL = 'https://be-production-dcb3.up.railway.app/api/v1'
 
 const DEFAULT_API_BASE_URL = import.meta.env.DEV
   ? LOCAL_API_BASE_URL
