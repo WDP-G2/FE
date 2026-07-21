@@ -34,6 +34,7 @@ const STATUS_TABS = [
   { key: 'upcoming', label: 'Sắp diễn ra' },
   { key: 'ongoing', label: 'Đang diễn ra' },
   { key: 'completed', label: 'Đã kết thúc' },
+  { key: 'cancelled', label: 'Đã hủy' },
 ];
 
 export function RefereeRaces() {
@@ -84,11 +85,11 @@ export function RefereeRaces() {
 
   useEffect(() => {
     if (loading || !races.length) return;
-    const ongoingCount = races.filter((r) => r.tabBucket === 'ongoing').length;
-    const completedCount = races.filter((r) => r.tabBucket === 'completed').length;
-    if (ongoingCount > 0) setTab('ongoing');
-    else if (completedCount > 0 && ongoingCount === 0) setTab('completed');
-  }, [loading, races]);
+    if (races.some((race) => race.tabBucket === tab)) return;
+    const nextTab = ['ongoing', 'upcoming', 'completed', 'cancelled']
+      .find((bucket) => races.some((race) => race.tabBucket === bucket));
+    if (nextTab) queueMicrotask(() => setTab(nextTab));
+  }, [loading, races, tab]);
 
   const filtered = useMemo(
     () =>

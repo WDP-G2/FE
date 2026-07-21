@@ -4,9 +4,9 @@ import { PanelHeader, SimpleTable } from '@/components/ui/Panel'
 import { formatVnd, getPrizeAmountByRank } from '../utils'
 import { useRaceResults } from '@/services/raceResultService'
 
-export default function RaceResults({ race, tournament }) {
+export default function RaceResults({ race }) {
   const { rankedRows, disqualifiedRows, loading, error } = useRaceResults(race?.id)
-  const tournamentOngoing = tournament?.statusCode === 'ONGOING'
+  const raceOngoing = race?.statusCode === 'ONGOING'
 
   const prizeFor = (item) => {
     if (item.prizeAmount > 0) return formatVnd(item.prizeAmount)
@@ -16,8 +16,8 @@ export default function RaceResults({ race, tournament }) {
     return '—'
   }
 
-  const subtitle = tournamentOngoing
-    ? 'Giải đang diễn ra — chỉ hiển thị ngựa có hạng'
+  const subtitle = raceOngoing
+    ? 'Cuộc đua đang diễn ra — chỉ hiển thị ngựa có hạng'
     : rankedRows.length
       ? 'Bảng xếp hạng cuộc đua'
       : 'Chưa có kết quả xếp hạng'

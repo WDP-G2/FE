@@ -24,8 +24,8 @@ export default function ScheduleTab({ tournament }) {
               <div className="mb-2 flex items-center gap-3">
                 <span className="font-bold text-[#dda50e]">R{race.no}</span>
                 <span className="text-lg font-bold">{race.name}</span>
-                <Badge tone={toneForStatus(getAdminRaceDisplayStatus(race, tournament))}>
-                  {getAdminRaceDisplayStatus(race, tournament)}
+                <Badge tone={toneForStatus(getAdminRaceDisplayStatus(race))}>
+                  {getAdminRaceDisplayStatus(race)}
                 </Badge>
               </div>
               <div className="flex flex-wrap gap-5 text-sm text-white/55">

@@ -129,11 +129,9 @@ export function normalizeTournamentStatusCode(status) {
   return String(status).trim().toUpperCase()
 }
 
-/** Trọng tài sửa kết quả khi admin bật giải "Đang diễn ra"; khóa khi giải "Đã kết thúc" */
-export function canRefereeEditRaceResults(raceStatus, tournamentStatus) {
-  const tournament = normalizeTournamentStatusCode(tournamentStatus)
-  const race = normalizeRaceStatusCode(raceStatus)
-  return tournament === 'ONGOING' && race === 'ONGOING'
+/** Sau khi giải bắt đầu, quyền nhập kết quả chỉ còn phụ thuộc trạng thái riêng của race. */
+export function canRefereeEditRaceResults(raceStatus) {
+  return normalizeRaceStatusCode(raceStatus) === 'ONGOING'
 }
 
 export function raceStatusTone(status) {

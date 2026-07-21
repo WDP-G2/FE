@@ -6,7 +6,7 @@ import { toneForStatus, getAdminRaceDisplayStatus } from "../utils";
 import { formatDistance } from "./helpers";
 import { formatDisplayDate } from "@/utils/dateFormat";
 
-export default function RaceList({ races, selectedId, onAdd, onSelect, tournament }) {
+export default function RaceList({ races, selectedId, onAdd, onSelect }) {
   return (
     <Card className="h-fit shrink-0 p-5">
       <div className="mb-5 flex items-center justify-between">
@@ -60,8 +60,8 @@ export default function RaceList({ races, selectedId, onAdd, onSelect, tournamen
                     <div className="text-xs text-white/50">{scheduleText}</div>
                   </div>
                 </div>
-                <Badge tone={toneForStatus(getAdminRaceDisplayStatus(race, tournament))}>
-                  {getAdminRaceDisplayStatus(race, tournament)}
+                <Badge tone={toneForStatus(getAdminRaceDisplayStatus(race))}>
+                  {getAdminRaceDisplayStatus(race)}
                 </Badge>
               </div>
 
