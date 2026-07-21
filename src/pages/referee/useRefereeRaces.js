@@ -6,7 +6,6 @@ import {
   filterRacesForRefereeOperation,
   REFEREE_INVITATIONS_UPDATED_EVENT,
 } from '@/services/refereeInvitationService'
-import { useAuthStore } from '@/store/authStore'
 import {
   buildTournamentNameMap,
   buildTournamentStatusMap,
@@ -54,7 +53,6 @@ async function enrichRacesWithCheckInProgress(races) {
 }
 
 export function useRefereeRaces({ operationOnly = true } = {}) {
-  const userId = useAuthStore((state) => state.user?.id ?? state.user?.userId)
   const [races, setRaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -104,7 +102,21 @@ export function useRefereeRaces({ operationOnly = true } = {}) {
       setRefreshing(false)
       reloadingRef.current = false
     }
-  }, [userId, operationOnly])
+  }, [operationOnly])
+
+  const applyRaceResponse = useCallback((rawRace) => {
+    if (!rawRace?.id) return
+    setRaces((current) => current.map((race, index) => {
+      if (String(race.id) !== String(rawRace.id)) return race
+      const mapped = mapRaceFromApi({
+        ...race.raw,
+        ...rawRace,
+        tournamentName: rawRace.tournamentName || race.tournamentName,
+        tournamentStatus: rawRace.tournamentStatus || race.tournamentStatus,
+      }, index)
+      return { ...race, ...mapped }
+    }))
+  }, [])
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -133,5 +145,5 @@ export function useRefereeRaces({ operationOnly = true } = {}) {
     }
   }, [reload])
 
-  return { races, loading, refreshing, error, reload }
+  return { races, loading, refreshing, error, reload, applyRaceResponse }
 }

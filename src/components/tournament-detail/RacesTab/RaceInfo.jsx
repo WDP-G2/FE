@@ -343,7 +343,7 @@ export default function RaceInfo({
           )}
         </Field>
         <Field label="Trạng thái" full>
-          <Input value={getAdminRaceDisplayStatus(race, tournament)} disabled />
+          <Input value={getAdminRaceDisplayStatus(race)} disabled />
         </Field>
       </div>
       <PanelActions

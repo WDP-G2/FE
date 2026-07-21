@@ -16,7 +16,6 @@ import {
   Ban,
   Upload,
   Camera,
-  FileText,
   Plus,
   Play,
   Send,
@@ -47,12 +46,10 @@ import {
   findHorseByGate,
   getAssignedGate,
   mapParticipantFromApi,
-  parseFinishTimeToMillis,
   buildRaceFinalizePayload,
   buildResultRowsFromHorses,
   clearResultsDraft,
   loadResultsDraft,
-  saveResultsDraft,
   getRefereeRaceDisplayLabel,
   getRefereeRaceStatusTone,
   canRefereeEditRaceResults,
@@ -67,14 +64,12 @@ import {
   sortResultRowsForDisplay,
   normalizeRaceStatusCode,
   normalizeTournamentStatusCode,
-  raceStatusTone,
   randomizeGateMap,
   fetchRaceRules,
   parseRulesLines,
   severityTone,
 } from '@/utils/refereeRaceUtils';
 import { useRefereeRaces } from './useRefereeRaces';
-import { tournamentService } from '@/services/tournamentService';
 import { buildViolationTimestamp, formatViolationDisplayId, formatViolationTimestamp, mapActiveViolationTypeLabels } from '@/utils/violationUtils';
 import { ViolationEvidencePreviewModal, ViolationEvidenceThumbnail } from './ViolationEvidencePreview';
 import { RaceSimulationTrack } from '@/components/race-simulation/RaceSimulationTrack';
@@ -96,7 +91,13 @@ export function RefereeRaceDetail() {
   const { pathname } = useLocation();
   const id = pathname.split('/').filter(Boolean)[2];
   const navigate = useNavigate();
-  const { races, loading: racesLoading, error: racesError, reload: reloadRaces } = useRefereeRaces();
+  const {
+    races,
+    loading: racesLoading,
+    error: racesError,
+    reload: reloadRaces,
+    applyRaceResponse,
+  } = useRefereeRaces();
   const race = races.find((r) => String(r.id) === String(id));
   const [tab, setTab] = useState('overview');
   const [mgmtTab, setMgmtTab] = useState('positions');
@@ -105,21 +106,6 @@ export function RefereeRaceDetail() {
   const [startingRace, setStartingRace] = useState(false);
 
   const reloadRacesQuiet = useCallback(() => reloadRaces({ silent: true }), [reloadRaces]);
-
-  const handleStartRace = async () => {
-    if (!id) return;
-    if (startingRace) return;
-    setStartingRace(true);
-    try {
-      await refereeService.startRace(id);
-      await reloadRaces({ silent: true });
-      toast.success('Cuộc đua đã bắt đầu — bạn có thể ghi và sửa kết quả');
-    } catch (err) {
-      toast.error(getApiErrorMessage(err) || 'Không thể bắt đầu cuộc đua');
-    } finally {
-      setStartingRace(false);
-    }
-  };
 
   const loadParticipants = useCallback(async () => {
     if (!id) return;
@@ -135,8 +121,26 @@ export function RefereeRaceDetail() {
     }
   }, [id]);
 
+  const handleStartRace = async () => {
+    if (!id || startingRace) return;
+    setStartingRace(true);
+    try {
+      const startedRace = await refereeService.startRace(id);
+      applyRaceResponse(startedRace);
+      await Promise.all([
+        reloadRaces({ silent: true }),
+        loadParticipants(),
+      ]);
+      toast.success('Cuộc đua đã bắt đầu — bạn có thể ghi và sửa kết quả');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || 'Không thể bắt đầu cuộc đua');
+    } finally {
+      setStartingRace(false);
+    }
+  };
+
   useEffect(() => {
-    if (race) loadParticipants();
+    if (race) queueMicrotask(loadParticipants);
   }, [race, loadParticipants]);
 
   const goManagement = (sub) => {
@@ -426,6 +430,8 @@ function RaceManagementTab({
   const [startPositions, setStartPositions] = useState({});
 
   useEffect(() => {
+    // Keep local gate edits while merging participants loaded from the API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStartPositions((previous) => {
       const next = { ...previous }
       let changed = false
@@ -449,8 +455,6 @@ function RaceManagementTab({
       return changed ? next : previous
     })
   }, [horseSignature, horses])
-
-  const activeInfo = MGMT_TABS.find((t) => t.k === activeTab);
 
   useEffect(() => {
     if (activeTab === 'results' || activeTab === 'positions') {
@@ -962,7 +966,7 @@ function ViolationsTab({ raceId, raceName, horses }) {
   }, [raceId]);
 
   useEffect(() => {
-    loadViolations();
+    queueMicrotask(loadViolations);
   }, [loadViolations]);
 
   useEffect(() => {
@@ -988,6 +992,8 @@ function ViolationsTab({ raceId, raceName, horses }) {
   }, [])
 
   useEffect(() => {
+    // Reconcile the selected type when the backend settings list changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm((previous) => {
       if (violationTypeOptions.includes(previous.type)) return previous
       return { ...previous, type: defaultViolationType }
@@ -1338,107 +1344,83 @@ function ResultsTab({
   startingRace,
   onReloadRace,
 }) {
-  const horses = Array.isArray(horsesProp) ? horsesProp : [];
-  const safeStartPositions =
-    startPositions && typeof startPositions === 'object' && !Array.isArray(startPositions)
-      ? startPositions
-      : {};
-
-  const [liveRaceStatus, setLiveRaceStatus] = useState(() => normalizeRaceStatusCode(race?.status));
-  const [tournamentStatus, setTournamentStatus] = useState(
-    () => normalizeTournamentStatusCode(race?.tournamentStatus),
+  const sourceHorses = useMemo(
+    () => (Array.isArray(horsesProp) ? horsesProp : []),
+    [horsesProp],
   );
-  const tournamentCompleted = tournamentStatus === 'COMPLETED';
-  const canEdit = canRefereeEditRaceResults(liveRaceStatus, tournamentStatus);
+  const safeStartPositions = useMemo(
+    () => startPositions && typeof startPositions === 'object' && !Array.isArray(startPositions)
+      ? startPositions
+      : {},
+    [startPositions],
+  );
+  const propRaceStatus = normalizeRaceStatusCode(race?.status);
+  const tournamentStatus = normalizeTournamentStatusCode(race?.tournamentStatus);
+  const [refreshedRace, setRefreshedRace] = useState(null);
+  const liveRaceStatus = refreshedRace?.raceId === String(raceId)
+    ? refreshedRace.status
+    : propRaceStatus;
+  const horses = useMemo(() => {
+    if (!['ONGOING', 'RESULT_CONFIRMED'].includes(liveRaceStatus)) return sourceHorses;
+    return sourceHorses.filter((horse) =>
+      ['CHECKED_IN', 'RACING', 'FINISHED', 'DISQUALIFIED', 'DNF'].includes(
+        String(horse.status || '').toUpperCase(),
+      ),
+    );
+  }, [liveRaceStatus, sourceHorses]);
+  const canEdit = canRefereeEditRaceResults(liveRaceStatus);
   const needsManualStart = needsRefereeStartRace(liveRaceStatus, tournamentStatus);
   const hasSavedResults = liveRaceStatus === 'RESULT_CONFIRMED';
 
   const [rows, setRows] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingResults, setLoadingResults] = useState(false);
   const [simulationStatus, setSimulationStatus] = useState(null);
   const manualCanEdit = canEdit && !simulationStatus;
 
-  const refreshLiveRaceStatus = useCallback(async () => {
-    if (!raceId) return normalizeRaceStatusCode(race?.status);
+  const refreshLiveRaceStatus = async () => {
+    if (!raceId) return propRaceStatus;
     try {
       const fresh = await refereeService.getAssignedRaceById(raceId);
-      const code = normalizeRaceStatusCode(fresh?.status ?? race?.status);
-      setLiveRaceStatus(code);
+      const code = normalizeRaceStatusCode(fresh?.status ?? propRaceStatus);
+      setRefreshedRace({ raceId: String(raceId), status: code });
       return code;
     } catch {
-      const fallback = normalizeRaceStatusCode(race?.status);
-      setLiveRaceStatus(fallback);
-      return fallback;
+      return propRaceStatus;
     }
-  }, [raceId, race?.status]);
-
-  useEffect(() => {
-    setLiveRaceStatus(normalizeRaceStatusCode(race?.status));
-  }, [race?.status]);
-
-  useEffect(() => {
-    setTournamentStatus(normalizeTournamentStatusCode(race?.tournamentStatus));
-  }, [race?.tournamentStatus]);
-
-  useEffect(() => {
-    if (!race?.tournamentId) return undefined;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data, raw } = await tournamentService.getPublicTournament(race.tournamentId);
-        if (!cancelled) {
-          setTournamentStatus(
-            normalizeTournamentStatusCode(raw?.status ?? data?.statusCode ?? data?.status),
-          );
-        }
-      } catch {
-        if (!cancelled) {
-          setTournamentStatus(normalizeTournamentStatusCode(race?.tournamentStatus));
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [race?.tournamentId, race?.tournamentStatus]);
+  };
 
   useEffect(() => {
     if (!raceId || !horses.length) return undefined;
 
     let cancelled = false;
     (async () => {
-      setLoadingResults(true);
       const draft = loadResultsDraft(raceId);
       try {
         const results = await refereeService.getRaceResults(raceId);
         if (cancelled) return;
-        if (draft?.length) {
-          setRows(buildResultRowsFromHorses(horses, safeStartPositions, { draftRows: draft }));
-        } else if (results.length) {
+        if (results.length) {
+          clearResultsDraft(raceId);
           setRows(buildResultRowsFromHorses(horses, safeStartPositions, { results }));
+        } else if (draft?.length && !hasSavedResults) {
+          setRows(buildResultRowsFromHorses(horses, safeStartPositions, { draftRows: draft }));
         } else {
           setRows(buildResultRowsFromHorses(horses, safeStartPositions));
         }
       } catch {
         if (!cancelled) {
           setRows(
-            draft?.length
+            draft?.length && !hasSavedResults
               ? buildResultRowsFromHorses(horses, safeStartPositions, { draftRows: draft })
               : buildResultRowsFromHorses(horses, safeStartPositions),
           );
         }
-      } finally {
-        if (!cancelled) setLoadingResults(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [raceId, horses, safeStartPositions]);
+  }, [hasSavedResults, raceId, horses, safeStartPositions]);
 
   const updateRow = (id, patch) => {
     if (!patch || typeof patch !== 'object') return;
@@ -1501,12 +1483,6 @@ function ResultsTab({
       const rankedRows = assignRanksByFinishTime(rows);
       setRows(rankedRows);
 
-      if (hasSavedResults) {
-        saveResultsDraft(raceId, rankedRows);
-        toast.success('Đã lưu thay đổi — hạng được sắp theo thời gian về đích');
-        return;
-      }
-
       const status = await refreshLiveRaceStatus();
 
       if (status !== 'ONGOING') {
@@ -1531,31 +1507,6 @@ function ResultsTab({
 
   if (!horses.length) {
     return <div className="text-center py-12 text-white/40 text-sm">Chưa có ngựa để ghi kết quả.</div>;
-  }
-
-  if (tournamentCompleted) {
-    return (
-      <GlassCard>
-        <div className="p-6 bg-gradient-to-br from-purple-500/20 to-transparent border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-purple-500/20 border border-purple-500/40 rounded-2xl flex items-center justify-center">
-              <Lock className="w-6 h-6 text-purple-300" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-white">Giải đấu đã kết thúc</h3>
-              <p className="text-xs text-white/60">Admin đã chuyển trạng thái sang &quot;Đã kết thúc&quot; — không thể chỉnh sửa kết quả</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-5">
-          {loadingResults ? (
-            <div className="text-center py-8 text-white/40 text-sm">Đang tải kết quả...</div>
-          ) : (
-            <ResultsTable rows={displayRows} readOnly />
-          )}
-        </div>
-      </GlassCard>
-    );
   }
 
   return (
@@ -1590,12 +1541,7 @@ function ResultsTab({
         <GlassCard className="p-4 flex items-start gap-3 bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/30">
           <Info className="w-5 h-5 text-emerald-300 mt-0.5 shrink-0" />
           <div className="text-xs text-white/70 leading-relaxed">
-            Giải đang <span className="text-emerald-300 font-semibold">Đang diễn ra</span> — bạn có thể ghi và sửa kết quả.
-            {hasSavedResults && (
-              <span className="block mt-1 text-white/50">
-                Kết quả đã chốt trên server — bạn vẫn chỉnh sửa và bấm &quot;Lưu thay đổi&quot; (lưu nháp trên trình duyệt).
-              </span>
-            )}
+            Cuộc đua đang <span className="text-emerald-300 font-semibold">Đang diễn ra</span> — bạn có thể ghi và sửa kết quả.
             <span className="block mt-1">
               Nhập thời gian <span className="font-mono text-white/80">MM:SS:CC</span>. Hạng tự xếp theo thời gian (nhanh hơn = hạng cao hơn) khi bấm Lưu. Ngựa bị loại cần ghi lý do.
             </span>
@@ -1630,10 +1576,14 @@ function ResultsTab({
           <div className="text-xs text-white/60 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-300" />
             {manualCanEdit
-              ? 'Có thể ghi/sửa kết quả khi giải đang diễn ra'
+              ? 'Có thể ghi/sửa kết quả khi cuộc đua đang diễn ra'
+              : hasSavedResults
+                ? 'Kết quả chính thức đã khóa và chỉ có thể xem'
               : simulationStatus
                 ? 'Kết quả thủ công đã khóa vì cuộc đua có mô phỏng'
-              : 'Admin cần bật giải "Đang diễn ra" để ghi kết quả'}
+                : liveRaceStatus === 'SCHEDULED' && tournamentStatus !== 'ONGOING'
+                  ? 'Vui lòng chờ admin bắt đầu giải trước khi bắt đầu cuộc đua'
+                  : 'Phải bắt đầu cuộc đua trước khi ghi kết quả'}
           </div>
           <PrimaryButton
             icon={Send}
@@ -1642,9 +1592,7 @@ function ResultsTab({
           >
             {submitting
               ? 'Đang lưu...'
-              : hasSavedResults
-                ? 'Lưu thay đổi'
-                : 'Xác nhận & phát hành kết quả'}
+              : 'Xác nhận & phát hành kết quả'}
           </PrimaryButton>
         </div>
       </GlassCard>

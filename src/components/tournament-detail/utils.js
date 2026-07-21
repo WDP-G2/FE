@@ -1,4 +1,4 @@
-export function registrationsFor(race) {
+export function registrationsFor() {
   return []
 }
 
@@ -68,12 +68,18 @@ export function toneForStatus(status) {
   return 'blue'
 }
 
-/** Admin hiển thị trạng thái cuộc đua theo giải (Cài đặt), không theo RESULT_CONFIRMED của trọng tài */
-export function getAdminRaceDisplayStatus(race, tournament) {
-  const tournamentCode = tournament?.statusCode
-  if (tournamentCode === 'ONGOING') return tournament?.status || 'Đang diễn ra'
-  if (tournamentCode === 'COMPLETED') return tournament?.status || 'Đã kết thúc'
-  if (tournamentCode === 'CANCELLED') return 'Đã hủy'
-  if (tournamentCode === 'SCHEDULED') return tournament?.status || 'Đã lên lịch'
-  return race?.status ?? '—'
+const raceStatusLabels = {
+  SCHEDULED: 'Sắp diễn ra',
+  ONGOING: 'Đang diễn ra',
+  RESULT_CONFIRMED: 'Đã kết thúc',
+  CANCELLED: 'Đã hủy',
+}
+
+/** Trạng thái race độc lập với tournament kể từ khi race đã được lên lịch. */
+export function getAdminRaceDisplayStatus(race) {
+  const statusCode = String(race?.statusCode ?? race?.raw?.status ?? '')
+    .trim()
+    .toUpperCase()
+
+  return raceStatusLabels[statusCode] ?? race?.status ?? '—'
 }

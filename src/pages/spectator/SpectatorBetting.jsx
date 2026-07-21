@@ -141,7 +141,7 @@ export default function SpectatorBetting() {
     try {
       if (!betIdempotencyKeyRef.current) betIdempotencyKeyRef.current = createIdempotencyKey();
       await bettingService.placeBet(selectedMarket.raceId, {
-        participantId: Number(selectedParticipantId),
+        participantId: String(selectedParticipantId),
         stakeAmount: amount,
       }, betIdempotencyKeyRef.current);
       betIdempotencyKeyRef.current = null;

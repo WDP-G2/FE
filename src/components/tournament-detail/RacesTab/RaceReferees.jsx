@@ -108,7 +108,7 @@ export default function RaceReferees({ race, tournament }) {
                   "Vòng",
                   "Cuộc đua",
                   "Lịch",
-                  "Trạng thái giải",
+                  "Trạng thái cuộc đua",
                   "Trọng tài",
                   "Phân công",
                 ].map((header) => (
@@ -125,7 +125,7 @@ export default function RaceReferees({ race, tournament }) {
                   refereesById,
                 );
                 const isActive = String(item.id) === String(race.id);
-                const displayStatus = getAdminRaceDisplayStatus(item, tournament);
+                const displayStatus = getAdminRaceDisplayStatus(item);
 
                 return (
                   <tr

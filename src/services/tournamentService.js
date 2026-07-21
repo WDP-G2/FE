@@ -38,6 +38,12 @@ const STATUS_LABELS = {
   CANCELLED: 'Đã hủy',
 }
 
+const RACE_STATUS_LABELS = {
+  ...STATUS_LABELS,
+  SCHEDULED: 'Sắp diễn ra',
+  RESULT_CONFIRMED: 'Đã kết thúc',
+}
+
 const STATUS_TONES = {
   DRAFT: 'gray',
   PUBLISHED: 'blue',
@@ -126,7 +132,7 @@ function mapRace(race, index) {
     checkIn: toTime(scheduledStartAt),
     scheduledStartAt,
     scheduledEndAt,
-    status: STATUS_LABELS[race?.status] ?? race?.status ?? 'Nháp',
+    status: RACE_STATUS_LABELS[race?.status] ?? race?.status ?? 'Nháp',
     statusCode: race?.status,
     refereeId: race?.refereeId == null ? '' : String(race.refereeId),
     refereeName: race?.refereeUsername ?? race?.refereeName ?? '',

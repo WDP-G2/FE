@@ -29,6 +29,7 @@ const API_MESSAGE_VI = {
   'Gate number must be greater than zero': 'Số cổng xuất phát phải lớn hơn 0',
   'Gate number already exists in this race': 'Số cổng này đã được ngựa khác sử dụng trong cuộc đua',
   'Gate number must be assigned before race starts': 'Phải phân cổng xuất phát trước khi bắt đầu đua',
+  'Race has no approved participants': 'Cuộc đua chưa có ngựa được duyệt để bắt đầu',
   'Cannot update gate after race has started, finished, or been cancelled':
     'Không thể đổi cổng sau khi cuộc đua đã bắt đầu, kết thúc hoặc bị hủy',
   'Only scheduled races can be started': 'Chỉ có thể bắt đầu cuộc đua khi cuộc đua ở trạng thái "Sắp diễn ra"',

@@ -7,7 +7,7 @@ import { formatVnd, getPrizeAmountByRank, getTotalPrize, getAdminRaceDisplayStat
 import { formatDisplayDate } from '@/utils/dateFormat'
 import { useRaceResults } from '@/services/raceResultService'
 
-function RaceResultCard({ race, tournament, open, onToggle }) {
+function RaceResultCard({ race, open, onToggle }) {
   const { rankedRows, disqualifiedRows, loading, error } = useRaceResults(race.id)
   const champion = rankedRows[0]?.horse ?? 'Chưa có'
 
@@ -97,8 +97,8 @@ function RaceResultCard({ race, tournament, open, onToggle }) {
         <span className="flex-1">
           <span className="mb-2 flex items-center gap-3">
             <span className="text-xl font-bold">{race.name}</span>
-            <Badge tone={toneForStatus(getAdminRaceDisplayStatus(race, tournament))}>
-              {getAdminRaceDisplayStatus(race, tournament)}
+            <Badge tone={toneForStatus(getAdminRaceDisplayStatus(race))}>
+              {getAdminRaceDisplayStatus(race)}
             </Badge>
           </span>
           <span className="text-sm text-white/55">
@@ -127,7 +127,6 @@ export default function ResultsTab({ tournament }) {
         <RaceResultCard
           key={race.id}
           race={race}
-          tournament={tournament}
           open={expanded === race.id}
           onToggle={() => setExpanded(expanded === race.id ? '' : race.id)}
         />

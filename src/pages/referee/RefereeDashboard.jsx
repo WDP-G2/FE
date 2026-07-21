@@ -18,7 +18,6 @@ import {
   formatRaceTime,
   getRefereeRaceDisplayLabel,
   getRefereeRaceStatusTone,
-  isRaceUpcoming,
   normalizeRaceStatusCode,
 } from '@/utils/refereeRaceUtils';
 import { getApiErrorMessage } from '@/utils/apiError';
@@ -145,7 +144,9 @@ export function RefereeDashboard() {
           .filter((race) => race?.id != null);
 
         if (!upcomingList.length) {
-          upcomingList = mappedRaces.filter((race) => isRaceUpcoming(race.scheduledStartAt));
+          upcomingList = mappedRaces.filter((race) =>
+            ['ONGOING', 'SCHEDULED'].includes(normalizeRaceStatusCode(race.status)),
+          );
         }
 
         const enriched = await refereeService.enrichRacesCheckIn(upcomingList);
@@ -228,7 +229,7 @@ export function RefereeDashboard() {
               <Calendar className="w-5 h-5 text-[#D4A017]" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Cuộc đua sắp điều hành</h2>
+              <h2 className="text-base font-bold text-white">Cuộc đua đang và sắp điều hành</h2>
               <p className="text-xs text-white/50">
                 {loading ? 'Đang tải...' : 'Có mặt / Chờ / Vắng theo từng cuộc đua'}
               </p>
@@ -249,7 +250,7 @@ export function RefereeDashboard() {
 
           {!loading && scheduleRaces.length === 0 && (
             <div className="text-center text-white/40 py-8 text-sm">
-              Chưa có race sắp tới được giao.
+              Chưa có race đang diễn ra hoặc sắp tới được giao.
             </div>
           )}
 
