@@ -15,6 +15,7 @@ import {
   X,
   Shield,
   Wallet,
+  Bell,
 } from "lucide-react";
 import RoleWalletBadge from "@/components/wallet/RoleWalletBadge";
 import { WALLET_PATHS } from "@/constants/walletPaths";
@@ -34,6 +35,7 @@ export const HORSE_OWNER_NAV = [
   { label: "Ví của tôi", to: "/horse-owner/wallet", icon: Wallet },
   { label: "Thanh toán", to: "/horse-owner/payments", icon: CreditCard },
   { label: "Kết quả thi đấu", to: "/horse-owner/results", icon: BarChart3 },
+  { label: "Thông báo", to: "/horse-owner/notifications", icon: Bell },
 ];
 
 export function HorseOwnerLayout({ children, title, subtitle, actions }) {

@@ -117,7 +117,9 @@ export const raceRegistrationService = {
   },
 
   async rejectRegistration(id, note = '') {
-    const payload = { note: note?.trim() || 'Không đạt điều kiện duyệt' }
+    const normalizedNote = note?.trim()
+    if (!normalizedNote) throw new Error('Lý do từ chối đăng ký là bắt buộc')
+    const payload = { note: normalizedNote }
     const data = await axiosClient
       .put(ENDPOINTS.raceRegistrations.adminReject(id), payload)
       .then(unwrapResponse)

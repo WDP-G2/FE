@@ -141,7 +141,11 @@ export default function RaceRegistrations({ race, tournament }) {
     const promptedNote = window.prompt("Lý do từ chối đăng ký", "Không đạt điều kiện duyệt");
     if (promptedNote === null) return;
 
-    const note = promptedNote || "Không đạt điều kiện duyệt";
+    const note = promptedNote.trim();
+    if (!note) {
+      toast.error("Lý do từ chối đăng ký là bắt buộc");
+      return;
+    }
     const id = actionPayloadId(registration);
     setSavingId(String(id));
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Trophy,
@@ -47,6 +48,10 @@ function mapNotification(item) {
     body: item.message || "",
     read: item.readStatus === "READ" || item.read === true,
     type: mapNotificationType(item.type),
+    link:
+      item.type === "JOCKEY_ASSIGNMENT_CANCELLED"
+        ? "/jockey/invitations"
+        : item.metadata?.link || "",
     time: item.createdAt
       ? new Date(item.createdAt).toLocaleString("vi-VN", {
           day: "2-digit",
@@ -59,6 +64,7 @@ function mapNotification(item) {
 }
 
 export function JockeyNotifications() {
+  const navigate = useNavigate();
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -129,9 +135,15 @@ export function JockeyNotifications() {
             return (
               <GlassCard
                 key={n.id}
-                className={!n.read ? "border-[#D4A017]/20 bg-[#D4A017]/[0.03]" : ""}
+                className={`${!n.read ? "border-[#D4A017]/20 bg-[#D4A017]/[0.03]" : ""} ${n.link ? "cursor-pointer" : ""}`}
               >
-                <div className="p-4 flex items-start gap-4">
+                <div
+                  className="p-4 flex items-start gap-4"
+                  onClick={() => {
+                    if (!n.read) markRead(n.id);
+                    if (n.link) navigate(n.link);
+                  }}
+                >
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeBg(n.type)}`}
                   >
@@ -151,7 +163,10 @@ export function JockeyNotifications() {
                     {!n.read && (
                       <button
                         type="button"
-                        onClick={() => markRead(n.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          markRead(n.id);
+                        }}
                         className="p-1.5 hover:bg-white/10 rounded-lg"
                       >
                         <Check className="w-3.5 h-3.5 text-white/50" />
@@ -159,7 +174,10 @@ export function JockeyNotifications() {
                     )}
                     <button
                       type="button"
-                      onClick={() => setNotifs((prev) => prev.filter((item) => item.id !== n.id))}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setNotifs((prev) => prev.filter((item) => item.id !== n.id));
+                      }}
                       className="p-1.5 hover:bg-red-500/10 rounded-lg"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-white/30 hover:text-red-400" />

@@ -95,6 +95,12 @@ export function InvitationCard({ invitation, conflictMap, onAccept, onReject, sa
               Phản hồi: {invitation.responseNote}
             </div>
           )}
+          {invitation.statusCode === "CANCELLED" &&
+            invitation.rewardStatus === "REFUNDED" && (
+              <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/[0.06] p-3 text-xs font-semibold text-emerald-200">
+                Thù lao đã được hoàn lại cho chủ ngựa
+              </div>
+            )}
         </div>
 
         {hasPendingConflicts && (

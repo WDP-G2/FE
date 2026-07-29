@@ -202,6 +202,11 @@ export default function ParticipantsTab({ tournament }) {
   const rejectRegistration = async (registration) => {
     const promptedNote = window.prompt('Lý do từ chối đăng ký', 'Không đạt điều kiện duyệt')
     if (promptedNote === null) return
+    const note = promptedNote.trim()
+    if (!note) {
+      toast.error('Lý do từ chối đăng ký là bắt buộc')
+      return
+    }
 
     const id = actionPayloadId(registration)
     setSavingId(String(id))
@@ -209,7 +214,7 @@ export default function ParticipantsTab({ tournament }) {
     try {
       const nextRegistration = await raceRegistrationService.rejectRegistration(
         id,
-        promptedNote || 'Không đạt điều kiện duyệt',
+        note,
       )
       updateRegistration(nextRegistration)
       toast.success('Đã từ chối đăng ký thi đấu')

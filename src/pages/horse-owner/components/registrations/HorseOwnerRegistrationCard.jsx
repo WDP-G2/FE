@@ -42,7 +42,9 @@ export function HorseOwnerRegistrationCard({
         {(registration.ownerNote || registration.reviewNote || registration.withdrawNote) && (
           <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-white/55">
             {registration.ownerNote && <div>Ghi chú: {registration.ownerNote}</div>}
-            {registration.reviewNote && <div>Admin: {registration.reviewNote}</div>}
+            {registration.reviewNote && (
+              <div>Lý do admin từ chối: {registration.reviewNote}</div>
+            )}
             {registration.withdrawNote && <div>Lý do rút: {registration.withdrawNote}</div>}
           </div>
         )}
