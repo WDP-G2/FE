@@ -81,8 +81,8 @@ const TABS = [
 ];
 
 const MGMT_TABS = [
-  { k: 'positions', label: 'Vị trí xuất phát', icon: Hash, desc: 'Phân chia cổng xuất phát' },
   { k: 'checkin', label: 'Xác nhận có mặt', icon: ClipboardCheck, desc: 'Xác nhận có mặt & điều kiện' },
+  { k: 'positions', label: 'Vị trí xuất phát', icon: Hash, desc: 'Phân chia cổng xuất phát' },
   { k: 'violations', label: 'Vi phạm', icon: AlertTriangle, desc: 'Ghi nhận & theo dõi vi phạm' },
   { k: 'results', label: 'Ghi kết quả', icon: Award, desc: 'Nhập thứ hạng & thời gian' },
 ];
@@ -100,7 +100,7 @@ export function RefereeRaceDetail() {
   } = useRefereeRaces();
   const race = races.find((r) => String(r.id) === String(id));
   const [tab, setTab] = useState('overview');
-  const [mgmtTab, setMgmtTab] = useState('positions');
+  const [mgmtTab, setMgmtTab] = useState('checkin');
   const [participants, setParticipants] = useState([]);
   const [participantsLoading, setParticipantsLoading] = useState(false);
   const [startingRace, setStartingRace] = useState(false);
@@ -276,7 +276,9 @@ function MetaTile({ icon: Icon, label, value }) {
 
 /* ---------------- Overview ---------------- */
 function OverviewTab({ race, participants, goManagement }) {
-  const checkedInCount = participants.filter((p) => p.status === 'CHECKED_IN').length;
+  const checkedInCount = participants.filter(
+    (participant) => participant.raw?.checkInStatus === 'CHECKED_IN',
+  ).length;
   const checkInSub = participants.length
     ? `${checkedInCount}/${participants.length} đã check-in`
     : `${race.checkedInDisplay} / ${race.participantCount}`;
@@ -314,13 +316,6 @@ function OverviewTab({ race, participants, goManagement }) {
           <div className="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <StepCard
               n={1}
-              title="Vị trí xuất phát"
-              status="active"
-              sub="Phân chia cổng cho từng ngựa"
-              onClick={() => goManagement('positions')}
-            />
-            <StepCard
-              n={2}
               title="Xác nhận có mặt"
               status={
                 participants.length > 0 && checkedInCount === participants.length
@@ -331,6 +326,17 @@ function OverviewTab({ race, participants, goManagement }) {
               }
               sub={checkInSub}
               onClick={() => goManagement('checkin')}
+            />
+            <StepCard
+              n={2}
+              title="Vị trí xuất phát"
+              status={checkedInCount > 0 ? 'active' : 'pending'}
+              sub={
+                checkedInCount > 0
+                  ? `Bốc thăm cho ${checkedInCount} ngựa đã check-in`
+                  : 'Check-in ngựa trước khi bốc thăm'
+              }
+              onClick={() => goManagement('positions')}
             />
             <StepCard
               n={3}
@@ -422,9 +428,16 @@ function RaceManagementTab({
   onReloadRace,
 }) {
   const horses = useMemo(() => (Array.isArray(participants) ? participants : []), [participants]);
-  const horseSignature = useMemo(
-    () => horses.map((horse) => `${horse.id}:${horse.gateNumber ?? ''}`).join('|'),
+  const checkedInHorses = useMemo(
+    () =>
+      horses.filter(
+        (horse) => horse.raw?.checkInStatus === 'CHECKED_IN',
+      ),
     [horses],
+  );
+  const horseSignature = useMemo(
+    () => checkedInHorses.map((horse) => `${horse.id}:${horse.gateNumber ?? ''}`).join('|'),
+    [checkedInHorses],
   );
 
   const [startPositions, setStartPositions] = useState({});
@@ -436,7 +449,7 @@ function RaceManagementTab({
       const next = { ...previous }
       let changed = false
 
-      horses.forEach((horse, index) => {
+      checkedInHorses.forEach((horse, index) => {
         const key = String(horse.id)
         const fromApi = horse.gateNumber ?? index + 1
         if (next[key] == null) {
@@ -446,7 +459,7 @@ function RaceManagementTab({
       })
 
       Object.keys(next).forEach((key) => {
-        if (!horses.some((horse) => String(horse.id) === key)) {
+        if (!checkedInHorses.some((horse) => String(horse.id) === key)) {
           delete next[key]
           changed = true
         }
@@ -454,7 +467,7 @@ function RaceManagementTab({
 
       return changed ? next : previous
     })
-  }, [horseSignature, horses])
+  }, [horseSignature, checkedInHorses])
 
   useEffect(() => {
     if (activeTab === 'results' || activeTab === 'positions') {
@@ -518,7 +531,8 @@ function RaceManagementTab({
       {activeTab === 'positions' && (
         <StartingPositionsTab
           race={race}
-          horses={horses}
+          horses={checkedInHorses}
+          totalHorses={horses.length}
           positions={startPositions}
           setPositions={setStartPositions}
           loading={participantsLoading}
@@ -556,6 +570,7 @@ function RaceManagementTab({
 function StartingPositionsTab({
   race,
   horses,
+  totalHorses,
   positions,
   setPositions,
   loading,
@@ -597,7 +612,11 @@ function StartingPositionsTab({
   }
 
   if (!horseList.length) {
-    return <div className="text-center py-12 text-white/40 text-sm">Chưa có ngựa tham gia cuộc đua.</div>
+    return (
+      <div className="text-center py-12 text-white/40 text-sm">
+        Chưa có ngựa check-in (0/{totalHorses}). Hãy sang mục Xác nhận có mặt trước khi chia vị trí xuất phát.
+      </div>
+    )
   }
 
   return (
@@ -605,7 +624,7 @@ function StartingPositionsTab({
       <GlassCard className="p-4 flex items-start gap-3 bg-gradient-to-r from-[#D4A017]/10 to-transparent border-[#D4A017]/30">
         <Info className="w-5 h-5 text-[#D4A017] mt-0.5 shrink-0" />
         <div className="text-xs text-white/70 leading-relaxed">
-          Phân chia số cổng xuất phát cho từng ngựa. Vị trí xuất phát sẽ được sử dụng trong bảng ghi kết quả.
+          Chỉ ngựa đã check-in mới được phân chia cổng xuất phát. Vị trí xuất phát sẽ được sử dụng trong bảng ghi kết quả.
           Dùng <span className="text-[#D4A017] font-semibold">Bốc thăm ngẫu nhiên</span> rồi bấm Lưu phân công.
         </div>
       </GlassCard>
@@ -618,7 +637,9 @@ function StartingPositionsTab({
             </div>
             <div>
               <h3 className="font-bold text-white">Phân chia vị trí xuất phát · {race.name}</h3>
-              <p className="text-xs text-white/50">{horseList.length} ngựa · {horseList.length} cổng xuất phát</p>
+              <p className="text-xs text-white/50">
+                {horseList.length}/{totalHorses} ngựa đã check-in · {horseList.length} cổng xuất phát
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

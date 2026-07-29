@@ -10,11 +10,10 @@ function createFeeGroup() {
   return {
     id: `fee-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     registrationFee: '',
-    lateFee: '',
   }
 }
 
-function FeeGroupCard({ title, registrationFee, lateFee, onRegistrationChange, onLateChange, onRemove }) {
+function FeeGroupCard({ title, registrationFee, onRegistrationChange, onRemove }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -24,7 +23,7 @@ function FeeGroupCard({ title, registrationFee, lateFee, onRegistrationChange, o
           </span>
           <div>
             <h3 className="font-bold text-white">{title}</h3>
-            <p className="text-xs text-white/45">Lệ phí đăng ký mặc định và phí trễ hạn</p>
+            <p className="text-xs text-white/45">Lệ phí đăng ký mặc định</p>
           </div>
         </div>
         {onRemove && (
@@ -40,17 +39,11 @@ function FeeGroupCard({ title, registrationFee, lateFee, onRegistrationChange, o
         )}
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div>
         <Field label="Lệ phí đăng ký mặc định (VNĐ)">
           <MoneyInput
             value={registrationFee}
             onValueChange={onRegistrationChange}
-          />
-        </Field>
-        <Field label="Phí trễ hạn (VNĐ)">
-          <MoneyInput
-            value={lateFee}
-            onValueChange={onLateChange}
           />
         </Field>
       </div>
@@ -60,9 +53,7 @@ function FeeGroupCard({ title, registrationFee, lateFee, onRegistrationChange, o
 
 export default function DefaultFeesSettingsPanel({ onRegisterAddFee }) {
   const [registrationFee, setRegistrationFee] = useState('')
-  const [lateFee, setLateFee] = useState('')
   const [savedRegistrationFee, setSavedRegistrationFee] = useState('')
-  const [savedLateFee, setSavedLateFee] = useState('')
   const [extraFeeGroups, setExtraFeeGroups] = useState([])
   const [savedExtraFeeGroups, setSavedExtraFeeGroups] = useState([])
   const [loading, setLoading] = useState(true)
@@ -86,11 +77,8 @@ export default function DefaultFeesSettingsPanel({ onRegisterAddFee }) {
         const storedExtraFeeGroups = readExtraFeeGroups()
         if (!cancelled) {
           const registration = String(response.data.defaultRegistrationFee ?? '')
-          const late = String(response.data.lateCheckInFee ?? '')
           setRegistrationFee(registration)
-          setLateFee(late)
           setSavedRegistrationFee(registration)
-          setSavedLateFee(late)
           setExtraFeeGroups(storedExtraFeeGroups)
           setSavedExtraFeeGroups(storedExtraFeeGroups)
         }
@@ -119,27 +107,21 @@ export default function DefaultFeesSettingsPanel({ onRegisterAddFee }) {
 
   const resetFees = () => {
     setRegistrationFee(savedRegistrationFee)
-    setLateFee(savedLateFee)
     setExtraFeeGroups(savedExtraFeeGroups)
   }
 
   const validateFeeGroup = (group, label) => {
     const defaultRegistrationFee = Number(group.registrationFee)
-    const lateCheckInFee = Number(group.lateFee)
 
     if (!Number.isFinite(defaultRegistrationFee) || defaultRegistrationFee < 0) {
       toast.error(`${label}: lệ phí đăng ký mặc định không hợp lệ`)
-      return false
-    }
-    if (!Number.isFinite(lateCheckInFee) || lateCheckInFee < 0) {
-      toast.error(`${label}: phí trễ hạn không hợp lệ`)
       return false
     }
     return true
   }
 
   const saveFees = async () => {
-    if (!validateFeeGroup({ registrationFee, lateFee }, 'Lệ phí mặc định')) return
+    if (!validateFeeGroup({ registrationFee }, 'Lệ phí mặc định')) return
 
     for (let index = 0; index < extraFeeGroups.length; index += 1) {
       if (!validateFeeGroup(extraFeeGroups[index], `Lệ phí bổ sung ${index + 1}`)) return
@@ -149,15 +131,11 @@ export default function DefaultFeesSettingsPanel({ onRegisterAddFee }) {
       setSaving(true)
       const response = await systemSettingsService.updateFees({
         defaultRegistrationFee: Number(registrationFee),
-        lateCheckInFee: Number(lateFee),
       })
       const registration = String(response.data.defaultRegistrationFee ?? registrationFee)
-      const late = String(response.data.lateCheckInFee ?? lateFee)
       writeExtraFeeGroups(extraFeeGroups)
       setRegistrationFee(registration)
-      setLateFee(late)
       setSavedRegistrationFee(registration)
-      setSavedLateFee(late)
       setSavedExtraFeeGroups(extraFeeGroups)
       toast.success('Đã lưu cấu hình lệ phí')
     } catch (error) {
@@ -177,9 +155,7 @@ export default function DefaultFeesSettingsPanel({ onRegisterAddFee }) {
         <FeeGroupCard
           title="Lệ phí mặc định"
           registrationFee={registrationFee}
-          lateFee={lateFee}
           onRegistrationChange={setRegistrationFee}
-          onLateChange={setLateFee}
         />
 
         {extraFeeGroups.map((group, index) => (
@@ -187,11 +163,9 @@ export default function DefaultFeesSettingsPanel({ onRegisterAddFee }) {
             key={group.id}
             title={`Lệ phí bổ sung ${index + 1}`}
             registrationFee={group.registrationFee}
-            lateFee={group.lateFee}
             onRegistrationChange={(value) =>
               updateExtraFeeGroup(group.id, { registrationFee: value })
             }
-            onLateChange={(value) => updateExtraFeeGroup(group.id, { lateFee: value })}
             onRemove={() => removeExtraFeeGroup(group.id)}
           />
         ))}

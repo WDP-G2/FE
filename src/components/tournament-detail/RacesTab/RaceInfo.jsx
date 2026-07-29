@@ -71,9 +71,6 @@ export default function RaceInfo({
 
   const feeLoading = loadingOptions && registrationFeeOptions.length === 0;
   const selectedFeeOptionId = findRegistrationFeeOptionId(draft.entryFee, registrationFeeOptions);
-  const selectedFeeOption = registrationFeeOptions.find(
-    (option) => option.id === selectedFeeOptionId,
-  );
   const hasCustomEntryFee =
     Number(draft.entryFee) > 0 && !selectedFeeOptionId && registrationFeeOptions.length > 0;
 
@@ -283,7 +280,8 @@ export default function RaceInfo({
         <Field label="Số ngựa tối thiểu của cuộc đua">
           <Input
             type="number"
-            min="1"
+            min="2"
+            step="1"
             value={draft.minHorses}
             disabled={saving}
             onChange={(event) =>
@@ -319,7 +317,7 @@ export default function RaceInfo({
             </option>
             {hasCustomEntryFee && (
               <option value="custom">
-                {Number(draft.entryFee).toLocaleString("vi-VN")} VND (hiện tại)
+                {Number(draft.entryFee).toLocaleString("vi-VN")} VND
               </option>
             )}
             {registrationFeeOptions.map((option) => (
@@ -328,11 +326,6 @@ export default function RaceInfo({
               </option>
             ))}
           </Select>
-          {selectedFeeOption && (
-            <p className="mt-2 text-xs text-white/45">
-              Phí trễ hạn: {Number(selectedFeeOption.lateFee || 0).toLocaleString("vi-VN")} VND
-            </p>
-          )}
           {!feeLoading && registrationFeeOptions.length === 0 && (
             <p className="mt-2 text-xs font-medium text-amber-300">
               Chưa có lệ phí trong cài đặt hệ thống.{" "}

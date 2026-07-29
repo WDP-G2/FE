@@ -6,6 +6,7 @@ import { formatDisplayDateTime } from '@/utils/dateFormat'
 import { EmptyState, ErrorState, LoadingState, Panel } from './spectatorUi'
 
 function betStatusLabel(status) {
+  if (status === 'PLACED' || status === 'LOCKED') return 'Đang chờ'
   if (status === 'PENDING') return 'Đang chờ'
   if (status === 'WON') return 'Thắng cược'
   if (status === 'LOST') return 'Thua cược'
@@ -66,9 +67,33 @@ export default function SpectatorBets() {
                     <p className="mt-1 text-sm text-white/50">{bet.horseName}</p>
                     <p className="mt-1 text-xs text-white/38">{formatDisplayDateTime(bet.placedAt)}</p>
                   </div>
-                  <div className="grid gap-3 text-sm sm:grid-cols-3 lg:min-w-[420px]">
+                  <div className="grid gap-3 text-sm sm:grid-cols-2 lg:min-w-[640px] lg:grid-cols-3">
                     <Metric label="Tiền cược" value={fmtVND(bet.stakeAmount)} />
-                    <Metric label="Có thể nhận" value={fmtVND(bet.potentialPayoutAmount)} />
+                    <Metric label="Tổng trước thuế" value={fmtVND(bet.potentialPayoutAmount)} />
+                    {['PLACED', 'LOCKED', 'PENDING'].includes(bet.status) && (
+                      <>
+                        <Metric
+                          label={`Thuế dự kiến (${bet.appliedWinningTaxPercent ?? '-'}%)`}
+                          value={fmtVND(bet.estimatedWinningTaxAmount)}
+                        />
+                        <Metric
+                          label="Thực nhận dự kiến"
+                          value={fmtVND(bet.estimatedNetPayoutAmount)}
+                        />
+                      </>
+                    )}
+                    {bet.status === 'WON' && (
+                      <>
+                        <Metric
+                          label={`Thuế đã trừ (${bet.appliedWinningTaxPercent ?? '-'}%)`}
+                          value={fmtVND(bet.winningTaxAmount)}
+                        />
+                        <Metric label="Thực nhận" value={fmtVND(bet.actualPayoutAmount)} />
+                      </>
+                    )}
+                    {bet.status === 'REFUNDED' && (
+                      <Metric label="Đã hoàn" value={fmtVND(bet.actualPayoutAmount)} />
+                    )}
                     <Metric label="Trạng thái" value={betStatusLabel(bet.status)} />
                   </div>
                 </div>

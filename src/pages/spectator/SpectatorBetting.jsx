@@ -9,6 +9,7 @@ import { formatDisplayDateTime } from "@/utils/dateFormat";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { EmptyState, ErrorState, LoadingState, Panel } from "./spectatorUi";
 import { createIdempotencyKey } from "@/utils/idempotency";
+import { calculateBetBreakdown } from "@/utils/bettingMoney";
 
 function marketStatusLabel(status) {
   if (status === "OPEN") return "Đang mở";
@@ -106,6 +107,23 @@ export default function SpectatorBetting() {
         (market) => String(market.id) === String(selectedMarketId),
       ) || markets[0],
     [markets, selectedMarketId],
+  );
+
+  const betPreview = useMemo(
+    () => {
+      const amount = Number(stakeAmount);
+      if (!Number.isSafeInteger(amount) || amount <= 0) return null;
+      return calculateBetBreakdown({
+        stakeAmount: amount,
+        payoutMultiplier: selectedMarket?.payoutMultiplier || 2,
+        winningTaxPercent: selectedMarket?.winningTaxPercent,
+      });
+    },
+    [
+      selectedMarket?.payoutMultiplier,
+      selectedMarket?.winningTaxPercent,
+      stakeAmount,
+    ],
   );
 
   useEffect(() => {
@@ -280,13 +298,60 @@ export default function SpectatorBetting() {
                   </span>
                 </label>
 
+                {betPreview ? (
+                  <div className="rounded-2xl border border-[#D4A017]/25 bg-[#D4A017]/10 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <span className="text-sm font-black text-white">
+                        Dự tính nếu thắng
+                      </span>
+                      <span className="rounded-full bg-[#D4A017]/15 px-3 py-1 text-xs font-black text-[#D4A017]">
+                        Thuế {selectedMarket.winningTaxPercent}%
+                      </span>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <PreviewMetric
+                        label="Tiền cược"
+                        value={fmtVND(betPreview.stakeAmount)}
+                      />
+                      <PreviewMetric
+                        label="Tổng trước thuế"
+                        value={fmtVND(betPreview.potentialPayoutAmount)}
+                      />
+                      <PreviewMetric
+                        label="Lãi gộp"
+                        value={fmtVND(betPreview.grossProfitAmount)}
+                      />
+                      <PreviewMetric
+                        label="Thuế dự kiến"
+                        value={fmtVND(betPreview.winningTaxAmount)}
+                      />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between rounded-xl bg-black/15 p-3">
+                      <span className="text-sm font-bold text-white/60">
+                        Tổng thực nhận
+                      </span>
+                      <span className="text-xl font-black text-emerald-300">
+                        {fmtVND(betPreview.actualPayoutAmount)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-white/45">
+                      Thuế chỉ tính trên phần lãi, không tính trên tiền cược gốc.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 p-3 text-sm text-rose-200">
+                    Kèo cược chưa có cấu hình thuế hợp lệ.
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={placeBet}
                   disabled={
                     submitting ||
                     selectedMarket.status !== "OPEN" ||
-                    selectedMarket.options.length === 0
+                    selectedMarket.options.length === 0 ||
+                    !betPreview
                   }
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A017] px-5 py-3 text-sm font-black text-white transition hover:bg-[#B8941F] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30"
                 >
@@ -298,6 +363,17 @@ export default function SpectatorBetting() {
           </Panel>
         </section>
       )}
+    </div>
+  );
+}
+
+function PreviewMetric({ label, value }) {
+  return (
+    <div className="rounded-xl bg-black/10 p-3">
+      <div className="text-[10px] font-bold uppercase tracking-wide text-white/40">
+        {label}
+      </div>
+      <div className="mt-1 font-black text-white">{value}</div>
     </div>
   );
 }

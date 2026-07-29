@@ -52,6 +52,35 @@ function addDays(date, days) {
   return `${year}-${month}-${day}`;
 }
 
+function getTeamLimitError(form) {
+  const minTeams = Number(form.minTeams);
+  const maxTeams = Number(form.maxTeams);
+
+  if (!Number.isInteger(minTeams) || minTeams < 2) {
+    return "Số đội tối thiểu phải từ 2 trở lên";
+  }
+  if (!Number.isInteger(maxTeams) || maxTeams < minTeams) {
+    return "Số đội tối đa phải là số nguyên và không nhỏ hơn số đội tối thiểu";
+  }
+  return "";
+}
+
+function getHorseLimitError(form) {
+  const minHorsesPerOwner = Number(form.minHorsesPerOwner);
+  const maxHorsesPerOwner = Number(form.maxHorsesPerOwner);
+
+  if (!Number.isInteger(minHorsesPerOwner) || minHorsesPerOwner < 1) {
+    return "Số ngựa tối thiểu mỗi tài khoản phải từ 1 trở lên";
+  }
+  if (
+    !Number.isInteger(maxHorsesPerOwner) ||
+    maxHorsesPerOwner < minHorsesPerOwner
+  ) {
+    return "Số ngựa tối đa mỗi tài khoản phải là số nguyên và không nhỏ hơn số ngựa tối thiểu";
+  }
+  return "";
+}
+
 function buildTournamentPayload(form, bannerUrl) {
   return {
     name: form.name.trim(),
@@ -90,9 +119,9 @@ export default function AdminTournamentCreatePage() {
     endDate: "",
     rules: "",
     banner: defaultBanner,
-    minTeams: 1,
+    minTeams: 2,
     maxTeams: 100,
-    minHorsesPerOwner: 4,
+    minHorsesPerOwner: 1,
     maxHorsesPerOwner: 10,
   });
   const [bannerFile, setBannerFile] = useState(null);
@@ -165,11 +194,7 @@ export default function AdminTournamentCreatePage() {
     (!registrationCloseMax ||
       form.registrationCloseDate <= registrationCloseMax) &&
     form.startDate >= startDateMin &&
-    form.endDate > form.startDate &&
-    Number(form.minTeams) > 0 &&
-    Number(form.maxTeams) >= Number(form.minTeams) &&
-    Number(form.minHorsesPerOwner) > 0 &&
-    Number(form.maxHorsesPerOwner) >= Number(form.minHorsesPerOwner);
+    form.endDate > form.startDate;
 
   const update = (key, value) =>
     setForm((previous) => {
@@ -215,6 +240,18 @@ export default function AdminTournamentCreatePage() {
 
   const createTournament = async () => {
     if (!valid || submitting) return;
+
+    const teamLimitError = getTeamLimitError(form);
+    if (teamLimitError) {
+      toast.error(teamLimitError);
+      return;
+    }
+
+    const horseLimitError = getHorseLimitError(form);
+    if (horseLimitError) {
+      toast.error(horseLimitError);
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -371,7 +408,8 @@ export default function AdminTournamentCreatePage() {
               <Input
                 variant="form"
                 type="number"
-                min="1"
+                min="2"
+                step="1"
                 value={form.minTeams}
                 onChange={(event) =>
                   update("minTeams", Number(event.target.value))
@@ -382,7 +420,8 @@ export default function AdminTournamentCreatePage() {
               <Input
                 variant="form"
                 type="number"
-                min={Math.max(1, Number(form.minTeams))}
+                min={Math.max(2, Number(form.minTeams))}
+                step="1"
                 value={form.maxTeams}
                 onChange={(event) =>
                   update("maxTeams", Number(event.target.value))
@@ -394,6 +433,7 @@ export default function AdminTournamentCreatePage() {
                 variant="form"
                 type="number"
                 min="1"
+                step="1"
                 value={form.minHorsesPerOwner}
                 onChange={(event) => {
                   const value = Number(event.target.value);
@@ -413,6 +453,7 @@ export default function AdminTournamentCreatePage() {
                 variant="form"
                 type="number"
                 min={Number(form.minHorsesPerOwner)}
+                step="1"
                 value={form.maxHorsesPerOwner}
                 onChange={(event) =>
                   update("maxHorsesPerOwner", Number(event.target.value))

@@ -125,9 +125,12 @@ function mapRace(race, index) {
     track: venueLabel || 'Chưa có sân',
     surface: race?.surface ?? 'Chưa cập nhật',
     category: race?.category ?? 'Open',
-    minHorses: Number(race?.minParticipants ?? 0),
+    minHorses: Number(race?.minParticipants ?? 2),
     maxHorses: Number(race?.maxParticipants ?? 0),
     registered: Number(race?.participantCount ?? 0),
+    eligibleRegistrationCount: Number(
+      race?.eligibleRegistrationCount ?? race?.participantCount ?? 0,
+    ),
     entryFee: Number(race?.entryFee ?? 0),
     checkIn: toTime(scheduledStartAt),
     scheduledStartAt,
@@ -140,6 +143,10 @@ function mapRace(race, index) {
     financialSettlementStatus: race?.financialSettlementStatus ?? 'NONE',
     financialSettledAt: race?.financialSettledAt ?? null,
     financialSettlementSnapshot: race?.financialSettlementSnapshot ?? null,
+    registrationClosedAt: race?.registrationClosedAt ?? null,
+    cancelledAt: race?.cancelledAt ?? null,
+    cancellationCode: race?.cancellationCode ?? '',
+    cancellationReason: race?.cancellationReason ?? '',
     raw: race,
   }
 }
@@ -188,8 +195,8 @@ function raceRequest(race) {
   const date = race.date || new Date().toISOString().slice(0, 10)
   const time = race.time || '08:00'
   const endTime = race.endTime || ''
-  const minParticipants = Math.max(1, Number(race.minHorses || 1))
-  const maxParticipants = Math.max(minParticipants, Number(race.maxHorses || minParticipants))
+  const minParticipants = Number(race.minHorses ?? 2)
+  const maxParticipants = Number(race.maxHorses ?? minParticipants)
 
   return {
     name: race.name,
@@ -232,9 +239,10 @@ export function mapTournament(tournament) {
     raceCount: Number(tournament.raceCount ?? races.length),
     registrations,
     registeredHorses: registrations,
-    minTeams: Number(tournament.minTeams ?? 0),
+    eligibleTeamCount: Number(tournament.eligibleTeamCount ?? 0),
+    minTeams: Number(tournament.minTeams ?? 2),
     maxTeams: Number(tournament.maxTeams ?? 0),
-    minHorsesPerOwner: Number(tournament.minHorsesPerOwner ?? 4),
+    minHorsesPerOwner: Number(tournament.minHorsesPerOwner ?? 1),
     maxHorsesPerOwner: Number(tournament.maxHorsesPerOwner ?? 10),
     maxHorses: Number(tournament.maxTeams ?? 0) || sumRaceCapacity(races),
     entryFee: firstPositiveEntryFee(races),
@@ -245,6 +253,11 @@ export function mapTournament(tournament) {
     endTime: toTime(tournament.endAt),
     createdAt: tournament.createdAt,
     updatedAt: tournament.updatedAt,
+    registrationClosedAt: tournament.registrationClosedAt ?? null,
+    cancelledAt: tournament.cancelledAt ?? null,
+    cancellationCode: tournament.cancellationCode ?? '',
+    cancellationReason: tournament.cancellationReason ?? '',
+    registrationResolution: tournament.registrationResolution ?? null,
     raw: tournament,
   }
 }

@@ -68,7 +68,6 @@ export function readExtraFeeGroups() {
       .map((group) => ({
         id: group?.id || `fee-${Math.random().toString(36).slice(2, 9)}`,
         registrationFee: String(group?.registrationFee ?? group?.amount ?? ''),
-        lateFee: String(group?.lateFee ?? ''),
       }))
       .filter((group) => group.id)
   } catch {
@@ -87,26 +86,22 @@ function formatFeeAmount(amount) {
 export function buildRegistrationFeeOptions(settings = {}) {
   const options = []
   const defaultRegistrationFee = Number(settings.defaultRegistrationFee ?? 0)
-  const defaultLateFee = Number(settings.lateCheckInFee ?? 0)
 
   options.push({
     id: 'default',
-    label: `Lệ phí mặc định · ${formatFeeAmount(defaultRegistrationFee)} VND`,
+    label: `${formatFeeAmount(defaultRegistrationFee)} VND`,
     registrationFee: defaultRegistrationFee,
-    lateFee: defaultLateFee,
   })
 
-  readExtraFeeGroups().forEach((group, index) => {
+  readExtraFeeGroups().forEach((group) => {
     const registrationFee = Number(group.registrationFee)
-    const lateFee = Number(group.lateFee)
 
     if (!Number.isFinite(registrationFee) || registrationFee < 0) return
 
     options.push({
       id: group.id,
-      label: `Lệ phí bổ sung ${index + 1} · ${formatFeeAmount(registrationFee)} VND`,
+      label: `${formatFeeAmount(registrationFee)} VND`,
       registrationFee,
-      lateFee: Number.isFinite(lateFee) ? lateFee : 0,
     })
   })
 
@@ -144,11 +139,10 @@ export const systemSettingsService = {
     return mapSettings(settings)
   },
 
-  async updateFees({ defaultRegistrationFee, lateCheckInFee }) {
+  async updateFees({ defaultRegistrationFee }) {
     const settings = await axiosClient
       .put(ENDPOINTS.systemSettings.fees, {
         defaultRegistrationFee: Number(defaultRegistrationFee),
-        lateCheckInFee: Number(lateCheckInFee),
       })
       .then(unwrapResponse)
 

@@ -96,9 +96,9 @@ function makeDraft(tournament, provinces = []) {
     startDate: tournament.startDate ?? '',
     endDate: tournament.endDate ?? '',
     statusCode: tournament.statusCode ?? 'DRAFT',
-    minTeams: Number(tournament.minTeams || 1),
-    maxTeams: Number(tournament.maxTeams || 1),
-    minHorsesPerOwner: Number(tournament.minHorsesPerOwner || 4),
+    minTeams: Number(tournament.minTeams ?? 2),
+    maxTeams: Number(tournament.maxTeams ?? 2),
+    minHorsesPerOwner: Number(tournament.minHorsesPerOwner ?? 1),
     maxHorsesPerOwner: Number(tournament.maxHorsesPerOwner || 10),
     rules: tournament.rules ?? '',
   }
@@ -186,9 +186,11 @@ function getValidationError(draft, original = null) {
 
   if (!draft.name.trim()) return 'Tên giải đấu không được để trống'
   if (!draft.provinceId) return 'Vui lòng chọn tỉnh/thành phố'
-  if (Number(draft.minTeams) <= 0 || Number(draft.maxTeams) <= 0) return 'Giới hạn đội phải lớn hơn 0'
+  if (!Number.isInteger(Number(draft.minTeams)) || Number(draft.minTeams) < 2) return 'Số đội tối thiểu phải từ 2 trở lên'
+  if (!Number.isInteger(Number(draft.maxTeams)) || Number(draft.maxTeams) < 2) return 'Số đội tối đa phải từ 2 trở lên'
   if (Number(draft.minTeams) > Number(draft.maxTeams)) return 'Số đội tối thiểu không được lớn hơn tối đa'
-  if (Number(draft.minHorsesPerOwner) <= 0 || Number(draft.maxHorsesPerOwner) <= 0) return 'Số ngựa mỗi tài khoản phải lớn hơn 0'
+  if (!Number.isInteger(Number(draft.minHorsesPerOwner)) || Number(draft.minHorsesPerOwner) < 1) return 'Số ngựa tối thiểu mỗi tài khoản phải từ 1 trở lên'
+  if (!Number.isInteger(Number(draft.maxHorsesPerOwner)) || Number(draft.maxHorsesPerOwner) < 1) return 'Số ngựa tối đa mỗi tài khoản phải từ 1 trở lên'
   if (Number(draft.minHorsesPerOwner) > Number(draft.maxHorsesPerOwner)) return 'Số ngựa tối thiểu mỗi tài khoản không được lớn hơn tối đa'
   if (!draft.registrationOpenDate || !draft.registrationCloseDate) return 'Ngày mở và kết thúc đăng ký không được để trống'
   if (registrationOpenChanged && draft.registrationOpenDate < registrationOpenMin) {
@@ -235,6 +237,19 @@ export default function SettingsTab({ tournament, setTournament }) {
   const registrationCloseMax = draft.startDate ? addDays(draft.startDate, -2) : ''
   const endDateMin = draft.startDate ? addDays(draft.startDate, 1) : startDateMin
   const statusOptions = STATUS_TRANSITIONS[tournament.statusCode] || [tournament.statusCode]
+  const activeRaces = (tournament.races || []).filter(
+    (race) => !['CANCELLED', 'RESULT_CONFIRMED'].includes(race.statusCode),
+  )
+  const insufficientRaces = activeRaces.filter(
+    (race) =>
+      Number(race.eligibleRegistrationCount ?? race.registered ?? 0) <
+      Number(race.minHorses ?? 2),
+  )
+  const eligibleTeamCount = Number(tournament.eligibleTeamCount ?? 0)
+  const canCloseRegistration =
+    activeRaces.length > 0 &&
+    insufficientRaces.length === 0 &&
+    eligibleTeamCount >= Number(tournament.minTeams ?? 2)
 
   useEffect(() => {
     savedStatusCodeRef.current = tournament.statusCode ?? 'DRAFT'
@@ -569,7 +584,8 @@ export default function SettingsTab({ tournament, setTournament }) {
           <Field label="Số đội tối thiểu">
             <Input
               type="number"
-              min="1"
+              min="2"
+              step="1"
               value={draft.minTeams}
               onChange={(event) => updateDraft({ minTeams: Number(event.target.value) })}
             />
@@ -577,7 +593,8 @@ export default function SettingsTab({ tournament, setTournament }) {
           <Field label="Số đội tối đa">
             <Input
               type="number"
-              min={Math.max(1, Number(draft.minTeams))}
+              min={Math.max(2, Number(draft.minTeams))}
+              step="1"
               value={draft.maxTeams}
               onChange={(event) => updateDraft({ maxTeams: Number(event.target.value) })}
             />
@@ -586,6 +603,7 @@ export default function SettingsTab({ tournament, setTournament }) {
             <Input
               type="number"
               min="1"
+              step="1"
               value={draft.minHorsesPerOwner}
               onChange={(event) => {
                 const value = Number(event.target.value)
@@ -600,6 +618,7 @@ export default function SettingsTab({ tournament, setTournament }) {
             <Input
               type="number"
               min={Number(draft.minHorsesPerOwner)}
+              step="1"
               value={draft.maxHorsesPerOwner}
               onChange={(event) => updateDraft({ maxHorsesPerOwner: Number(event.target.value) })}
             />
@@ -610,11 +629,34 @@ export default function SettingsTab({ tournament, setTournament }) {
               onChange={(event) => updateDraft({ statusCode: event.target.value })}
             >
               {statusOptions.map((value) => (
-                <option key={value} value={value}>
+                <option
+                  key={value}
+                  value={value}
+                  disabled={
+                    tournament.statusCode === 'OPEN_REGISTRATION' &&
+                    value === 'REGISTRATION_CLOSED' &&
+                    !canCloseRegistration
+                  }
+                >
                   {STATUS_LABELS[value] || value}
                 </option>
               ))}
             </Select>
+            {tournament.statusCode === 'OPEN_REGISTRATION' && !canCloseRegistration && (
+              <p className="mt-2 text-xs font-medium text-amber-300">
+                Chưa thể đóng đăng ký: {eligibleTeamCount}/{Number(tournament.minTeams ?? 2)} đội
+                {insufficientRaces.length > 0
+                  ? `; ${insufficientRaces
+                      .map(
+                        (race) =>
+                          `${race.name}: ${Number(
+                            race.eligibleRegistrationCount ?? race.registered ?? 0,
+                          )}/${Number(race.minHorses ?? 2)} ngựa`,
+                      )
+                      .join('; ')}`
+                  : ''}
+              </p>
+            )}
             {tournament.statusCode === 'PUBLISHED' && statusOptions.includes('OPEN_REGISTRATION') && (
               <p className="mt-2 text-xs text-white/45">
                 Để mở đăng ký, giải cần có ít nhất một cuộc đua và cấu hình giải thưởng đầy đủ.

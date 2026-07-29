@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { AlertTriangle, Banknote, DollarSign, FileText, MapPin, Plus, Ruler, Settings } from 'lucide-react'
+import { AlertTriangle, BadgePercent, Banknote, DollarSign, FileText, MapPin, Plus, Ruler, Settings } from 'lucide-react'
 import AdminLayout from '@/components/AdminLayout'
 import LocationSettingsPanel from '@/components/admin/LocationSettingsPanel'
 import RaceDistanceSettingsPanel from '@/components/admin/RaceDistanceSettingsPanel'
@@ -7,6 +7,7 @@ import DefaultRulesSettingsPanel from '@/components/admin/DefaultRulesSettingsPa
 import DefaultFeesSettingsPanel from '@/components/admin/DefaultFeesSettingsPanel'
 import RefereeFeeSettingsPanel from '@/components/admin/RefereeFeeSettingsPanel'
 import ViolationSettingsPanel from '@/components/admin/ViolationSettingsPanel'
+import BettingSettingsPanel from '@/components/admin/BettingSettingsPanel'
 
 const tabs = [
   { key: 'fees', label: 'Lệ phí mặc định', icon: DollarSign },
@@ -15,6 +16,7 @@ const tabs = [
   { key: 'locations', label: 'Tỉnh & địa điểm đua', icon: MapPin },
   { key: 'race-distances', label: 'Khoảng cách đua', icon: Ruler },
   { key: 'referee-fee', label: 'Lương trọng tài', icon: Banknote },
+  { key: 'betting', label: 'Cấu hình cược', icon: BadgePercent },
 ]
 
 export default function AdminSettingsPage() {
@@ -88,6 +90,8 @@ export default function AdminSettingsPage() {
           <ViolationSettingsPanel />
         ) : tab === 'referee-fee' ? (
           <RefereeFeeSettingsPanel />
+        ) : tab === 'betting' ? (
+          <BettingSettingsPanel />
         ) : (
           <DefaultFeesSettingsPanel onRegisterAddFee={registerAddFee} />
         )}

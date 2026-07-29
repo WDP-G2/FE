@@ -13,6 +13,7 @@ import AdminLayout from "@/components/AdminLayout";
 import Field from "@/components/ui/Field";
 import { MoneyInput, Select, TextArea } from "@/components/ui/Input";
 import { adminBettingService } from "@/services/adminBettingService";
+import { financeSettingsService } from "@/services/financeSettingsService";
 import { tournamentService } from "@/services/tournamentService";
 import { fmtVND } from "@/utils/formatCurrency";
 import { formatDisplayDateTime } from "@/utils/dateFormat";
@@ -55,6 +56,7 @@ function raceStatusLabel(status) {
 }
 
 function betStatusLabel(status) {
+  if (status === "PLACED" || status === "LOCKED") return "Đang chờ";
   if (status === "PENDING") return "Đang chờ";
   if (status === "WON") return "Thắng cược";
   if (status === "LOST") return "Thua cược";
@@ -62,6 +64,16 @@ function betStatusLabel(status) {
   if (status === "REFUNDED") return "Đã hoàn tiền";
   if (status === "SETTLED") return "Đã chốt";
   return status || "Chưa cập nhật";
+}
+
+function isPendingBetStatus(status) {
+  return ["PLACED", "LOCKED", "PENDING"].includes(status);
+}
+
+function payoutMetricLabel(status) {
+  if (isPendingBetStatus(status)) return "Thực nhận dự kiến";
+  if (status === "REFUNDED") return "Đã hoàn";
+  return "Thực nhận";
 }
 
 const STARTED_RACE_STATUSES = new Set([
@@ -106,6 +118,7 @@ export default function AdminBetMarketsPage() {
   const [selectedRaceId, setSelectedRaceId] = useState("");
   const [markets, setMarkets] = useState([]);
   const [marketBets, setMarketBets] = useState([]);
+  const [configuredTaxPercent, setConfiguredTaxPercent] = useState(null);
   const [form, setForm] = useState({ minStake: "", maxStake: "", note: "" });
   const [loading, setLoading] = useState(true);
   const [loadingTournament, setLoadingTournament] = useState(false);
@@ -135,14 +148,20 @@ export default function AdminBetMarketsPage() {
   const loadBaseData = async () => {
     setLoading(true);
     try {
-      const [tournamentResponse, marketList] = await Promise.all([
+      const [tournamentResponse, marketList, financeResponse] = await Promise.all([
         tournamentService.getAdminTournaments(),
         adminBettingService.getMarkets(),
+        financeSettingsService.getAdminSettings(),
       ]);
       const nextTournaments = tournamentResponse.data || [];
 
       setTournaments(nextTournaments);
       setMarkets(marketList);
+      setConfiguredTaxPercent(
+        financeResponse.data.betWinningTaxPercent === ""
+          ? null
+          : Number(financeResponse.data.betWinningTaxPercent),
+      );
 
       if (!selectedTournamentId && nextTournaments[0]?.id) {
         setSelectedTournamentId(String(nextTournaments[0].id));
@@ -463,6 +482,17 @@ export default function AdminBetMarketsPage() {
                     />
                   </Field>
                 </div>
+                <div className="rounded-2xl border border-[#D4A017]/25 bg-[#D4A017]/10 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wide text-[#D4A017]">
+                    Thuế thắng cược áp dụng
+                  </div>
+                  <div className="mt-1 text-2xl font-black text-white">
+                    {configuredTaxPercent == null ? "Chưa có cấu hình" : `${configuredTaxPercent}%`}
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-white/50">
+                    Thuế được tính trên phần lãi và sẽ được cố định cho kèo ngay khi tạo.
+                  </p>
+                </div>
                 <Field label="Ghi chú">
                   <TextArea
                     value={form.note}
@@ -477,7 +507,7 @@ export default function AdminBetMarketsPage() {
                 </Field>
                 <button
                   type="button"
-                  disabled={saving || !selectedRace}
+                  disabled={saving || !selectedRace || configuredTaxPercent == null}
                   onClick={createMarket}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#D4A017] px-5 text-sm font-bold text-white transition hover:bg-[#B8941F] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30"
                 >
@@ -524,6 +554,40 @@ export default function AdminBetMarketsPage() {
                         </div>
                       </div>
                     </div>
+                    <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                      <BetMetric
+                        label="Thuế áp dụng"
+                        value={
+                          bet.appliedWinningTaxPercent == null
+                            ? "Chưa có snapshot"
+                            : `${bet.appliedWinningTaxPercent}%`
+                        }
+                      />
+                      <BetMetric
+                        label={isPendingBetStatus(bet.status) ? "Lãi gộp dự kiến" : "Lãi/lỗ"}
+                        value={fmtVND(
+                          isPendingBetStatus(bet.status)
+                            ? bet.estimatedGrossProfitAmount
+                            : bet.grossProfitAmount,
+                        )}
+                      />
+                      <BetMetric
+                        label={bet.status === "WON" ? "Thuế đã trừ" : "Thuế dự kiến"}
+                        value={
+                          bet.status === "WON"
+                            ? fmtVND(bet.winningTaxAmount)
+                            : isPendingBetStatus(bet.status)
+                              ? fmtVND(bet.estimatedWinningTaxAmount)
+                              : "Không áp dụng"
+                        }
+                      />
+                      <BetMetric
+                        label={payoutMetricLabel(bet.status)}
+                        value={fmtVND(
+                          bet.actualPayoutAmount ?? bet.estimatedNetPayoutAmount,
+                        )}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -563,6 +627,20 @@ function MarketSummary({ market, saving, onOpen, onClose, onSettle, onViewBets }
             {market.note}
           </p>
         )}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <BetMetric
+            label="Thuế thắng cược đã cố định"
+            value={
+              market.winningTaxPercent == null
+                ? "Chưa có snapshot"
+                : `${market.winningTaxPercent}%`
+            }
+          />
+          <BetMetric
+            label="Hệ số trả thưởng"
+            value={`${market.payoutMultiplier || 2}×`}
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -604,6 +682,17 @@ function MarketSummary({ market, saving, onOpen, onClose, onSettle, onViewBets }
           Xem lượt cược
         </button>
       </div>
+    </div>
+  );
+}
+
+function BetMetric({ label, value }) {
+  return (
+    <div className="rounded-xl bg-white/[0.04] p-3">
+      <div className="text-[10px] font-bold uppercase tracking-wide text-white/35">
+        {label}
+      </div>
+      <div className="mt-1 font-black text-white">{value}</div>
     </div>
   );
 }

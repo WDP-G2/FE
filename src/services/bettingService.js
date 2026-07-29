@@ -9,6 +9,12 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0
 }
 
+function toNullableNumber(value) {
+  if (value == null || value === '') return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
 export function mapBetOption(option) {
   return {
     participantId: option?.participantId,
@@ -34,6 +40,8 @@ export function mapBetMarket(market) {
     status: market.status,
     minStake: toNumber(market.minStake),
     maxStake: toNumber(market.maxStake),
+    winningTaxPercent: toNullableNumber(market.winningTaxPercent),
+    payoutMultiplier: toNumber(market.payoutMultiplier) || 2,
     note: market.note || '',
     openedAt: market.openedAt,
     closedAt: market.closedAt,
@@ -56,6 +64,11 @@ export function mapBet(bet) {
     horseName: bet?.horseName || 'Chưa cập nhật',
     stakeAmount: toNumber(bet?.stakeAmount),
     potentialPayoutAmount: toNumber(bet?.potentialPayoutAmount),
+    appliedWinningTaxPercent: toNullableNumber(bet?.appliedWinningTaxPercent),
+    estimatedGrossProfitAmount: toNullableNumber(bet?.estimatedGrossProfitAmount),
+    estimatedWinningTaxAmount: toNullableNumber(bet?.estimatedWinningTaxAmount),
+    estimatedNetPayoutAmount: toNullableNumber(bet?.estimatedNetPayoutAmount),
+    actualPayoutAmount: toNullableNumber(bet?.actualPayoutAmount),
     winningTaxAmount: toNumber(bet?.winningTaxAmount),
     grossProfitAmount: toNumber(bet?.grossProfitAmount),
     netProfitAmount: toNumber(bet?.netProfitAmount),

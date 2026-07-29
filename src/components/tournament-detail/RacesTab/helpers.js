@@ -122,7 +122,7 @@ export function buildDefaultRace(
     track: "",
     surface: "",
     category: "",
-    minHorses: 8,
+    minHorses: 2,
     maxHorses: 12,
     registered: 0,
     entryFee: fee,
@@ -166,8 +166,8 @@ export function applyOptionDefaults(
   if (!Object.prototype.hasOwnProperty.call(next, "endTime") && next.time) {
     next.endTime = shiftTime(next.time, 1);
   }
-  if (!next.minHorses) next.minHorses = 8;
-  if (!next.maxHorses) next.maxHorses = 12;
+  if (next.minHorses === "" || next.minHorses == null) next.minHorses = 2;
+  if (next.maxHorses === "" || next.maxHorses == null) next.maxHorses = 12;
   return next;
 }
 
@@ -253,8 +253,10 @@ export function getRaceValidationError(races, tournament) {
       return `Giờ bắt đầu và giờ kết thúc phải cách nhau ít nhất ${MIN_RACE_DURATION_MINUTES} phút`;
     if (raceStart < tournamentStart || raceEnd > tournamentEnd)
       return "Lịch thi đấu phải nằm trong thời gian mùa giải";
-    if (Number(race.minHorses) <= 0 || Number(race.maxHorses) <= 0)
-      return "Giới hạn ngựa phải lớn hơn 0";
+    if (!Number.isInteger(Number(race.minHorses)) || Number(race.minHorses) < 2)
+      return "Số ngựa tối thiểu của cuộc đua phải từ 2 trở lên";
+    if (!Number.isInteger(Number(race.maxHorses)) || Number(race.maxHorses) <= 0)
+      return "Số ngựa tối đa của cuộc đua phải là số nguyên lớn hơn 0";
     if (Number(race.minHorses) > Number(race.maxHorses))
       return "Tối thiểu ngựa không được lớn hơn tối đa ngựa";
     if (Number(race.entryFee) < 0)

@@ -57,7 +57,6 @@ const TX_LABELS = {
   WITHDRAW: { label: 'Rút tiền', color: 'text-rose-300', bg: 'bg-rose-500/15' },
   ADMIN_WITHDRAW: { label: 'Rút quỹ', color: 'text-rose-300', bg: 'bg-rose-500/15' },
   ENTRY_FEE: { label: 'Phí đăng ký', color: 'text-amber-300', bg: 'bg-amber-500/15' },
-  LATE_CHECK_IN_FEE: { label: 'Phí check-in muộn', color: 'text-amber-300', bg: 'bg-amber-500/15' },
   JOCKEY_HIRE: { label: 'Thuê jockey', color: 'text-amber-300', bg: 'bg-amber-500/15' },
   JOCKEY_PAYOUT: { label: 'Thanh toán jockey', color: 'text-emerald-300', bg: 'bg-emerald-500/15' },
   JOCKEY_HIRE_TAX: { label: 'Thuế thuê jockey', color: 'text-amber-300', bg: 'bg-amber-500/15' },
@@ -76,7 +75,6 @@ const TX_ICONS = {
   WITHDRAW: CreditCard,
   ADMIN_WITHDRAW: CreditCard,
   ENTRY_FEE: Wallet,
-  LATE_CHECK_IN_FEE: Wallet,
   JOCKEY_HIRE: Wallet,
   JOCKEY_PAYOUT: Coins,
   JOCKEY_HIRE_TAX: Wallet,
@@ -675,7 +673,7 @@ export default function WalletPanel({
       return tx.type === 'WITHDRAW' || tx.type === 'ADMIN_WITHDRAW'
     }
     if (txFilter === 'BETS') {
-      return ['BET_STAKE', 'ENTRY_FEE', 'LATE_CHECK_IN_FEE', 'JOCKEY_HIRE', 'JOCKEY_HIRE_TAX', 'ITEM_PURCHASE'].includes(tx.type)
+      return ['BET_STAKE', 'ENTRY_FEE', 'JOCKEY_HIRE', 'JOCKEY_HIRE_TAX', 'ITEM_PURCHASE'].includes(tx.type)
     }
     if (txFilter === 'PAYOUTS') {
       return ['BET_PAYOUT', 'PRIZE_PAYOUT', 'JOCKEY_PAYOUT', 'ITEM_SALE'].includes(tx.type)
