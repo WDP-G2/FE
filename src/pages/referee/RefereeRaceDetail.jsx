@@ -30,6 +30,7 @@ import {
   Hash,
   Shuffle,
   LayoutGrid,
+  Trash2,
 } from 'lucide-react';
 import { RefereeLayout } from './RefereeLayout';
 import CheckInStatTile from '@/components/referee/CheckInStatTile';
@@ -48,6 +49,7 @@ import {
   mapParticipantFromApi,
   buildRaceFinalizePayload,
   buildResultRowsFromHorses,
+  buildResultRowsFromDraft,
   clearResultsDraft,
   loadResultsDraft,
   getRefereeRaceDisplayLabel,
@@ -72,6 +74,7 @@ import {
 import { useRefereeRaces } from './useRefereeRaces';
 import { buildViolationTimestamp, formatViolationDisplayId, formatViolationTimestamp, mapActiveViolationTypeLabels } from '@/utils/violationUtils';
 import { ViolationEvidencePreviewModal, ViolationEvidenceThumbnail } from './ViolationEvidencePreview';
+import { ViolationEditModal } from './ViolationEditModal';
 import { RaceSimulationTrack } from '@/components/race-simulation/RaceSimulationTrack';
 
 
@@ -1396,7 +1399,22 @@ function ResultsTab({
   const [rows, setRows] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [simulationStatus, setSimulationStatus] = useState(null);
-  const manualCanEdit = canEdit && !simulationStatus;
+  const [resultDraft, setResultDraft] = useState(null);
+  const [resultDataLoading, setResultDataLoading] = useState(false);
+  const [resultDraftError, setResultDraftError] = useState('');
+  const [resultViolations, setResultViolations] = useState([]);
+  const [violationRow, setViolationRow] = useState(null);
+  const [editingResultViolation, setEditingResultViolation] = useState(null);
+  const [violationSubmitting, setViolationSubmitting] = useState(false);
+  const [resultViolationTypes, setResultViolationTypes] = useState(FALLBACK_VIOLATION_TYPES);
+  const [resultViolationForm, setResultViolationForm] = useState(() =>
+    createViolationDraft(1, FALLBACK_VIOLATION_TYPES[0]),
+  );
+  const resultCardRef = useRef(null);
+  const hasSimulationDraft = Boolean(resultDraft?.simulationRunId);
+  const draftCanReview =
+    canEdit && resultDraft?.status === 'REVIEW_PENDING' && !hasSavedResults;
+  const manualCanEdit = canEdit && !simulationStatus && !hasSimulationDraft;
 
   const refreshLiveRaceStatus = async () => {
     if (!raceId) return propRaceStatus;
@@ -1410,38 +1428,79 @@ function ResultsTab({
     }
   };
 
-  useEffect(() => {
-    if (!raceId || !horses.length) return undefined;
+  const loadResultData = useCallback(async () => {
+    if (!raceId || !horses.length) return;
+    setResultDataLoading(true);
+    const localDraft = loadResultsDraft(raceId);
+    try {
+      const [resultsResult, draftResult, violationsResult] = await Promise.allSettled([
+        refereeService.getRaceResults(raceId),
+        refereeService.getResultDraft(raceId),
+        refereeService.getRaceViolations(raceId),
+      ]);
+      const results = resultsResult.status === 'fulfilled' && Array.isArray(resultsResult.value)
+        ? resultsResult.value
+        : [];
+      const violations =
+        violationsResult.status === 'fulfilled' && Array.isArray(violationsResult.value)
+          ? violationsResult.value
+          : [];
+      setResultViolations(violations);
 
-    let cancelled = false;
-    (async () => {
-      const draft = loadResultsDraft(raceId);
-      try {
-        const results = await refereeService.getRaceResults(raceId);
-        if (cancelled) return;
-        if (results.length) {
-          clearResultsDraft(raceId);
-          setRows(buildResultRowsFromHorses(horses, safeStartPositions, { results }));
-        } else if (draft?.length && !hasSavedResults) {
-          setRows(buildResultRowsFromHorses(horses, safeStartPositions, { draftRows: draft }));
-        } else {
-          setRows(buildResultRowsFromHorses(horses, safeStartPositions));
-        }
-      } catch {
-        if (!cancelled) {
-          setRows(
-            draft?.length && !hasSavedResults
-              ? buildResultRowsFromHorses(horses, safeStartPositions, { draftRows: draft })
-              : buildResultRowsFromHorses(horses, safeStartPositions),
-          );
-        }
+      let serverDraft = null;
+      if (draftResult.status === 'fulfilled') {
+        serverDraft = draftResult.value;
+        setResultDraft(serverDraft);
+        setResultDraftError('');
+      } else {
+        setResultDraftError(
+          getApiErrorMessage(draftResult.reason) ||
+          'Không tải được bản nháp kết quả từ backend',
+        );
       }
-    })();
 
+      if (results.length) {
+        clearResultsDraft(raceId);
+        setRows(buildResultRowsFromHorses(horses, safeStartPositions, {
+          results,
+          draftRows: serverDraft?.rows,
+        }));
+      } else if (serverDraft?.rows?.length) {
+        clearResultsDraft(raceId);
+        setRows(buildResultRowsFromDraft(horses, serverDraft.rows));
+      } else if (localDraft?.length && !hasSavedResults && !simulationStatus) {
+        setRows(buildResultRowsFromHorses(horses, safeStartPositions, { draftRows: localDraft }));
+      } else if (draftResult.status === 'fulfilled') {
+        setRows(buildResultRowsFromHorses(horses, safeStartPositions));
+      }
+    } finally {
+      setResultDataLoading(false);
+    }
+  }, [
+    hasSavedResults,
+    horses,
+    raceId,
+    safeStartPositions,
+    simulationStatus,
+  ]);
+
+  useEffect(() => {
+    queueMicrotask(loadResultData);
+  }, [loadResultData]);
+
+  useEffect(() => {
+    let cancelled = false;
+    systemSettingsService.getPublicViolationTypes()
+      .then((response) => {
+        if (cancelled) return;
+        const labels = mapActiveViolationTypeLabels(response);
+        if (labels.length) setResultViolationTypes(labels);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [hasSavedResults, raceId, horses, safeStartPositions]);
+  }, []);
 
   const updateRow = (id, patch) => {
     if (!patch || typeof patch !== 'object') return;
@@ -1473,7 +1532,121 @@ function ResultsTab({
   const winner = rows.find((x) => x.position === 1 && !x.dq);
   const displayRows = useMemo(() => sortResultRowsForDisplay(rows), [rows]);
 
+  const applyDraftResponse = (draft) => {
+    if (!draft?.rows?.length) return;
+    setResultDraft(draft);
+    setRows(buildResultRowsFromDraft(horses, draft.rows));
+  };
+
+  const openResultViolation = (row, forceDisqualification = false) => {
+    const defaultType = resultViolationTypes[0] || FALLBACK_VIOLATION_TYPES[0];
+    setViolationRow(row);
+    setResultViolationForm({
+      ...createViolationDraft(row.startPos || 1, defaultType),
+      severity: forceDisqualification ? 'Loại' : 'Phạt nhẹ',
+      penalty: forceDisqualification ? 'Loại khỏi cuộc đua' : '',
+    });
+  };
+
+  const closeResultViolation = () => {
+    if (resultViolationForm.evidencePreview) {
+      URL.revokeObjectURL(resultViolationForm.evidencePreview);
+    }
+    setViolationRow(null);
+  };
+
+  const submitResultViolation = async () => {
+    if (!violationRow) return;
+    if (!String(resultViolationForm.description || '').trim()) {
+      toast.error('Vui lòng nhập mô tả vi phạm');
+      return;
+    }
+    if (!resultViolationForm.evidenceFile) {
+      toast.error('Vui lòng tải lên bằng chứng ảnh hoặc video');
+      return;
+    }
+    if (!isValidTimeOfDay(resultViolationForm.occurredAt)) {
+      toast.error('Thời điểm không hợp lệ. Nhập theo định dạng HH:mm:ss');
+      return;
+    }
+    setViolationSubmitting(true);
+    try {
+      const response = await refereeService.createViolation(
+        raceId,
+        {
+          participantId: violationRow.participantId,
+          horseNo: violationRow.startPos,
+          horseName: violationRow.horse,
+          jockeyName: violationRow.jockey,
+          type: resultViolationForm.type,
+          severity: resultViolationForm.severity,
+          description: resultViolationForm.description.trim(),
+          penalty: resultViolationForm.penalty,
+          occurredAt: buildViolationTimestamp(resultViolationForm.occurredAt),
+        },
+        resultViolationForm.evidenceFile,
+      );
+      applyDraftResponse(response.resultDraft);
+      closeResultViolation();
+      const violations = await refereeService.getRaceViolations(raceId);
+      setResultViolations(violations);
+      toast.success('Đã ghi nhận vi phạm và cập nhật kết quả dự kiến');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || 'Không ghi nhận được vi phạm');
+    } finally {
+      setViolationSubmitting(false);
+    }
+  };
+
+  const voidResultViolation = async (violationId) => {
+    if (!window.confirm('Hủy biên bản vi phạm này và tính lại kết quả?')) return;
+    try {
+      const response = await refereeService.voidViolation(violationId);
+      applyDraftResponse(response.resultDraft);
+      setResultViolations((current) =>
+        current.filter((violation) => String(violation.id) !== String(violationId)),
+      );
+      toast.success('Đã hủy biên bản và tính lại kết quả');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err) || 'Không hủy được biên bản vi phạm');
+    }
+  };
+
   const handleFinalize = async () => {
+    if (hasSimulationDraft) {
+      if (!draftCanReview) {
+        toast.error('Bản nháp kết quả hiện không thể công bố');
+        return;
+      }
+      const disqualifiedCount = rows.filter((row) => row.dq).length;
+      const penalizedCount = rows.filter((row) => row.penaltyTimeMillis > 0).length;
+      const confirmed = window.confirm(
+        `Xác nhận & phát hành kết quả chính thức?\n\n` +
+        `Ngựa thắng: ${winner?.horse || 'Chưa xác định'}\n` +
+        `Ngựa bị cộng thời gian: ${penalizedCount}\n` +
+        `Ngựa bị loại: ${disqualifiedCount}\n\n` +
+        'Sau khi công bố, kết quả và biên bản vi phạm sẽ bị khóa.',
+      );
+      if (!confirmed) return;
+      setSubmitting(true);
+      try {
+        await refereeService.finalizeRaceResults(
+          raceId,
+          null,
+          { draftVersion: resultDraft.version },
+        );
+        await refreshLiveRaceStatus();
+        if (onReloadRace) await onReloadRace();
+        await loadResultData();
+        toast.success('Đã công bố kết quả chính thức');
+      } catch (err) {
+        toast.error(getApiErrorMessage(err) || 'Không công bố được kết quả');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     if (!rows.length) {
       toast.error('Chưa có ngựa để ghi kết quả');
       return;
@@ -1552,11 +1725,46 @@ function ResultsTab({
         raceId={raceId}
         canOperate={canEdit && !hasSavedResults}
         onStateChange={setSimulationStatus}
-        onConfirmed={async () => {
+        onConfirmed={async (response) => {
+          if (response?.resultDraft) applyDraftResponse(response.resultDraft);
           await refreshLiveRaceStatus();
           if (onReloadRace) await onReloadRace();
+          await loadResultData();
+          window.setTimeout(() => {
+            resultCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
         }}
       />
+
+      {resultDraftError && simulationStatus && (
+        <GlassCard className="p-4 flex items-start justify-between gap-4 flex-wrap bg-gradient-to-r from-red-500/10 to-transparent border-red-500/30">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-300 mt-0.5 shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-red-200">
+                Không tải được bản nháp kết quả
+              </div>
+              <div className="mt-1 text-xs text-white/55">
+                {resultDraftError}. Kết quả chưa được công bố và bảng sẽ không bị chuyển sang chế độ khóa thủ công.
+              </div>
+            </div>
+          </div>
+          <GhostButton onClick={loadResultData} disabled={resultDataLoading}>
+            {resultDataLoading ? 'Đang tải...' : 'Tải lại bản nháp'}
+          </GhostButton>
+        </GlassCard>
+      )}
+
+      {hasSimulationDraft && !hasSavedResults && (
+        <GlassCard className="p-4 flex items-start gap-3 bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/30">
+          <Info className="w-5 h-5 text-amber-300 mt-0.5 shrink-0" />
+          <div className="text-xs text-white/70 leading-relaxed">
+            <span className="font-semibold text-amber-300">Chờ trọng tài duyệt — chưa công bố.</span>{' '}
+            Kết quả mô phỏng đã được chuyển thành bản nháp.
+            Ghi nhận các vi phạm cần thiết, kiểm tra hạng sau xử phạt rồi mới công bố kết quả chính thức.
+          </div>
+        </GlassCard>
+      )}
 
       {manualCanEdit && (
         <GlassCard className="p-4 flex items-start gap-3 bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/30">
@@ -1570,6 +1778,7 @@ function ResultsTab({
         </GlassCard>
       )}
 
+      <div ref={resultCardRef}>
       <GlassCard>
         <div className="p-5 border-b border-white/10 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
@@ -1581,6 +1790,13 @@ function ResultsTab({
               <p className="text-xs text-white/50">
                 {rows.length} ngựa
                 {winner ? ` · Vô địch dự kiến: ${winner.horse}` : ' · Chưa có vô địch'}
+                {hasSimulationDraft
+                  ? resultDraft.status === 'PUBLISHED' || hasSavedResults
+                    ? ' · Kết quả chính thức'
+                    : resultDraft.status === 'PUBLISHING'
+                      ? ' · Đang phát hành'
+                      : ` · Bản nháp v${resultDraft.version}`
+                  : ''}
               </p>
             </div>
           </div>
@@ -1588,20 +1804,33 @@ function ResultsTab({
         <div className="p-5">
           <ResultsTable
             rows={displayRows}
-            readOnly={!manualCanEdit}
+            readOnly={hasSimulationDraft ? !draftCanReview : !manualCanEdit}
             onUpdate={manualCanEdit ? updateRow : undefined}
             onToggleDq={manualCanEdit ? toggleDq : undefined}
+            simulationDraft={hasSimulationDraft}
+            violations={resultViolations}
+            onAddViolation={draftCanReview ? openResultViolation : undefined}
+            onEditViolation={draftCanReview ? setEditingResultViolation : undefined}
+            onVoidViolation={draftCanReview ? voidResultViolation : undefined}
           />
         </div>
         <div className="p-5 border-t border-white/10 flex items-center justify-between flex-wrap gap-3 bg-gradient-to-r from-[#D4A017]/5 to-transparent">
           <div className="text-xs text-white/60 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-300" />
-            {manualCanEdit
+            {resultDataLoading
+              ? 'Đang tải bản nháp kết quả từ backend...'
+              : resultDraftError && simulationStatus
+                ? 'Không tải được bản nháp; hãy tải lại trước khi thao tác'
+              : hasSimulationDraft && !hasSavedResults
+              ? 'Kết quả đang chờ trọng tài duyệt; thời gian mô phỏng gốc không thể sửa'
+              : manualCanEdit
               ? 'Có thể ghi/sửa kết quả khi cuộc đua đang diễn ra'
               : hasSavedResults
                 ? 'Kết quả chính thức đã khóa và chỉ có thể xem'
+              : simulationStatus === 'DRAFTED'
+                ? 'Đang khôi phục bản nháp kết quả mô phỏng'
               : simulationStatus
-                ? 'Kết quả thủ công đã khóa vì cuộc đua có mô phỏng'
+                ? 'Hãy xác nhận kết quả mô phỏng để chuyển xuống bảng Ghi kết quả'
                 : liveRaceStatus === 'SCHEDULED' && tournamentStatus !== 'ONGOING'
                   ? 'Vui lòng chờ admin bắt đầu giải trước khi bắt đầu cuộc đua'
                   : 'Phải bắt đầu cuộc đua trước khi ghi kết quả'}
@@ -1609,14 +1838,138 @@ function ResultsTab({
           <PrimaryButton
             icon={Send}
             onClick={handleFinalize}
-            disabled={submitting || !manualCanEdit}
+            disabled={
+              submitting ||
+              resultDataLoading ||
+              Boolean(resultDraftError) ||
+              (hasSimulationDraft ? !draftCanReview : !manualCanEdit)
+            }
           >
             {submitting
-              ? 'Đang lưu...'
+              ? 'Đang công bố...'
               : 'Xác nhận & phát hành kết quả'}
           </PrimaryButton>
         </div>
       </GlassCard>
+      </div>
+
+      {violationRow && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto"
+          onClick={closeResultViolation}
+        >
+          <div
+            className="bg-[#0F1E3A] border border-white/10 rounded-2xl max-w-2xl w-full my-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="p-5 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-white">Ghi vi phạm · {violationRow.horse}</h3>
+                <p className="text-xs text-white/50">Hình phạt sẽ được áp dụng theo cấu hình của admin</p>
+              </div>
+              <button type="button" onClick={closeResultViolation}>
+                <XCircle className="w-5 h-5 text-white/60" />
+              </button>
+            </div>
+            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Loại vi phạm *">
+                <Select
+                  value={resultViolationForm.type}
+                  onChange={(event) =>
+                    setResultViolationForm({ ...resultViolationForm, type: event.target.value })
+                  }
+                  className="w-full"
+                >
+                  {resultViolationTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Mức độ *">
+                <Select
+                  value={resultViolationForm.severity}
+                  onChange={(event) =>
+                    setResultViolationForm({ ...resultViolationForm, severity: event.target.value })
+                  }
+                  className="w-full"
+                >
+                  <option>Cảnh cáo</option>
+                  <option>Phạt nhẹ</option>
+                  <option>Phạt nặng</option>
+                  <option>Loại</option>
+                </Select>
+              </Field>
+              <Field label="Thời điểm *">
+                <TextInput
+                  value={resultViolationForm.occurredAt}
+                  onChange={(event) =>
+                    setResultViolationForm({
+                      ...resultViolationForm,
+                      occurredAt: formatTimeInputValue(event.target.value),
+                    })
+                  }
+                  maxLength={8}
+                  placeholder="HH:mm:ss"
+                />
+              </Field>
+              <Field label="Hình phạt ghi chú">
+                <TextInput
+                  value={resultViolationForm.penalty}
+                  onChange={(event) =>
+                    setResultViolationForm({ ...resultViolationForm, penalty: event.target.value })
+                  }
+                  placeholder="Áp dụng theo cấu hình admin"
+                />
+              </Field>
+              <div className="md:col-span-2">
+                <Field label="Mô tả chi tiết *">
+                  <textarea
+                    rows={3}
+                    value={resultViolationForm.description}
+                    onChange={(event) =>
+                      setResultViolationForm({
+                        ...resultViolationForm,
+                        description: event.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#D4A017] resize-none"
+                  />
+                </Field>
+              </div>
+              <div className="md:col-span-2">
+                <Field label="Bằng chứng ảnh/video *">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,.jpg,.jpeg,.png,.webp,.gif,.mp4,.mov"
+                    onChange={(event) =>
+                      setResultViolationForm({
+                        ...resultViolationForm,
+                        evidenceFile: event.target.files?.[0] || null,
+                      })
+                    }
+                    className="block w-full text-sm text-white/70 file:mr-4 file:rounded-lg file:border-0 file:bg-[#D4A017] file:px-4 file:py-2 file:font-semibold file:text-black"
+                  />
+                </Field>
+              </div>
+            </div>
+            <div className="p-5 border-t border-white/10 flex justify-end gap-3">
+              <GhostButton onClick={closeResultViolation}>Hủy</GhostButton>
+              <PrimaryButton
+                icon={AlertTriangle}
+                onClick={submitResultViolation}
+                disabled={violationSubmitting}
+              >
+                {violationSubmitting ? 'Đang lưu...' : 'Ghi nhận & áp dụng'}
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      )}
+      <ViolationEditModal
+        violation={editingResultViolation}
+        onClose={() => setEditingResultViolation(null)}
+        onUpdated={loadResultData}
+      />
     </div>
   );
 }
@@ -1626,7 +1979,18 @@ function ResultsTable({
   onUpdate,
   onToggleDq,
   readOnly,
+  simulationDraft = false,
+  violations = [],
+  onAddViolation,
+  onEditViolation,
+  onVoidViolation,
 }) {
+  const violationById = new Map(
+    (Array.isArray(violations) ? violations : []).map((violation) => [
+      String(violation.id),
+      violation,
+    ]),
+  );
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -1637,15 +2001,36 @@ function ResultsTable({
             <th className="px-3 py-3">Chủ ngựa</th>
             <th className="px-3 py-3">Jockey</th>
             <th className="px-3 py-3 w-24 text-center">Vị trí XP</th>
-            <th className="px-3 py-3 w-32">Thời gian</th>
-            <th className="px-3 py-3 w-20 text-center">Loại</th>
-            <th className="px-3 py-3 min-w-[180px]">Lý do loại</th>
+            {simulationDraft ? (
+              <>
+                <th className="px-3 py-3 w-28">TG gốc</th>
+                <th className="px-3 py-3 w-24">Phạt</th>
+                <th className="px-3 py-3 w-28">TG cuối</th>
+                <th className="px-3 py-3 min-w-[260px]">Vi phạm / xử lý</th>
+              </>
+            ) : (
+              <>
+                <th className="px-3 py-3 w-32">Thời gian</th>
+                <th className="px-3 py-3 w-20 text-center">Loại</th>
+                <th className="px-3 py-3 min-w-[180px]">Lý do loại</th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => {
             const podium = !r.dq && r.position <= 3;
             const PodiumIcon = r.position === 1 ? Crown : Medal;
+            const linkedViolations = (r.violationIds || [])
+              .map((id) => violationById.get(String(id)))
+              .filter(Boolean);
+            const rowViolations = linkedViolations.length
+              ? linkedViolations
+              : violations.filter(
+                  (violation) =>
+                    violation.participantId != null &&
+                    String(violation.participantId) === String(r.participantId),
+                );
             return (
               <tr key={r.id} className={`border-b border-white/5 ${r.dq ? 'opacity-70' : ''}`}>
                 <td className="px-3 py-3 text-center">
@@ -1675,51 +2060,146 @@ function ResultsTable({
                     <span className="text-sm font-bold text-[#D4A017]">{r.startPos}</span>
                   </div>
                 </td>
-                <td className="px-3 py-3">
-                  {readOnly || r.dq ? (
-                    <span className="font-mono text-sm text-white">{r.dq ? '—' : r.time}</span>
-                  ) : (
-                    <input
-                      value={r.time}
-                      onChange={(e) => onUpdate?.(r.id, { time: sanitizeRaceTimeInput(e.target.value) })}
-                      onBlur={() => {
-                        const formatted = formatRaceTimeOnBlur(r.time);
-                        if (formatted) onUpdate?.(r.id, { time: formatted });
-                      }}
-                      placeholder="MM:SS:CC"
-                      className="w-28 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs font-mono focus:outline-none focus:border-[#D4A017]"
-                    />
-                  )}
-                </td>
-                <td className="px-3 py-3 text-center">
-                  {readOnly ? (
-                    r.dq ? <Pill tone="red">Loại</Pill> : <span className="text-white/30">—</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onToggleDq?.(r.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        r.dq ? 'bg-red-500 text-white' : 'bg-white/5 text-white/40 hover:bg-red-500/20 hover:text-red-300'
-                      }`}
-                    >
-                      Loại
-                    </button>
-                  )}
-                </td>
-                <td className="px-3 py-3">
-                  {readOnly ? (
-                    <span className="text-xs text-white/60">{r.dq ? (r.dqReason || '—') : '—'}</span>
-                  ) : r.dq ? (
-                    <input
-                      value={r.dqReason ?? ''}
-                      onChange={(e) => onUpdate?.(r.id, { dqReason: e.target.value })}
-                      placeholder="VD: Phạm luật xuất phát"
-                      className="w-full px-2 py-1.5 bg-white/5 border border-red-500/30 rounded-lg text-white text-xs focus:outline-none focus:border-red-400"
-                    />
-                  ) : (
-                    <span className="text-white/25 text-xs">—</span>
-                  )}
-                </td>
+                {simulationDraft ? (
+                  <>
+                    <td className="px-3 py-3 font-mono text-xs text-white/55">{r.baseTime}</td>
+                    <td className="px-3 py-3">
+                      {r.penaltyTimeMillis > 0 ? (
+                        <span className="font-mono text-xs font-semibold text-amber-300">
+                          +{(r.penaltyTimeMillis / 1000).toFixed(
+                            r.penaltyTimeMillis % 1000 ? 1 : 0,
+                          )}s
+                        </span>
+                      ) : (
+                        <span className="text-white/25">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 font-mono text-sm text-white">
+                      {r.dq ? <Pill tone="red">Loại</Pill> : r.time}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="space-y-2">
+                        {rowViolations.map((violation) => (
+                          <div
+                            key={violation.id}
+                            className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5"
+                          >
+                            <div className="min-w-0">
+                              <div className="truncate text-xs font-semibold text-white">
+                                {violation.type}
+                              </div>
+                              <div className="text-[10px] text-white/45">
+                                {violation.severity}
+                                {violation.resultAction === 'TIME_PENALTY'
+                                  ? ` · +${violation.timePenaltyMillis / 1000}s`
+                                  : violation.resultAction === 'DISQUALIFY'
+                                    ? ' · Loại'
+                                    : ''}
+                              </div>
+                            </div>
+                            {!readOnly && onVoidViolation && (
+                              <div className="flex items-center gap-1">
+                                {onEditViolation && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onEditViolation(violation)}
+                                    className="rounded-lg px-2 py-1 text-[10px] text-white/50 hover:bg-white/10 hover:text-white"
+                                  >
+                                    Sửa
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => onVoidViolation(violation.id)}
+                                  className="rounded-lg p-1.5 text-white/40 hover:bg-red-500/15 hover:text-red-300"
+                                  title="Hủy biên bản"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {r.dq && r.dqReason && (
+                          <div className="text-[10px] leading-relaxed text-red-300">
+                            {r.dqReason}
+                          </div>
+                        )}
+                        {!readOnly && onAddViolation && (
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => onAddViolation(r, false)}
+                              className="rounded-lg border border-[#D4A017]/30 bg-[#D4A017]/10 px-2 py-1 text-[10px] font-semibold text-[#D4A017]"
+                            >
+                              + Ghi vi phạm
+                            </button>
+                            {!r.dq && (
+                              <button
+                                type="button"
+                                onClick={() => onAddViolation(r, true)}
+                                className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] font-semibold text-red-300"
+                              >
+                                Loại
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {!rowViolations.length && readOnly && (
+                          <span className="text-xs text-white/25">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-3 py-3">
+                      {readOnly || r.dq ? (
+                        <span className="font-mono text-sm text-white">{r.dq ? '—' : r.time}</span>
+                      ) : (
+                        <input
+                          value={r.time}
+                          onChange={(e) => onUpdate?.(r.id, { time: sanitizeRaceTimeInput(e.target.value) })}
+                          onBlur={() => {
+                            const formatted = formatRaceTimeOnBlur(r.time);
+                            if (formatted) onUpdate?.(r.id, { time: formatted });
+                          }}
+                          placeholder="MM:SS:CC"
+                          className="w-28 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs font-mono focus:outline-none focus:border-[#D4A017]"
+                        />
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {readOnly ? (
+                        r.dq ? <Pill tone="red">Loại</Pill> : <span className="text-white/30">—</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onToggleDq?.(r.id)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            r.dq ? 'bg-red-500 text-white' : 'bg-white/5 text-white/40 hover:bg-red-500/20 hover:text-red-300'
+                          }`}
+                        >
+                          Loại
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
+                      {readOnly ? (
+                        <span className="text-xs text-white/60">{r.dq ? (r.dqReason || '—') : '—'}</span>
+                      ) : r.dq ? (
+                        <input
+                          value={r.dqReason ?? ''}
+                          onChange={(e) => onUpdate?.(r.id, { dqReason: e.target.value })}
+                          placeholder="VD: Phạm luật xuất phát"
+                          className="w-full px-2 py-1.5 bg-white/5 border border-red-500/30 rounded-lg text-white text-xs focus:outline-none focus:border-red-400"
+                        />
+                      ) : (
+                        <span className="text-white/25 text-xs">—</span>
+                      )}
+                    </td>
+                  </>
+                )}
               </tr>
             );
           })}

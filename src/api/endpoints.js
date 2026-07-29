@@ -121,6 +121,7 @@ export const ENDPOINTS = {
       `/referee/races/${raceId}/participants/${participantId}/check-in`,
     startRace: (raceId) => `/referee/races/${raceId}/start`,
     finalizeResults: (raceId) => `/referee/races/${raceId}/results/finalize`,
+    resultDraft: (raceId) => `/referee/races/${raceId}/results/draft`,
     generateSimulation: (raceId) => `/referee/races/${raceId}/simulation`,
     confirmSimulation: (raceId) => `/referee/races/${raceId}/simulation/confirm`,
     payments: '/referee/payments',
@@ -128,6 +129,7 @@ export const ENDPOINTS = {
     raceViolations: (raceId) => `/referee/races/${raceId}/violations`,
     createViolation: (raceId) => `/referee/races/${raceId}/violations`,
     updateViolation: (id) => `/referee/violations/${id}`,
+    voidViolation: (id) => `/referee/violations/${id}`,
   },
   raceRegistrations: {
     ownerList: '/owner/race-registrations',

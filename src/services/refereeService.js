@@ -50,6 +50,45 @@ function buildViolationFormData(payload, evidenceFile) {
   return formData
 }
 
+function mapResultDraft(raw) {
+  if (!raw?.simulationRunId) return null
+  return {
+    status: raw.status || 'REVIEW_PENDING',
+    source: raw.source || 'SIMULATION',
+    simulationRunId: String(raw.simulationRunId),
+    version: Number(raw.version || 1),
+    createdAt: raw.createdAt || null,
+    updatedAt: raw.updatedAt || null,
+    publishedAt: raw.publishedAt || null,
+    rows: (Array.isArray(raw.rows) ? raw.rows : []).map((row) => ({
+      participantId: String(row.participantId || ''),
+      horseId: row.horseId ? String(row.horseId) : null,
+      horseName: row.horseName || '',
+      jockeyId: row.jockeyId ? String(row.jockeyId) : null,
+      jockeyName: row.jockeyName || '',
+      gateNumber: Number(row.gateNumber || 0),
+      baseRank: Number(row.baseRank || 0),
+      rank: Number(row.rank || 0),
+      baseFinishTimeMillis: Number(row.baseFinishTimeMillis || 0),
+      penaltyTimeMillis: Number(row.penaltyTimeMillis || 0),
+      finishTimeMillis: Number(row.finishTimeMillis || 0),
+      status: row.status || 'FINISHED',
+      violationIds: (Array.isArray(row.violationIds) ? row.violationIds : []).map(String),
+      disqualificationReason: row.disqualificationReason || '',
+    })),
+  }
+}
+
+function mapViolationMutation(raw) {
+  if (!raw?.violation) {
+    return { violation: mapViolationFromApi(raw), resultDraft: null }
+  }
+  return {
+    violation: mapViolationFromApi(raw.violation),
+    resultDraft: mapResultDraft(raw.resultDraft),
+  }
+}
+
 export const refereeService = {
   async getAvailableReferees() {
     try {
@@ -309,7 +348,20 @@ export const refereeService = {
       .then(unwrapResponse)
   },
 
-  async finalizeRaceResults(raceId, results) {
+  async finalizeRaceResults(raceId, results, { draftVersion } = {}) {
+    if (Number.isInteger(Number(draftVersion))) {
+      const version = Number(draftVersion)
+      return axiosClient
+        .post(
+          ENDPOINTS.referee.finalizeResults(raceId),
+          { draftVersion: version },
+          {
+            ...idempotencyConfig(stableIdempotencyKey(`race-finalize:${raceId}:draft:${version}`)),
+            timeout: 60_000,
+          },
+        )
+        .then(unwrapResponse)
+    }
     const payload = (Array.isArray(results) ? results : []).map((entry) => ({
       participantId: String(entry.participantId ?? '').trim(),
       rank: entry.rank != null ? Number(entry.rank) : undefined,
@@ -322,6 +374,13 @@ export const refereeService = {
     return axiosClient
       .post(ENDPOINTS.referee.finalizeResults(raceId), { results: payload }, { ...idempotencyConfig(stableIdempotencyKey(`race-finalize:${raceId}`)), timeout: 60_000 })
       .then(unwrapResponse)
+  },
+
+  async getResultDraft(raceId) {
+    const data = await axiosClient
+      .get(ENDPOINTS.referee.resultDraft(raceId))
+      .then(unwrapResponse)
+    return mapResultDraft(data)
   },
 
   async getRaceResults(raceId) {
@@ -347,7 +406,7 @@ export const refereeService = {
         { headers: multipartHeaders, timeout: 120_000 },
       )
       .then(unwrapResponse)
-    return mapViolationFromApi(data)
+    return mapViolationMutation(data)
   },
 
   async updateViolation(violationId, payload, evidenceFile) {
@@ -358,7 +417,14 @@ export const refereeService = {
         { headers: multipartHeaders, timeout: 120_000 },
       )
       .then(unwrapResponse)
-    return mapViolationFromApi(data)
+    return mapViolationMutation(data)
+  },
+
+  async voidViolation(violationId) {
+    const data = await axiosClient
+      .delete(ENDPOINTS.referee.voidViolation(violationId))
+      .then(unwrapResponse)
+    return mapViolationMutation(data)
   },
 
   async loadRefereeHistoryRaces() {

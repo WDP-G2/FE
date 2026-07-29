@@ -59,7 +59,7 @@ export function RaceSimulationTrack({ raceId, canOperate = false, onConfirmed, o
   }, [load])
 
   useEffect(() => {
-    if (!simulation || simulation.status === 'CONFIRMED') return undefined
+    if (!simulation || ['DRAFTED', 'CONFIRMED'].includes(simulation.status)) return undefined
     const timer = window.setInterval(() => setNow(Date.now()), 100)
     const poll = window.setInterval(() => load({ silent: true }), 2000)
     return () => {
@@ -73,7 +73,9 @@ export function RaceSimulationTrack({ raceId, canOperate = false, onConfirmed, o
     const serverNow = now + clockOffset
     return clamp((serverNow - new Date(simulation.generatedAt).getTime()) / simulation.playbackDurationMs)
   }, [clockOffset, now, simulation])
-  const finished = simulation && (elapsed >= 1 || simulation.status === 'CONFIRMED')
+  const finished = simulation && (
+    elapsed >= 1 || ['DRAFTED', 'CONFIRMED'].includes(simulation.status)
+  )
 
   const liveOrder = useMemo(() => {
     if (!simulation) return []
@@ -101,10 +103,10 @@ export function RaceSimulationTrack({ raceId, canOperate = false, onConfirmed, o
   const confirm = async () => {
     setConfirming(true)
     try {
-      await raceSimulationService.confirm(raceId, simulation.runId)
-      toast.success('Đã xác nhận kết quả mô phỏng')
+      const result = await raceSimulationService.confirm(raceId, simulation.runId)
+      toast.success('Đã chuyển kết quả mô phỏng sang Ghi kết quả — chưa công bố')
       await load({ silent: true })
-      await onConfirmed?.()
+      await onConfirmed?.(result)
     } catch (error) {
       toast.error(getApiErrorMessage(error) || 'Không xác nhận được kết quả')
     } finally {
@@ -177,7 +179,7 @@ export function RaceSimulationTrack({ raceId, canOperate = false, onConfirmed, o
         <div className="flex items-center gap-3">
           <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <Activity className="h-5 w-5 text-[#D4A017] animate-pulse" />
-            {!finished && simulation.status !== 'CONFIRMED' && (
+            {!finished && !['DRAFTED', 'CONFIRMED'].includes(simulation.status) && (
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
@@ -191,7 +193,7 @@ export function RaceSimulationTrack({ raceId, canOperate = false, onConfirmed, o
 
           </div>
         </div>
-        <div className={`rounded-full border px-3 py-1 text-xs font-black tracking-wide shadow-sm transition-all ${simulation.status === 'CONFIRMED'
+        <div className={`rounded-full border px-3 py-1 text-xs font-black tracking-wide shadow-sm transition-all ${['DRAFTED', 'CONFIRMED'].includes(simulation.status)
             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
             : simulation.status === 'CONFIRMING'
               ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
@@ -199,8 +201,10 @@ export function RaceSimulationTrack({ raceId, canOperate = false, onConfirmed, o
                 ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                 : 'bg-[#D4A017]/10 text-[#D4A017] border-[#D4A017]/20'
           }`}>
-          {simulation.status === 'CONFIRMED'
-            ? '✓ ĐÃ XÁC NHẬN'
+          {simulation.status === 'DRAFTED'
+            ? 'CHỜ TRỌNG TÀI DUYỆT'
+            : simulation.status === 'CONFIRMED'
+              ? '✓ ĐÃ CÔNG BỐ'
             : simulation.status === 'CONFIRMING'
               ? 'ĐANG XÁC NHẬN...'
               : finished

@@ -591,13 +591,36 @@ export function buildResultRowsFromHorses(
     const resultByParticipant = new Map(
       results.map((item) => [String(item.participantId), item]),
     )
+    const draftByParticipant = new Map(
+      (Array.isArray(draftRows) ? draftRows : []).map((item) => [
+        String(item.participantId),
+        item,
+      ]),
+    )
     return sortResultRowsForDisplay(
       horseList.map((horse, index) => {
-        const result = resultByParticipant.get(String(horse.participantId ?? horse.id))
+        const participantId = String(horse.participantId ?? horse.id)
+        const result = resultByParticipant.get(participantId)
+        const publishedDraftRow = draftByParticipant.get(participantId)
         const startPos = getAssignedGate(horse, safeStartPositions)
         if (!result) return defaultResultRow(horse, index, safeStartPositions)
 
         const dq = result.status === 'DISQUALIFIED'
+        const resultViolationIds = Array.isArray(result.violationIds)
+          ? result.violationIds.map(String)
+          : []
+        const draftViolationIds = Array.isArray(publishedDraftRow?.violationIds)
+          ? publishedDraftRow.violationIds.map(String)
+          : []
+        const baseFinishTimeMillis = Number(
+          result.baseFinishTimeMillis ||
+            publishedDraftRow?.baseFinishTimeMillis ||
+            result.finishTimeMillis ||
+            0,
+        )
+        const penaltyTimeMillis = Number(
+          result.penaltyTimeMillis || publishedDraftRow?.penaltyTimeMillis || 0,
+        )
         return {
           id: horse.id,
           participantId: horse.participantId ?? result.participantId,
@@ -606,8 +629,11 @@ export function buildResultRowsFromHorses(
           jockey: horse.jockey ?? result.jockeyUsername,
           startPos,
           position: dq ? 0 : (result.rank ?? index + 1),
+          baseTime: formatMillisAsRaceTime(baseFinishTimeMillis),
+          penaltyTimeMillis,
           time: dq ? '' : formatMillisAsRaceTime(result.finishTimeMillis),
           dqReason: dq ? (result.note ?? '') : '',
+          violationIds: resultViolationIds.length ? resultViolationIds : draftViolationIds,
           dq,
         }
       }),
@@ -635,6 +661,37 @@ export function buildResultRowsFromHorses(
   }
 
   return horseList.map((horse, index) => defaultResultRow(horse, index, safeStartPositions))
+}
+
+export function buildResultRowsFromDraft(horses, draftRows) {
+  const horseByParticipant = new Map(
+    (Array.isArray(horses) ? horses : []).map((horse) => [
+      String(horse.participantId ?? horse.id),
+      horse,
+    ]),
+  )
+  return sortResultRowsForDisplay(
+    (Array.isArray(draftRows) ? draftRows : []).map((row) => {
+      const horse = horseByParticipant.get(String(row.participantId)) || {}
+      const dq = row.status === 'DISQUALIFIED'
+      return {
+        id: String(row.participantId),
+        participantId: String(row.participantId),
+        horse: row.horseName || horse.horse || '—',
+        owner: horse.owner || '—',
+        jockey: row.jockeyName || horse.jockey || '—',
+        startPos: Number(row.gateNumber || horse.no || 0),
+        position: dq ? 0 : Number(row.rank || 0),
+        baseRank: Number(row.baseRank || 0),
+        baseTime: formatMillisAsRaceTime(row.baseFinishTimeMillis),
+        penaltyTimeMillis: Number(row.penaltyTimeMillis || 0),
+        time: dq ? '' : formatMillisAsRaceTime(row.finishTimeMillis),
+        dqReason: row.disqualificationReason || '',
+        violationIds: Array.isArray(row.violationIds) ? row.violationIds.map(String) : [],
+        dq,
+      }
+    }),
+  )
 }
 
 export function formatMillisAsRaceTime(ms) {
