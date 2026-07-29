@@ -1618,15 +1618,7 @@ function ResultsTab({
         toast.error('Bản nháp kết quả hiện không thể công bố');
         return;
       }
-      const disqualifiedCount = rows.filter((row) => row.dq).length;
-      const penalizedCount = rows.filter((row) => row.penaltyTimeMillis > 0).length;
-      const confirmed = window.confirm(
-        `Xác nhận & phát hành kết quả chính thức?\n\n` +
-        `Ngựa thắng: ${winner?.horse || 'Chưa xác định'}\n` +
-        `Ngựa bị cộng thời gian: ${penalizedCount}\n` +
-        `Ngựa bị loại: ${disqualifiedCount}\n\n` +
-        'Sau khi công bố, kết quả và biên bản vi phạm sẽ bị khóa.',
-      );
+      const confirmed = window.confirm('Bạn có chắc chắn với kết quả này không?');
       if (!confirmed) return;
       setSubmitting(true);
       try {

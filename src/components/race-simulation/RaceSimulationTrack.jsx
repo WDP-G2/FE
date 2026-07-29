@@ -85,7 +85,9 @@ export function RaceSimulationTrack({ raceId, canOperate = false, onConfirmed, o
   }, [elapsed, simulation])
 
   const generate = async () => {
-    if (!window.confirm('Mỗi cuộc đua chỉ được mô phỏng một lần và không thể chạy lại. Tiếp tục?')) return
+    if (
+      !window.confirm('Bạn có chắc chắn muốn bắt đầu mô phỏng cuộc đua này không?')
+    ) return
     setGenerating(true)
     try {
       const data = await raceSimulationService.generate(raceId)

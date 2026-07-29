@@ -76,13 +76,14 @@ function payoutMetricLabel(status) {
   return "Thực nhận";
 }
 
-const STARTED_RACE_STATUSES = new Set([
-  "ONGOING",
-  "RESULT_CONFIRMED",
-  "COMPLETED",
-  "CANCELLED",
-  "FINISHED",
-]);
+const SCHEDULED_STATUS = "SCHEDULED";
+
+function isScheduledTournament(tournament) {
+  const status = String(
+    tournament?.statusCode || tournament?.raw?.status || "",
+  ).toUpperCase();
+  return status === SCHEDULED_STATUS;
+}
 
 function getRaceStartTime(race) {
   const value = race?.scheduledStartAt || race?.raw?.scheduledStartAt;
@@ -96,7 +97,7 @@ function isRaceBeforeStart(race) {
   const status = String(
     race?.statusCode || race?.raw?.status || "",
   ).toUpperCase();
-  if (STARTED_RACE_STATUSES.has(status)) return false;
+  if (status !== SCHEDULED_STATUS) return false;
 
   const startTime = getRaceStartTime(race);
   return startTime != null && startTime > Date.now();
@@ -153,7 +154,9 @@ export default function AdminBetMarketsPage() {
         adminBettingService.getMarkets(),
         financeSettingsService.getAdminSettings(),
       ]);
-      const nextTournaments = tournamentResponse.data || [];
+      const nextTournaments = (tournamentResponse.data || []).filter(
+        isScheduledTournament,
+      );
 
       setTournaments(nextTournaments);
       setMarkets(marketList);
@@ -163,8 +166,15 @@ export default function AdminBetMarketsPage() {
           : Number(financeResponse.data.betWinningTaxPercent),
       );
 
-      if (!selectedTournamentId && nextTournaments[0]?.id) {
-        setSelectedTournamentId(String(nextTournaments[0].id));
+      const selectedStillScheduled = nextTournaments.some(
+        (tournament) =>
+          String(tournament.id) === String(selectedTournamentId),
+      );
+      if (!selectedStillScheduled) {
+        const firstTournamentId = nextTournaments[0]?.id;
+        setSelectedTournamentId(
+          firstTournamentId ? String(firstTournamentId) : "",
+        );
       }
       if (!nextTournaments.length) {
         setSelectedTournamentId("");
@@ -188,6 +198,12 @@ export default function AdminBetMarketsPage() {
     setLoadingTournament(true);
     try {
       const response = await tournamentService.getAdminTournament(tournamentId);
+      if (!isScheduledTournament(response.data)) {
+        setSelectedTournament(null);
+        setSelectedRaceId("");
+        toast.error("Chỉ giải đấu đã lên lịch mới được cấu hình cược");
+        return;
+      }
       const nextTournament = keepBettableUpcomingRaces(response.data);
       setSelectedTournament(nextTournament);
       const firstRaceId = nextTournament?.races?.[0]?.id;
@@ -334,7 +350,7 @@ export default function AdminBetMarketsPage() {
                 Chọn giải đấu và cuộc đua
               </h2>
               <p className="text-sm text-white/50">
-                Chỉ hiển thị cuộc đua chưa đến giờ bắt đầu để cấu hình cược.
+                Chỉ hiển thị giải đấu và cuộc đua đã lên lịch, chưa đến giờ bắt đầu.
               </p>
             </div>
             <button
