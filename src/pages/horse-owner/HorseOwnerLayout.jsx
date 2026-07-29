@@ -7,7 +7,6 @@ import {
   Trophy,
   ClipboardList,
   Users,
-  CreditCard,
   BarChart3,
   Search,
   LogOut,
@@ -33,7 +32,6 @@ export const HORSE_OWNER_NAV = [
   },
   { label: "Jockey", to: "/horse-owner/jockeys", icon: Users },
   { label: "Ví của tôi", to: "/horse-owner/wallet", icon: Wallet },
-  { label: "Thanh toán", to: "/horse-owner/payments", icon: CreditCard },
   { label: "Kết quả thi đấu", to: "/horse-owner/results", icon: BarChart3 },
   { label: "Thông báo", to: "/horse-owner/notifications", icon: Bell },
 ];
