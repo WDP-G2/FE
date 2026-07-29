@@ -6,19 +6,14 @@ import AuthLayout from '@/layouts/AuthLayout'
 import TextInput from '@/components/forms/TextInput'
 import PasswordInput from '@/components/forms/PasswordInput'
 import AuthButton from '@/components/ui/AuthButton'
-import SocialAuthButtons from '@/components/auth/SocialAuthButtons'
 import { useAuthStore } from '@/store/authStore'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { validatePassword } from '@/utils/validation'
-import { getRoleHomePath, normalizeRole } from '@/utils/roleRedirect'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
   const register = useAuthStore((s) => s.register)
-  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
-  const loginWithFacebook = useAuthStore((s) => s.loginWithFacebook)
   const [loading, setLoading] = useState(false)
-  const [socialLoading, setSocialLoading] = useState(false)
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -55,34 +50,6 @@ export default function RegisterPage() {
       setLoading(false)
     }
   }
-
-  const handleGoogleSuccess = async (idToken) => {
-    setSocialLoading(true)
-    try {
-      const { user } = await loginWithGoogle(idToken)
-      toast.success('Đăng ký / đăng nhập Google thành công')
-      navigate(getRoleHomePath(normalizeRole(user?.role)), { replace: true })
-    } catch (err) {
-      toast.error(getApiErrorMessage(err) || 'Đăng ký Google thất bại')
-    } finally {
-      setSocialLoading(false)
-    }
-  }
-
-  const handleFacebookSuccess = async (accessToken) => {
-    setSocialLoading(true)
-    try {
-      const { user } = await loginWithFacebook(accessToken)
-      toast.success('Đăng ký / đăng nhập Facebook thành công')
-      navigate(getRoleHomePath(normalizeRole(user?.role)), { replace: true })
-    } catch (err) {
-      toast.error(getApiErrorMessage(err) || 'Đăng ký Facebook thất bại')
-    } finally {
-      setSocialLoading(false)
-    }
-  }
-
-  const busy = loading || socialLoading
 
   return (
     <AuthLayout title="Đăng ký" subtitle="Tham gia hệ thống quản lý giải đua ngựa">
@@ -138,16 +105,9 @@ export default function RegisterPage() {
           Tài khoản sẽ được quản trị viên xác minh và cấp quyền phù hợp.
         </p>
 
-        <AuthButton loading={loading} disabled={socialLoading}>
+        <AuthButton loading={loading}>
           Đăng ký
         </AuthButton>
-
-        <SocialAuthButtons
-          mode="register"
-          onGoogleSuccess={handleGoogleSuccess}
-          onFacebookSuccess={handleFacebookSuccess}
-          disabled={busy}
-        />
 
         <p className="text-center text-sm text-gray-500">
           Đã có tài khoản?{' '}

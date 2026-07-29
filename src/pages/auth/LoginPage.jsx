@@ -6,7 +6,6 @@ import AuthLayout from '@/layouts/AuthLayout'
 import TextInput from '@/components/forms/TextInput'
 import PasswordInput from '@/components/forms/PasswordInput'
 import AuthButton from '@/components/ui/AuthButton'
-import SocialAuthButtons from '@/components/auth/SocialAuthButtons'
 import { useAuthStore } from '@/store/authStore'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { getPostLoginPath } from '@/utils/roleRedirect'
@@ -15,11 +14,8 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const login = useAuthStore((s) => s.login)
-  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
-  const loginWithFacebook = useAuthStore((s) => s.loginWithFacebook)
   const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [socialLoading, setSocialLoading] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
 
   const redirectAfterAuth = (user) => {
@@ -55,34 +51,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleGoogleSuccess = async (idToken) => {
-    setSocialLoading(true)
-    try {
-      const { user } = await loginWithGoogle(idToken)
-      toast.success('Đăng nhập Google thành công')
-      redirectAfterAuth(user)
-    } catch (err) {
-      toast.error(getApiErrorMessage(err) || 'Đăng nhập Google thất bại')
-    } finally {
-      setSocialLoading(false)
-    }
-  }
-
-  const handleFacebookSuccess = async (accessToken) => {
-    setSocialLoading(true)
-    try {
-      const { user } = await loginWithFacebook(accessToken)
-      toast.success('Đăng nhập Facebook thành công')
-      redirectAfterAuth(user)
-    } catch (err) {
-      toast.error(getApiErrorMessage(err) || 'Đăng nhập Facebook thất bại')
-    } finally {
-      setSocialLoading(false)
-    }
-  }
-
-  const busy = loading || socialLoading
-
   return (
     <AuthLayout title="Đăng nhập" subtitle="Chào mừng trở lại hệ thống quản lý giải đua ngựa">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,7 +77,7 @@ export default function LoginPage() {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
               className="rounded border-gray-300 text-[#D4A017] focus:ring-[#D4A017]"
-              disabled={busy}
+              disabled={loading}
             />
             Ghi nhớ đăng nhập
           </label>
@@ -118,16 +86,9 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <AuthButton loading={loading} disabled={socialLoading}>
+        <AuthButton loading={loading}>
           Đăng nhập
         </AuthButton>
-
-        <SocialAuthButtons
-          mode="login"
-          onGoogleSuccess={handleGoogleSuccess}
-          onFacebookSuccess={handleFacebookSuccess}
-          disabled={busy}
-        />
 
         <p className="text-center text-sm text-gray-500 pt-2">
           Chưa có tài khoản?{' '}
