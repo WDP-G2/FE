@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@source '../index.html';
+@source './**/*.{js,jsx}';
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: #1e3a5f;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Dropdown native: chữ đọc được trên admin / layout tối */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #162338;
+  color: #ffffff;
+}
+
+.google-signin-btn>div {
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+}
+
+.google-signin-compact {
+  cursor: pointer;
+}
+
+.google-signin-compact>div,
+.google-signin-compact iframe {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 48px;
+}
+
+@layer utilities {
+  .scrollbar-dark {
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-dark::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-dark::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+}
+
+@keyframes scan {
+  0% {
+    top: 5%;
+    opacity: 0.1;
+  }
+
+  50% {
+    top: 95%;
+    opacity: 0.8;
+  }
+
+  100% {
+    top: 5%;
+    opacity: 0.1;
+  }
+}
+
+.animate-scan {
+  animation: scan 3s ease-in-out infinite;
+}

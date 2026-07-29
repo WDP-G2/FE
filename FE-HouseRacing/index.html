@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Horse Racing Championship — Hệ thống quản lý giải đua ngựa chuyên nghiệp"
+    />
+    <meta name="theme-color" content="#1E3A5F" />
+    <link rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
+    <link rel="apple-touch-icon" href="/logo-icon.svg" />
+    <title>Horse Racing Championship</title>
+    <style>
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: linear-gradient(160deg, #fff8f0 0%, #ffffff 45%, #f5f0e8 100%);
+        transition: opacity 0.35s ease, visibility 0.35s ease;
+      }
+      #app-loader.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #app-loader img {
+        width: 72px;
+        height: 72px;
+        filter: drop-shadow(0 8px 24px rgba(212, 160, 23, 0.25));
+        animation: logo-pulse 2s ease-in-out infinite;
+      }
+      #app-loader p {
+        margin: 0;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        color: #1e3a5f;
+        text-transform: uppercase;
+      }
+      #app-loader span {
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        color: #d4a017;
+        font-weight: 600;
+      }
+      @keyframes logo-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.04);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-loader" aria-hidden="true">
+      <img src="/logo-icon.svg" width="72" height="72" alt="Horse Racing Championship" />
+      <p>Horse Racing</p>
+      <span>Championship</span>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+#!/bin/sh
+# Chặn Co-authored-by Cursor / cursoragent — mọi thành viên dùng core.hooksPath=.githooks
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+if grep -qiE '^co-authored-by:.*(cursor|cursoragent|cursor agent)' "$msg_file"; then
+  echo "Loi: Khong duoc them Co-authored-by Cursor (cursoragent)." >&2
+  echo "Chay: git config core.hooksPath .githooks" >&2
+  exit 1
+fi
+
+tmp="${msg_file}.tmp"
+grep -viE '^co-authored-by:.*(cursor|cursoragent|cursor agent)' "$msg_file" > "$tmp" 2>/dev/null || true
+[ -s "$tmp" ] && mv "$tmp" "$msg_file"
+exit 0
