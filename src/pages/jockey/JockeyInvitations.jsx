@@ -4,6 +4,7 @@ import { useJockeyInvitations } from "./hooks/useJockeyInvitations";
 import { InvitationFilterBar } from "./components/invitations/InvitationFilterBar";
 import { InvitationList } from "./components/invitations/InvitationList";
 import { InvitationAcceptModal } from "./components/invitations/InvitationAcceptModal";
+import { InvitationRejectModal } from "./components/invitations/InvitationRejectModal";
 
 export function JockeyInvitations() {
   const {
@@ -14,11 +15,14 @@ export function JockeyInvitations() {
     savingId,
     acceptTarget,
     setAcceptTarget,
+    rejectTarget,
+    setRejectTarget,
     pendingCount,
     conflictMap,
     pendingGroups,
     otherInvitations,
-    reject,
+    requestReject,
+    confirmReject,
     confirmAccept,
   } = useJockeyInvitations();
 
@@ -41,7 +45,7 @@ export function JockeyInvitations() {
           otherInvitations={otherInvitations}
           conflictMap={conflictMap}
           onAccept={setAcceptTarget}
-          onReject={reject}
+          onReject={requestReject}
           savingId={savingId}
         />
       )}
@@ -52,6 +56,14 @@ export function JockeyInvitations() {
         savingId={savingId}
         onClose={() => setAcceptTarget(null)}
         onConfirm={confirmAccept}
+      />
+
+      <InvitationRejectModal
+        key={rejectTarget?.id ?? "closed"}
+        rejectTarget={rejectTarget}
+        savingId={savingId}
+        onClose={() => setRejectTarget(null)}
+        onConfirm={confirmReject}
       />
     </JockeyLayout>
   );

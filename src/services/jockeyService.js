@@ -209,7 +209,10 @@ export const jockeyService = {
   },
 
   async rejectJockeyInvitation(id, note = '') {
-    const payload = note?.trim() ? { note: note.trim() } : null
+    const normalizedNote = note?.trim()
+    if (!normalizedNote) throw new Error('Lý do từ chối là bắt buộc')
+
+    const payload = { note: normalizedNote }
     const data = await axiosClient.put(ENDPOINTS.jockeys.jockeyRejectInvitation(id), payload).then(unwrapResponse)
     return mapJockeyInvitation(data)
   },

@@ -10,6 +10,7 @@ export function useJockeyInvitations() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [acceptTarget, setAcceptTarget] = useState(null);
+  const [rejectTarget, setRejectTarget] = useState(null);
 
   const pendingCount = invitations.filter((item) => item.statusCode === "PENDING").length;
   const conflictMap = useMemo(() => buildConflictMap(invitations), [invitations]);
@@ -36,13 +37,21 @@ export function useJockeyInvitations() {
     loadInvitations();
   }, []);
 
-  const reject = async (id) => {
+  const requestReject = (id) => {
+    const invitation = invitations.find((item) => item.id === id);
+    if (invitation) setRejectTarget(invitation);
+  };
+
+  const confirmReject = async (note) => {
+    if (!rejectTarget) return;
+
     try {
-      setSavingId(id);
-      const invitation = await jockeyService.rejectJockeyInvitation(id);
+      setSavingId(rejectTarget.id);
+      const invitation = await jockeyService.rejectJockeyInvitation(rejectTarget.id, note);
       setInvitations((prev) =>
         prev.map((item) => (item.id === invitation.id ? invitation : item)),
       );
+      setRejectTarget(null);
       toast.success("Đã từ chối lời mời thi đấu");
     } catch (error) {
       console.error("Không thể từ chối lời mời", error?.response?.data || error);
@@ -83,11 +92,14 @@ export function useJockeyInvitations() {
     savingId,
     acceptTarget,
     setAcceptTarget,
+    rejectTarget,
+    setRejectTarget,
     pendingCount,
     conflictMap,
     pendingGroups,
     otherInvitations,
-    reject,
+    requestReject,
+    confirmReject,
     confirmAccept,
   };
 }
